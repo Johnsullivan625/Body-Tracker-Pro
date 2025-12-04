@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Body Tracker Pro - User 1</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-danger: #ef4444;
+            --accent-warning: #f59e0b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+        }
+        
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1600px; margin: 0 auto; }
+        
+        .header {
+            background: var(--bg-secondary);
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+        
+        button.primary {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+        
+        button.danger {
+            background: var(--accent-danger);
+            border-color: var(--accent-danger);
+            padding: 5px 10px;
+            font-size: 0.8em;
+        }
+        
+        .card {
+            background: var(--bg-secondary);
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: var(--accent-cyan);
+        }
+        
+        .grid { display: grid; gap: 20px; margin-bottom: 20px; }
+        .grid-4 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+        
+        .stat-card {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid var(--accent-cyan);
+        }
+        
+        .stat-label {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            margin: 10px 0;
+        }
+        
+        .stat-change {
+            font-size: 0.9em;
+            font-family: 'Space Mono', monospace;
+        }
+        
+        .positive { color: var(--accent-success); }
+        .negative { color: var(--accent-danger); }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        canvas { max-height: 400px !important; }
+        
+        .chart-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .chart-tab {
+            padding: 10px 20px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+        
+        .chart-tab.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            font-weight: 600;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.75em;
+        }
+        
+        th {
+            background: var(--bg-tertiary);
+            padding: 10px 6px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8em;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        td {
+            padding: 8px 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        tbody tr:hover {
+            background: var(--bg-tertiary);
+            cursor: pointer;
+        }
+        
+        tbody tr.editing {
+            background: rgba(6, 182, 212, 0.15);
+            outline: 2px solid var(--accent-cyan);
+        }
+        
+        .refeed-row {
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .refeed-row:hover {
+            background: rgba(239, 68, 68, 0.15);
+        }
+        
+        td.editing input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--accent-cyan);
+            color: var(--text-primary);
+            padding: 4px 6px;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .modal-overlay.show { display: flex; }
+        
+        .modal {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+        
+        .form-section {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .form-section h3 {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            color: var(--accent-cyan);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+        }
+        
+        .form-field label {
+            display: block;
+            font-size: 0.85em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .form-field input, .form-field textarea {
+            width: 100%;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9em;
+        }
+        
+        .form-field input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+        
+        .form-field input[readonly] {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+        
+        .required::after {
+            content: " *";
+            color: var(--accent-danger);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--accent-success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            display: none;
+            animation: slideIn 0.3s ease;
+            max-width: 500px;
+            font-size: 0.9em;
+            white-space: pre-line;
+            font-family: 'Space Mono', monospace;
+        }
+        
+        .toast.show { display: block; }
+        .toast.error { background: var(--accent-danger); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        
+        .edit-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8em; }
+            .grid-4 { grid-template-columns: 1fr; }
+            .form-grid { grid-template-columns: 1fr; }
+            table { font-size: 0.7em; }
+            th, td { padding: 6px 3px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💪 BODY TRACKER PRO - USER 1</h1>
+            <p style="color: var(--text-secondary); font-family: 'Space Mono', monospace;" id="headerStatus">Loading...</p>
+            <div class="header-actions">
+                <button onclick="showAddEntry()" class="primary">+ Add Entry</button>
+                <button onclick="exportCSV()">📥 Export CSV</button>
+                <button onclick="exportBackup()">💾 Backup JSON</button>
+                <button onclick="reloadData()" style="background: var(--accent-purple);">🔄 Reload Data</button>
+                <button onclick="debugData()" style="background: var(--accent-warning);">🔧 Debug Data</button>
+            </div>
+        </div>
+
+        <div class="grid grid-4" id="statsGrid"></div>
+
+        <div class="card">
+            <h2>🎯 Goal Projection</h2>
+            <div id="goalContent"></div>
+        </div>
+
+        <div class="card">
+            <h2>📊 Body Composition Analysis</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">Choose a view to understand your transformation better</p>
+            <div class="chart-tabs">
+                <div class="chart-tab active" onclick="switchChart('fatVsLean')">Fat vs Lean Breakdown</div>
+                <div class="chart-tab" onclick="switchChart('weightTrend')">Weight & BF% Trend</div>
+                <div class="chart-tab" onclick="switchChart('rateOfChange')">Daily Rate of Change</div>
+                <div class="chart-tab" onclick="switchChart('nutrition')">Nutrition Tracking</div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>📋 Complete Data Log (<span id="entryCount">0</span> entries)</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">Click any row to edit all fields inline • Red rows = refeed days</p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Weight</th>
+                            <th>BF%</th>
+                            <th>BF lbs</th>
+                            <th>Lean</th>
+                            <th>Cal</th>
+                            <th>Pro</th>
+                            <th>Fat</th>
+                            <th>Carbs</th>
+                            <th>Steps</th>
+                            <th>RHR</th>
+                            <th>Sleep</th>
+                            <th>Sleep Hrs</th>
+                            <th>Refeed</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addEntryModal">
+        <div class="modal">
+            <h2 id="modalTitle">Add New Entry</h2>
+            
+            <div class="form-section">
+                <h3>Body Composition (Required)</h3>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label class="required">Date</label>
+                        <input type="date" id="entryDate" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="required">Weight (lbs)</label>
+                        <input type="number" step="0.1" id="entryWeight" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="required">Body Fat %</label>
+                        <input type="number" step="0.1" id="entryBfPercent" required>
+                    </div>
+                    <div class="form-field">
+                        <label class="required">Lean Mass (lbs)</label>
+                        <input type="number" step="0.1" id="entryLeanLbs" required>
+                    </div>
+                    <div class="form-field">
+                        <label>BF lbs (Auto)</label>
+                        <input type="text" id="entryBfLbsAuto" readonly>
+                    </div>
+                    <div class="form-field">
+                        <label>Lean % (Auto)</label>
+                        <input type="text" id="entryLeanPercentAuto" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Nutrition</h3>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label>Calories</label>
+                        <input type="number" id="entryCalories">
+                    </div>
+                    <div class="form-field">
+                        <label>Protein (g)</label>
+                        <input type="number" id="entryProtein">
+                    </div>
+                    <div class="form-field">
+                        <label>Fat (g)</label>
+                        <input type="number" id="entryFat">
+                    </div>
+                    <div class="form-field">
+                        <label>Carbs (g)</label>
+                        <input type="number" id="entryCarbs">
+                    </div>
+                    <div class="form-field">
+                        <label><input type="checkbox" id="entryRefeed" style="width: auto; margin-right: 8px;">Refeed Day 🔥</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Activity & Wellness</h3>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label>Steps</label>
+                        <input type="number" id="entrySteps">
+                    </div>
+                    <div class="form-field">
+                        <label>RHR (bpm)</label>
+                        <input type="number" id="entryRhr">
+                    </div>
+                    <div class="form-field">
+                        <label>Sleep Score (0-100)</label>
+                        <input type="number" min="0" max="100" id="entrySleepScore">
+                    </div>
+                    <div class="form-field">
+                        <label>Sleep Hours</label>
+                        <input type="number" step="0.1" id="entrySleepHours">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="form-field">
+                    <label>Notes</label>
+                    <textarea rows="2" id="entryNotes"></textarea>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="saveEntry()" class="primary" id="saveBtn">Save Entry</button>
+                <button onclick="hideModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // COMPLETE 37-DAY DATASET - 2025 DATES - ALL FIELDS
+        const INITIAL_DATA = [
+            {"date":"2025-10-27","weight":208.1,"bf_percent":20.5,"lean_lbs":156.3,"calories":1405,"protein":116,"fat":83,"carbs":40,"rhr":48,"sleep_score":87,"sleep_duration_hrs":9.42,"steps":7046,"refeed":false,"notes":""},
+            {"date":"2025-10-28","weight":208.9,"bf_percent":20.5,"lean_lbs":154.5,"calories":1565,"protein":139,"fat":92,"carbs":30,"rhr":null,"sleep_score":77,"sleep_duration_hrs":6.62,"steps":null,"refeed":false,"notes":""},
+            {"date":"2025-10-29","weight":203.4,"bf_percent":20.3,"lean_lbs":154.6,"calories":1577,"protein":151,"fat":79,"carbs":50,"rhr":null,"sleep_score":63,"sleep_duration_hrs":9.18,"steps":null,"refeed":false,"notes":""},
+            {"date":"2025-10-30","weight":202.6,"bf_percent":20.0,"lean_lbs":154.5,"calories":1555,"protein":142,"fat":95,"carbs":23,"rhr":55,"sleep_score":null,"sleep_duration_hrs":null,"steps":6480,"refeed":false,"notes":""},
+            {"date":"2025-10-31","weight":205.0,"bf_percent":19.7,"lean_lbs":154.2,"calories":1290,"protein":147,"fat":59,"carbs":35,"rhr":54,"sleep_score":86,"sleep_duration_hrs":10.38,"steps":9519,"refeed":false,"notes":""},
+            {"date":"2025-11-01","weight":204.4,"bf_percent":19.7,"lean_lbs":154.2,"calories":1735,"protein":146,"fat":41,"carbs":31,"rhr":52,"sleep_score":66,"sleep_duration_hrs":7.0,"steps":5231,"refeed":false,"notes":""},
+            {"date":"2025-11-02","weight":203.8,"bf_percent":19.5,"lean_lbs":154.3,"calories":1436,"protein":134,"fat":76,"carbs":29,"rhr":51,"sleep_score":91,"sleep_duration_hrs":8.1,"steps":2859,"refeed":false,"notes":""},
+            {"date":"2025-11-03","weight":204.0,"bf_percent":19.3,"lean_lbs":154.4,"calories":1981,"protein":207,"fat":76,"carbs":35,"rhr":55,"sleep_score":67,"sleep_duration_hrs":7.53,"steps":9321,"refeed":false,"notes":""},
+            {"date":"2025-11-04","weight":203.9,"bf_percent":19.2,"lean_lbs":154.4,"calories":1660,"protein":131,"fat":48,"carbs":50,"rhr":54,"sleep_score":73,"sleep_duration_hrs":6.65,"steps":7202,"refeed":false,"notes":""},
+            {"date":"2025-11-05","weight":200.8,"bf_percent":19.5,"lean_lbs":153.8,"calories":1525,"protein":161,"fat":85,"carbs":20,"rhr":52,"sleep_score":87,"sleep_duration_hrs":9.1,"steps":5753,"refeed":false,"notes":""},
+            {"date":"2025-11-06","weight":200.6,"bf_percent":19.6,"lean_lbs":153.3,"calories":1492,"protein":141,"fat":82,"carbs":39,"rhr":50,"sleep_score":76,"sleep_duration_hrs":9.03,"steps":10762,"refeed":false,"notes":""},
+            {"date":"2025-11-07","weight":200.2,"bf_percent":19.4,"lean_lbs":153.2,"calories":1724,"protein":179,"fat":71,"carbs":83,"rhr":52,"sleep_score":65,"sleep_duration_hrs":6.48,"steps":11448,"refeed":false,"notes":""},
+            {"date":"2025-11-08","weight":201.1,"bf_percent":19.1,"lean_lbs":153.3,"calories":2465,"protein":180,"fat":82,"carbs":197,"rhr":49,"sleep_score":73,"sleep_duration_hrs":8.67,"steps":4149,"refeed":true,"notes":""},
+            {"date":"2025-11-09","weight":202.8,"bf_percent":18.6,"lean_lbs":153.8,"calories":1710,"protein":203,"fat":57,"carbs":81,"rhr":48,"sleep_score":85,"sleep_duration_hrs":7.17,"steps":4673,"refeed":false,"notes":""},
+            {"date":"2025-11-10","weight":201.8,"bf_percent":18.4,"lean_lbs":154.2,"calories":1908,"protein":203,"fat":68,"carbs":100,"rhr":51,"sleep_score":78,"sleep_duration_hrs":9.0,"steps":7444,"refeed":false,"notes":""},
+            {"date":"2025-11-11","weight":200.3,"bf_percent":18.3,"lean_lbs":154.4,"calories":1199,"protein":150,"fat":26,"carbs":65,"rhr":45,"sleep_score":56,"sleep_duration_hrs":4.88,"steps":2327,"refeed":false,"notes":""},
+            {"date":"2025-11-12","weight":199.1,"bf_percent":18.3,"lean_lbs":154.2,"calories":1210,"protein":101,"fat":72,"carbs":28,"rhr":46,"sleep_score":76,"sleep_duration_hrs":9.7,"steps":3724,"refeed":false,"notes":""},
+            {"date":"2025-11-13","weight":199.5,"bf_percent":18.3,"lean_lbs":153.7,"calories":1756,"protein":133,"fat":112,"carbs":39,"rhr":48,"sleep_score":83,"sleep_duration_hrs":8.78,"steps":10266,"refeed":false,"notes":""},
+            {"date":"2025-11-14","weight":197.5,"bf_percent":18.4,"lean_lbs":153.5,"calories":2583,"protein":202,"fat":51,"carbs":270,"rhr":47,"sleep_score":81,"sleep_duration_hrs":8.53,"steps":6214,"refeed":true,"notes":""},
+            {"date":"2025-11-15","weight":199.1,"bf_percent":18.0,"lean_lbs":153.6,"calories":1960,"protein":219,"fat":84,"carbs":75,"rhr":55,"sleep_score":62,"sleep_duration_hrs":6.62,"steps":4173,"refeed":false,"notes":""},
+            {"date":"2025-11-16","weight":199.6,"bf_percent":17.8,"lean_lbs":153.8,"calories":1502,"protein":156,"fat":30,"carbs":128,"rhr":54,"sleep_score":60,"sleep_duration_hrs":7.1,"steps":4655,"refeed":false,"notes":""},
+            {"date":"2025-11-17","weight":198.3,"bf_percent":17.7,"lean_lbs":153.8,"calories":2165,"protein":207,"fat":127,"carbs":32,"rhr":52,"sleep_score":67,"sleep_duration_hrs":8.88,"steps":12478,"refeed":true,"notes":""},
+            {"date":"2025-11-18","weight":199.8,"bf_percent":17.8,"lean_lbs":153.4,"calories":1718,"protein":163,"fat":103,"carbs":26,"rhr":50,"sleep_score":71,"sleep_duration_hrs":7.05,"steps":4852,"refeed":false,"notes":""},
+            {"date":"2025-11-19","weight":199.8,"bf_percent":17.5,"lean_lbs":153.9,"calories":1715,"protein":169,"fat":60,"carbs":61,"rhr":57,"sleep_score":null,"sleep_duration_hrs":null,"steps":10165,"refeed":false,"notes":""},
+            {"date":"2025-11-20","weight":197.9,"bf_percent":17.2,"lean_lbs":154.4,"calories":2008,"protein":195,"fat":105,"carbs":50,"rhr":54,"sleep_score":63,"sleep_duration_hrs":8.33,"steps":4982,"refeed":true,"notes":""},
+            {"date":"2025-11-21","weight":197.2,"bf_percent":16.9,"lean_lbs":154.7,"calories":1275,"protein":207,"fat":48,"carbs":17,"rhr":54,"sleep_score":85,"sleep_duration_hrs":9.3,"steps":6988,"refeed":false,"notes":""},
+            {"date":"2025-11-22","weight":198.4,"bf_percent":16.4,"lean_lbs":155.3,"calories":1835,"protein":229,"fat":48,"carbs":114,"rhr":48,"sleep_score":null,"sleep_duration_hrs":null,"steps":4021,"refeed":false,"notes":""},
+            {"date":"2025-11-23","weight":200.2,"bf_percent":16.0,"lean_lbs":155.9,"calories":1501,"protein":132,"fat":37,"carbs":146,"rhr":51,"sleep_score":72,"sleep_duration_hrs":7.35,"steps":5803,"refeed":false,"notes":""},
+            {"date":"2025-11-24","weight":196.7,"bf_percent":16.6,"lean_lbs":154.9,"calories":null,"protein":null,"fat":98,"carbs":18,"rhr":49,"sleep_score":88,"sleep_duration_hrs":10.03,"steps":7179,"refeed":false,"notes":""},
+            {"date":"2025-11-25","weight":199.7,"bf_percent":16.5,"lean_lbs":154.7,"calories":1431,"protein":110,"fat":23,"carbs":188,"rhr":50,"sleep_score":76,"sleep_duration_hrs":7.98,"steps":9946,"refeed":false,"notes":""},
+            {"date":"2025-11-26","weight":200.2,"bf_percent":16.5,"lean_lbs":154.8,"calories":1325,"protein":195,"fat":47,"carbs":25,"rhr":48,"sleep_score":67,"sleep_duration_hrs":7.82,"steps":10712,"refeed":false,"notes":""},
+            {"date":"2025-11-27","weight":196.0,"bf_percent":16.9,"lean_lbs":154.3,"calories":null,"protein":null,"fat":null,"carbs":null,"rhr":49,"sleep_score":null,"sleep_duration_hrs":10.3,"steps":7392,"refeed":true,"notes":"Thanksgiving"},
+            {"date":"2025-11-28","weight":200.1,"bf_percent":16.4,"lean_lbs":154.7,"calories":967,"protein":133,"fat":40,"carbs":13,"rhr":53,"sleep_score":78,"sleep_duration_hrs":10.3,"steps":7310,"refeed":false,"notes":""},
+            {"date":"2025-11-29","weight":196.2,"bf_percent":16.7,"lean_lbs":154.6,"calories":null,"protein":null,"fat":75,"carbs":49,"rhr":50,"sleep_score":85,"sleep_duration_hrs":7.55,"steps":4914,"refeed":false,"notes":""},
+            {"date":"2025-11-30","weight":196.3,"bf_percent":16.7,"lean_lbs":154.2,"calories":1410,"protein":206,"fat":46,"carbs":47,"rhr":49,"sleep_score":89,"sleep_duration_hrs":7.63,"steps":3947,"refeed":false,"notes":""},
+            {"date":"2025-12-01","weight":192.6,"bf_percent":16.7,"lean_lbs":154.0,"calories":1105,"protein":182,"fat":27,"carbs":46,"rhr":49,"sleep_score":84,"sleep_duration_hrs":12.1,"steps":5540,"refeed":false,"notes":""},
+            {"date":"2025-12-02","weight":194.1,"bf_percent":16.4,"lean_lbs":153.9,"calories":1442,"protein":201,"fat":36,"carbs":94,"rhr":49,"sleep_score":73,"sleep_duration_hrs":7.2,"steps":10665,"refeed":false,"notes":"Starting today (Dec 2), all carb entries are Total Carbs (not Net Carbs)."},
+            {"date":"2025-12-03","weight":192.5,"bf_percent":16.1,"lean_lbs":154.1,"calories":null,"protein":null,"fat":null,"carbs":null,"rhr":51,"sleep_score":81,"sleep_duration_hrs":8.72,"steps":null,"refeed":false,"notes":""}
+        ];
+
+        const GOALS = { target_weight: 215, target_bf_percent: 10.0, target_bf_lbs: 21.5 };
+
+        let data = [];
+        let charts = {};
+        let currentChart = 'fatVsLean';
+        let editingIndex = null;
+
+        function processEntry(entry) {
+            return {
+                ...entry,
+                bf_lbs: (entry.weight * entry.bf_percent / 100).toFixed(2),
+                lean_percent: ((entry.lean_lbs / entry.weight) * 100).toFixed(1)
+            };
+        }
+
+        function init() {
+            const savedData = localStorage.getItem('bodyTrackingData_User1');
+            if (savedData) {
+                data = JSON.parse(savedData);
+            } else {
+                data = INITIAL_DATA.map(processEntry);
+                localStorage.setItem('bodyTrackingData_User1', JSON.stringify(data));
+            }
+            data.sort((a, b) => new Date(a.date) - new Date(b.date));
+            updateAll();
+        }
+
+        function updateAll() {
+            updateHeader();
+            updateStats();
+            updateGoals();
+            renderChart();
+            updateTable();
+        }
+
+        function updateHeader() {
+            const latest = data[data.length - 1];
+            document.getElementById('headerStatus').textContent = 
+                `Current: ${latest.weight} lbs @ ${latest.bf_percent}% BF | Goal: ${GOALS.target_weight} lbs @ ${GOALS.target_bf_percent}% BF | ${data.length} days tracked (${data[0].date} to ${latest.date})`;
+        }
+
+        function updateStats() {
+            const first = data[0];
+            const latest = data[data.length - 1];
+            
+            const weightChange = (latest.weight - first.weight).toFixed(1);
+            const fatChange = (parseFloat(latest.bf_lbs) - parseFloat(first.bf_lbs)).toFixed(1);
+            const leanChange = (latest.lean_lbs - first.lean_lbs).toFixed(1);
+            
+            const avgProtein = data.filter(e => e.protein).reduce((sum, e) => sum + e.protein, 0) / 
+                              data.filter(e => e.protein).length || 0;
+            
+            const avgFatLossPerWeek = (Math.abs(fatChange) / data.length * 7).toFixed(2);
+            const ratio = (Math.abs(fatChange) / Math.abs(leanChange)).toFixed(1);
+            
+            document.getElementById('statsGrid').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">Weight Change</div>
+                    <div class="stat-value">${weightChange} lbs</div>
+                    <div class="stat-change ${parseFloat(weightChange) < 0 ? 'positive' : 'negative'}">
+                        ${parseFloat(weightChange) < 0 ? '↓' : '↑'} From ${first.weight} to ${latest.weight} lbs
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Fat Loss</div>
+                    <div class="stat-value">${Math.abs(fatChange)} lbs</div>
+                    <div class="stat-change positive">↓ ${avgFatLossPerWeek} lbs/week | From ${first.bf_percent}% to ${latest.bf_percent}% BF</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Lean Mass Change</div>
+                    <div class="stat-value">${leanChange} lbs</div>
+                    <div class="stat-change ${parseFloat(leanChange) >= -2 ? 'positive' : 'negative'}">
+                        ${parseFloat(leanChange) >= 0 ? '↑' : '↓'} Fat:Lean Ratio = ${ratio}:1 ${parseFloat(ratio) >= 5 ? '(Excellent!)' : parseFloat(ratio) >= 3 ? '(Good)' : ''}
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg Protein</div>
+                    <div class="stat-value">${avgProtein.toFixed(0)}g</div>
+                    <div class="stat-change">${(avgProtein / latest.lean_lbs).toFixed(2)}g per lb lean mass</div>
+                </div>
+            `;
+        }
+
+        function updateGoals() {
+            const latest = data[data.length - 1];
+            const first = data[0];
+            const fatToLose = parseFloat(latest.bf_lbs) - GOALS.target_bf_lbs;
+            const avgFatLossPerDay = (parseFloat(first.bf_lbs) - parseFloat(latest.bf_lbs)) / data.length;
+            const daysToGoal = Math.max(0, fatToLose / avgFatLossPerDay);
+            const goalDate = new Date();
+            goalDate.setDate(goalDate.getDate() + daysToGoal);
+            const progress = Math.min(100, ((parseFloat(first.bf_lbs) - parseFloat(latest.bf_lbs)) / 
+                            (parseFloat(first.bf_lbs) - GOALS.target_bf_lbs) * 100)).toFixed(1);
+            
+            document.getElementById('goalContent').innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                        <p style="font-size: 0.85em; color: var(--text-secondary);">Fat to Lose</p>
+                        <p style="font-size: 1.8em; font-weight: 700; color: var(--accent-cyan); font-family: 'Space Mono', monospace;">${fatToLose.toFixed(1)} lbs</p>
+                        <p style="font-size: 0.8em; color: var(--text-secondary);">Current: ${latest.bf_lbs} lbs</p>
+                    </div>
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                        <p style="font-size: 0.85em; color: var(--text-secondary);">Current Rate</p>
+                        <p style="font-size: 1.8em; font-weight: 700; color: var(--accent-purple); font-family: 'Space Mono', monospace;">${avgFatLossPerDay.toFixed(2)} lbs/day</p>
+                        <p style="font-size: 0.8em; color: var(--text-secondary);">${(avgFatLossPerDay * 7).toFixed(2)} lbs/week</p>
+                    </div>
+                    <div style="background: linear-gradient(135deg, var(--accent-success), var(--accent-cyan)); padding: 15px; border-radius: 8px;">
+                        <p style="font-size: 0.85em; color: white; opacity: 0.9;">Goal Date</p>
+                        <p style="font-size: 1.8em; font-weight: 700; color: white; font-family: 'Space Mono', monospace;">${goalDate.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</p>
+                        <p style="font-size: 0.8em; color: white; opacity: 0.9;">${daysToGoal.toFixed(0)} days to ${GOALS.target_bf_lbs} lbs BF</p>
+                    </div>
+                </div>
+                <div style="background: var(--bg-primary); height: 40px; border-radius: 20px; overflow: hidden; padding: 5px;">
+                    <div style="height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple)); width: ${progress}%; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; border-radius: 15px; font-weight: 700; font-size: 1.1em;">
+                        ${progress}% Complete
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('mainChart');
+            if (charts[currentChart]) charts[currentChart].destroy();
+
+            if (currentChart === 'fatVsLean') {
+                const fatMassData = data.map(d => parseFloat(d.bf_lbs));
+                const leanMassData = data.map(d => d.lean_lbs);
+                
+                charts[currentChart] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.date.substring(5)),
+                        datasets: [{
+                            label: 'Fat Mass (lbs)',
+                            data: fatMassData,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.4)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }, {
+                            label: 'Lean Mass (lbs)',
+                            data: leanMassData,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.4)',
+                            borderWidth: 2,
+                            fill: '-1',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            title: { 
+                                display: true, 
+                                text: 'Body Composition Breakdown: Fat (Red) vs Lean (Green) Mass Over Time', 
+                                color: '#f1f5f9',
+                                font: { size: 14 }
+                            },
+                            legend: { labels: { color: '#f1f5f9' } },
+                            tooltip: {
+                                callbacks: {
+                                    footer: (items) => {
+                                        const idx = items[0].dataIndex;
+                                        const total = parseFloat(data[idx].bf_lbs) + data[idx].lean_lbs;
+                                        return `Combined: ${total.toFixed(1)} lbs\nTotal Weight: ${data[idx].weight} lbs\nBF%: ${data[idx].bf_percent}%`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { 
+                                stacked: true, 
+                                title: { display: true, text: 'Mass (lbs)', color: '#94a3b8' },
+                                grid: { color: '#334155' }, 
+                                ticks: { color: '#94a3b8' } 
+                            },
+                            x: { 
+                                title: { display: true, text: 'Date', color: '#94a3b8' },
+                                grid: { color: '#334155' }, 
+                                ticks: { color: '#94a3b8' } 
+                            }
+                        }
+                    }
+                });
+            } else if (currentChart === 'weightTrend') {
+                charts[currentChart] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.date.substring(5)),
+                        datasets: [{
+                            label: 'Weight (lbs)',
+                            data: data.map(d => d.weight),
+                            borderColor: '#06b6d4',
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            yAxisID: 'y',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true
+                        }, {
+                            label: 'Body Fat %',
+                            data: data.map(d => d.bf_percent),
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            yAxisID: 'y1',
+                            borderWidth: 3,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            title: { display: true, text: 'Weight & Body Fat Percentage Trends', color: '#f1f5f9', font: { size: 14 } },
+                            legend: { labels: { color: '#f1f5f9' } } 
+                        },
+                        scales: {
+                            y: { 
+                                type: 'linear', 
+                                position: 'left', 
+                                title: { display: true, text: 'Weight (lbs)', color: '#94a3b8' }, 
+                                grid: { color: '#334155' }, 
+                                ticks: { color: '#94a3b8' } 
+                            },
+                            y1: { 
+                                type: 'linear', 
+                                position: 'right', 
+                                title: { display: true, text: 'Body Fat %', color: '#94a3b8' }, 
+                                grid: { display: false }, 
+                                ticks: { color: '#94a3b8' } 
+                            },
+                            x: { 
+                                title: { display: true, text: 'Date', color: '#94a3b8' },
+                                grid: { color: '#334155' }, 
+                                ticks: { color: '#94a3b8' } 
+                            }
+                        }
+                    }
+                });
+            } else if (currentChart === 'rateOfChange') {
+                const dailyFatChange = [];
+                const dailyLeanChange = [];
+                for (let i = 1; i < data.length; i++) {
+                    dailyFatChange.push((parseFloat(data[i].bf_lbs) - parseFloat(data[i-1].bf_lbs)).toFixed(2));
+                    dailyLeanChange.push((data[i].lean_lbs - data[i-1].lean_lbs).toFixed(2));
+                }
+                
+                charts[currentChart] = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.slice(1).map(d => d.date.substring(5)),
+                        datasets: [{
+                            label: 'Daily Fat Change (lbs)',
+                            data: dailyFatChange,
+                            backgroundColor: dailyFatChange.map(v => parseFloat(v) < 0 ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
+                            borderColor: dailyFatChange.map(v => parseFloat(v) < 0 ? '#10b981' : '#ef4444'),
+                            borderWidth: 2,
+                            yAxisID: 'y'
+                        }, {
+                            label: 'Daily Lean Change (lbs)',
+                            data: dailyLeanChange,
+                            backgroundColor: dailyLeanChange.map(v => parseFloat(v) >= 0 ? 'rgba(139, 92, 246, 0.6)' : 'rgba(251, 146, 60, 0.6)'),
+                            borderColor: dailyLeanChange.map(v => parseFloat(v) >= 0 ? '#8b5cf6' : '#fb923c'),
+                            borderWidth: 2,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            title: { 
+                                display: true, 
+                                text: 'Daily Rate of Change: Fat Loss (Green=Good) vs Lean Mass (Purple=Good)', 
+                                color: '#f1f5f9',
+                                font: { size: 14 }
+                            },
+                            legend: { labels: { color: '#f1f5f9' } } 
+                        },
+                        scales: {
+                            y: { 
+                                type: 'linear', 
+                                position: 'left', 
+                                title: { display: true, text: 'Fat Change (lbs)', color: '#94a3b8' }, 
+                                grid: { color: '#334155' }, 
+                                ticks: { color: '#94a3b8' } 
+                            },
+                            y1: { 
+                                type: 'linear', 
+                                position: 'right', 
+                                title: { display: true, text: 'Lean Change (lbs)', color: '#94a3b8' }, 
+                                grid: { display: false }, 
+                                ticks: { color: '#94a3b8' } 
+                            },
+                            x: { 
+                                title: { display: true, text: 'Date', color: '#94a3b8' },
+                                grid: { color: '#334155' }, 
+                                ticks: { color: '#94a3b8', maxRotation: 45, minRotation: 45 } 
+                            }
+                        }
+                    }
+                });
+            } else if (currentChart === 'nutrition') {
+                charts[currentChart] = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.map(d => d.date.substring(5)),
+                        datasets: [{
+                            label: 'Calories',
+                            data: data.map(d => d.calories),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            yAxisID: 'y',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        }, {
+                            label: 'Protein (g)',
+                            data: data.map(d => d.protein),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            yAxisID: 'y1',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            title: { display: true, text: 'Nutrition Tracking: Calories & Protein Intake', color: '#f1f5f9', font: { size: 14 } },
+                            legend: { labels: { color: '#f1f5f9' } } 
+                        },
+                        scales: {
+                            y: { 
+                                type: 'linear', 
+                                position: 'left', 
+                                title: { display: true, text: 'Calories', color: '#94a3b8' }, 
+                                grid: { color: '#334155' }, 
+                                ticks: { color: '#94a3b8' } 
+                            },
+                            y1: { 
+                                type: 'linear', 
+                                position: 'right', 
+                                title: { display: true, text: 'Protein (g)', color: '#94a3b8' }, 
+                                grid: { display: false }, 
+                                ticks: { color: '#94a3b8' } 
+                            },
+                            x: { 
+                                title: { display: true, text: 'Date', color: '#94a3b8' },
+                                grid: { color: '#334155' }, 
+                                ticks: { color: '#94a3b8' } 
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function switchChart(type) {
+            currentChart = type;
+            document.querySelectorAll('.chart-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            renderChart();
+        }
+
+        function updateTable() {
+            const reversedData = [...data].reverse();
+            let html = '';
+            reversedData.forEach((entry, idx) => {
+                const actualIdx = data.length - 1 - idx;
+                html += `
+                    <tr class="${entry.refeed ? 'refeed-row' : ''}" onclick="editEntry(${actualIdx})">
+                        <td>${entry.date}</td>
+                        <td>${entry.weight}</td>
+                        <td>${entry.bf_percent}%</td>
+                        <td>${entry.bf_lbs}</td>
+                        <td>${entry.lean_lbs}</td>
+                        <td>${entry.calories || '—'}</td>
+                        <td>${entry.protein || '—'}</td>
+                        <td>${entry.fat || '—'}</td>
+                        <td>${entry.carbs || '—'}</td>
+                        <td>${entry.steps || '—'}</td>
+                        <td>${entry.rhr || '—'}</td>
+                        <td>${entry.sleep_score || '—'}</td>
+                        <td>${entry.sleep_duration_hrs || '—'}</td>
+                        <td>${entry.refeed ? '🔥' : '—'}</td>
+                        <td><button onclick="deleteEntry(${actualIdx}); event.stopPropagation();" class="danger">Delete</button></td>
+                    </tr>
+                `;
+            });
+            document.getElementById('dataTable').innerHTML = html;
+            document.getElementById('entryCount').textContent = data.length;
+        }
+
+        function showAddEntry() {
+            editingIndex = null;
+            document.getElementById('modalTitle').textContent = 'Add New Entry';
+            document.getElementById('saveBtn').textContent = 'Add Entry';
+            document.getElementById('entryDate').value = new Date().toISOString().split('T')[0];
+            clearForm();
+            document.getElementById('addEntryModal').classList.add('show');
+        }
+
+        function editEntry(idx) {
+            editingIndex = idx;
+            const entry = data[idx];
+            console.log('Editing entry:', entry); // Debug log
+            
+            document.getElementById('modalTitle').textContent = 'Edit Entry - ' + entry.date;
+            document.getElementById('saveBtn').textContent = 'Update Entry';
+            
+            // Required fields
+            document.getElementById('entryDate').value = entry.date;
+            document.getElementById('entryWeight').value = entry.weight;
+            document.getElementById('entryBfPercent').value = entry.bf_percent;
+            document.getElementById('entryLeanLbs').value = entry.lean_lbs;
+            
+            // Optional fields - explicitly handle null/undefined
+            document.getElementById('entryCalories').value = (entry.calories !== null && entry.calories !== undefined) ? entry.calories : '';
+            document.getElementById('entryProtein').value = (entry.protein !== null && entry.protein !== undefined) ? entry.protein : '';
+            document.getElementById('entryFat').value = (entry.fat !== null && entry.fat !== undefined) ? entry.fat : '';
+            document.getElementById('entryCarbs').value = (entry.carbs !== null && entry.carbs !== undefined) ? entry.carbs : '';
+            document.getElementById('entrySteps').value = (entry.steps !== null && entry.steps !== undefined) ? entry.steps : '';
+            document.getElementById('entryRhr').value = (entry.rhr !== null && entry.rhr !== undefined) ? entry.rhr : '';
+            document.getElementById('entrySleepScore').value = (entry.sleep_score !== null && entry.sleep_score !== undefined) ? entry.sleep_score : '';
+            document.getElementById('entrySleepHours').value = (entry.sleep_duration_hrs !== null && entry.sleep_duration_hrs !== undefined) ? entry.sleep_duration_hrs : '';
+            document.getElementById('entryRefeed').checked = entry.refeed || false;
+            document.getElementById('entryNotes').value = entry.notes || '';
+            
+            console.log('Form populated with values'); // Debug log
+            updateAutoCalc();
+            document.getElementById('addEntryModal').classList.add('show');
+        }
+
+        function deleteEntry(idx) {
+            if (confirm(`Delete entry from ${data[idx].date}?`)) {
+                data.splice(idx, 1);
+                localStorage.setItem('bodyTrackingData_User1', JSON.stringify(data));
+                updateAll();
+                showToast('Entry deleted');
+            }
+        }
+
+        function hideModal() {
+            document.getElementById('addEntryModal').classList.remove('show');
+            clearForm();
+            editingIndex = null;
+        }
+
+        function clearForm() {
+            document.querySelectorAll('#addEntryModal input, #addEntryModal textarea').forEach(el => {
+                if (el.type === 'checkbox') el.checked = false;
+                else if (!el.readOnly) el.value = '';
+            });
+        }
+
+        function updateAutoCalc() {
+            const weight = parseFloat(document.getElementById('entryWeight').value);
+            const bfPercent = parseFloat(document.getElementById('entryBfPercent').value);
+            const leanLbs = parseFloat(document.getElementById('entryLeanLbs').value);
+            
+            document.getElementById('entryBfLbsAuto').value = 
+                (weight && bfPercent) ? (weight * bfPercent / 100).toFixed(2) + ' lbs' : '—';
+            document.getElementById('entryLeanPercentAuto').value = 
+                (weight && leanLbs) ? ((leanLbs / weight) * 100).toFixed(1) + '%' : '—';
+        }
+
+        ['entryWeight', 'entryBfPercent', 'entryLeanLbs'].forEach(id => {
+            document.getElementById(id).addEventListener('input', updateAutoCalc);
+        });
+
+        function saveEntry() {
+            const date = document.getElementById('entryDate').value;
+            const weight = document.getElementById('entryWeight').value;
+            const bfPercent = document.getElementById('entryBfPercent').value;
+            const leanLbs = document.getElementById('entryLeanLbs').value;
+            
+            if (!date || !weight || !bfPercent || !leanLbs) {
+                showToast('Please fill all required fields (date, weight, BF%, lean mass)', 'error');
+                return;
+            }
+            
+            // Read ALL form values explicitly
+            const caloriesValue = document.getElementById('entryCalories').value;
+            const proteinValue = document.getElementById('entryProtein').value;
+            const fatValue = document.getElementById('entryFat').value;
+            const carbsValue = document.getElementById('entryCarbs').value;
+            const stepsValue = document.getElementById('entrySteps').value;
+            const rhrValue = document.getElementById('entryRhr').value;
+            const sleepScoreValue = document.getElementById('entrySleepScore').value;
+            const sleepHoursValue = document.getElementById('entrySleepHours').value;
+            
+            console.log('RAW FORM VALUES:');
+            console.log('Calories field:', caloriesValue);
+            console.log('Protein field:', proteinValue);
+            console.log('Fat field:', fatValue);
+            console.log('Carbs field:', carbsValue);
+            console.log('Steps field:', stepsValue);
+            console.log('RHR field:', rhrValue);
+            console.log('Sleep Score field:', sleepScoreValue);
+            console.log('Sleep Hours field:', sleepHoursValue);
+            
+            // Convert values with explicit null handling
+            const toNumber = (val, isInt = false) => {
+                if (val === null || val === undefined || val === '') return null;
+                const str = String(val).trim();
+                if (str === '') return null;
+                const num = isInt ? parseInt(str, 10) : parseFloat(str);
+                return isNaN(num) ? null : num;
+            };
+            
+            const entry = {
+                date: date,
+                weight: parseFloat(weight),
+                bf_percent: parseFloat(bfPercent),
+                lean_lbs: parseFloat(leanLbs),
+                calories: toNumber(caloriesValue),
+                protein: toNumber(proteinValue),
+                fat: toNumber(fatValue),
+                carbs: toNumber(carbsValue),
+                steps: toNumber(stepsValue, true),
+                rhr: toNumber(rhrValue, true),
+                sleep_score: toNumber(sleepScoreValue, true),
+                sleep_duration_hrs: toNumber(sleepHoursValue),
+                refeed: document.getElementById('entryRefeed').checked,
+                notes: document.getElementById('entryNotes').value || ''
+            };
+            
+            console.log('PARSED ENTRY OBJECT:', entry);
+            
+            if (editingIndex !== null) {
+                console.log('UPDATING index:', editingIndex);
+                console.log('OLD DATA:', data[editingIndex]);
+                
+                // Process and save
+                data[editingIndex] = processEntry(entry);
+                
+                console.log('NEW DATA:', data[editingIndex]);
+                
+                // Force save to localStorage
+                const jsonString = JSON.stringify(data);
+                localStorage.setItem('bodyTrackingData_User1', jsonString);
+                console.log('SAVED TO LOCALSTORAGE');
+                
+                // Verify save
+                const verified = JSON.parse(localStorage.getItem('bodyTrackingData_User1'));
+                const savedEntry = verified[editingIndex];
+                console.log('VERIFIED SAVED ENTRY:', savedEntry);
+                
+                // Build confirmation message
+                let msg = `✅ Updated ${savedEntry.date}:\n`;
+                msg += `Weight: ${savedEntry.weight} lbs\n`;
+                if (savedEntry.calories) msg += `Calories: ${savedEntry.calories}\n`;
+                if (savedEntry.protein) msg += `Protein: ${savedEntry.protein}g\n`;
+                if (savedEntry.fat) msg += `Fat: ${savedEntry.fat}g\n`;
+                if (savedEntry.carbs) msg += `Carbs: ${savedEntry.carbs}g\n`;
+                if (savedEntry.steps) msg += `Steps: ${savedEntry.steps}\n`;
+                if (savedEntry.rhr) msg += `RHR: ${savedEntry.rhr} bpm`;
+                
+                console.log('CONFIRMATION MESSAGE:', msg);
+                showToast(msg);
+                
+            } else {
+                console.log('ADDING NEW ENTRY');
+                data.push(processEntry(entry));
+                showToast('✅ Entry added successfully!');
+                
+                // Sort and save
+                data.sort((a, b) => new Date(a.date) - new Date(b.date));
+                localStorage.setItem('bodyTrackingData_User1', JSON.stringify(data));
+            }
+            
+            updateAll();
+            hideModal();
+        }
+
+        function exportCSV() {
+            const headers = ['Date','Weight','BF%','BF lbs','Lean lbs','Lean%','Calories','Protein','Fat','Carbs','Steps','RHR','Sleep Score','Sleep Hrs','Refeed','Notes'];
+            const rows = data.map(e => [e.date,e.weight,e.bf_percent,e.bf_lbs,e.lean_lbs,e.lean_percent,e.calories||'',e.protein||'',e.fat||'',e.carbs||'',e.steps||'',e.rhr||'',e.sleep_score||'',e.sleep_duration_hrs||'',e.refeed?'Yes':'No',e.notes||'']);
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `body-tracking-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            showToast('📥 CSV exported successfully!');
+        }
+
+        function exportBackup() {
+            const backup = JSON.stringify(data, null, 2);
+            const blob = new Blob([backup], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `body-tracking-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showToast('💾 Backup created successfully!');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            // Longer duration for multiline messages
+            const duration = message.includes('\n') ? 8000 : 5000;
+            setTimeout(() => toast.classList.remove('show'), duration);
+        }
+
+        function debugData() {
+            console.clear();
+            console.log('=== BODY TRACKER DEBUG INFO ===');
+            console.log('Total entries:', data.length);
+            console.log('Date range:', data[0].date, 'to', data[data.length - 1].date);
+            console.log('\nAll entries:');
+            data.forEach((entry, idx) => {
+                console.log(`Entry ${idx} (${entry.date}):`, entry);
+            });
+            console.log('\nLocalStorage data:');
+            console.log(localStorage.getItem('bodyTrackingData_User1'));
+            
+            // Find Dec 3 entry
+            const dec3 = data.find(e => e.date === '2025-12-03');
+            if (dec3) {
+                console.log('\n=== DEC 3, 2025 ENTRY ===');
+                console.log('Calories:', dec3.calories);
+                console.log('Protein:', dec3.protein);
+                console.log('Fat:', dec3.fat);
+                console.log('Carbs:', dec3.carbs);
+                console.log('Steps:', dec3.steps);
+                console.log('RHR:', dec3.rhr);
+                console.log('Sleep Score:', dec3.sleep_score);
+                console.log('Sleep Hours:', dec3.sleep_duration_hrs);
+                console.log('Full entry:', dec3);
+            } else {
+                console.log('\n⚠️ Dec 3, 2025 entry not found!');
+            }
+            
+            // Find Nov 24 entry
+            const nov24 = data.find(e => e.date === '2025-11-24');
+            if (nov24) {
+                console.log('\n=== NOV 24, 2025 ENTRY ===');
+                console.log('Calories:', nov24.calories);
+                console.log('Protein:', nov24.protein);
+                console.log('Fat:', nov24.fat);
+                console.log('Carbs:', nov24.carbs);
+                console.log('Steps:', nov24.steps);
+                console.log('Full entry:', nov24);
+            } else {
+                console.log('\n⚠️ Nov 24, 2025 entry not found!');
+            }
+            
+            alert('Debug info logged to browser console (F12 to view)');
+        }
+
+        function reloadData() {
+            console.log('🔄 RELOADING DATA FROM LOCALSTORAGE...');
+            const savedData = localStorage.getItem('bodyTrackingData_User1');
+            if (savedData) {
+                try {
+                    data = JSON.parse(savedData);
+                    data.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    console.log('✅ Loaded', data.length, 'entries');
+                    updateAll();
+                    showToast('🔄 Data reloaded: ' + data.length + ' entries');
+                } catch (e) {
+                    console.error('❌ Error parsing data:', e);
+                    showToast('Error reloading data', 'error');
+                }
+            } else {
+                console.log('⚠️ No saved data found');
+                showToast('No saved data found', 'error');
+            }
+        }
+
+        document.getElementById('addEntryModal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('addEntryModal')) hideModal();
+        });
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
