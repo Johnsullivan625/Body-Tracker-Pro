@@ -501,12 +501,12 @@
 
         <!-- TAB NAVIGATION -->
         <div style="display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; background: var(--bg-secondary); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
-            <button class="tab-button active" onclick="switchMainTab(\'dashboard\', this)">📊 Dashboard</button>
-            <button class="tab-button" onclick="switchMainTab(\'nutrition\', this)">🍽️ Nutrition</button>
-            <button class="tab-button" onclick="switchMainTab(\'measurements\', this)">📏 Body Measurements</button>
-            <button class="tab-button" onclick="switchMainTab(\'training\', this)">🏋️ Training Log</button>
-            <button class="tab-button" onclick="switchMainTab(\'correlations\', this)">🔍 Correlations</button>
-            <button class="tab-button" onclick="switchMainTab(\'data\', this)">📋 All Data</button>
+            <button class="tab-button active" onclick="switchMainTab('dashboard', this)">📊 Dashboard</button>
+            <button class="tab-button" onclick="switchMainTab('nutrition', this)">🍽️ Nutrition</button>
+            <button class="tab-button" onclick="switchMainTab('measurements', this)">📏 Body Measurements</button>
+            <button class="tab-button" onclick="switchMainTab('training', this)">🏋️ Training Log</button>
+            <button class="tab-button" onclick="switchMainTab('correlations', this)">🔍 Correlations</button>
+            <button class="tab-button" onclick="switchMainTab('data', this)">📋 All Data</button>
         </div>
 
         <!-- DASHBOARD TAB -->
@@ -522,10 +522,10 @@
                 <h2>📊 Body Composition Analysis</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 15px;">Choose a view to understand your transformation better</p>
                 <div class="chart-tabs">
-                    <div class="chart-tab active" onclick="switchChart(\'fatVsLean\', this)">Fat vs Lean Breakdown</div>
-                    <div class="chart-tab" onclick="switchChart(\'weightTrend\', this)">Weight & BF% Trend</div>
-                    <div class="chart-tab" onclick="switchChart(\'rateOfChange\', this)">Daily Rate of Change</div>
-                    <div class="chart-tab" onclick="switchChart(\'nutrition\', this)">Nutrition Tracking</div>
+                    <div class="chart-tab active" onclick="switchChart('fatVsLean', this)">Fat vs Lean Breakdown</div>
+                    <div class="chart-tab" onclick="switchChart('weightTrend', this)">Weight & BF% Trend</div>
+                    <div class="chart-tab" onclick="switchChart('rateOfChange', this)">Daily Rate of Change</div>
+                    <div class="chart-tab" onclick="switchChart('nutrition', this)">Nutrition Tracking</div>
                 </div>
                 <div class="chart-wrapper">
                     <canvas id="mainChart"></canvas>
