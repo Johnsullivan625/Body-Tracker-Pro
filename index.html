@@ -618,19 +618,44 @@
             </div>
         </div>
 <!-- Quick Add Section -->
-        <div class="quick-add-section" style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid var(--accent-cyan);">
-            <h3 style="margin-bottom: 15px; color: var(--accent-cyan);">⚡ Quick Add Today's Entry</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 10px;">
-                <input type="number" id="qa-weight" placeholder="Weight" step="0.1" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
-                <input type="number" id="qa-bf" placeholder="BF%" step="0.1" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
-                <input type="number" id="qa-water" placeholder="Water%" step="0.1" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
-                <input type="number" id="qa-calories" placeholder="Calories" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
-                <input type="number" id="qa-protein" placeholder="Protein" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
-                <input type="number" id="qa-steps" placeholder="Steps" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
-                <button onclick="quickAddEntry()" style="padding: 10px 20px; background: var(--accent-success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;">
+        <div class="quick-add-section" style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border);">
+            <h3 style="margin-bottom: 15px;">⚡ Quick Add Today's Entry</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <label style="display: block; font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px;">Weight (lbs)*</label>
+                    <input type="number" id="quick-weight" placeholder="195.0" step="0.1" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px;">BF %*</label>
+                    <input type="number" id="quick-bf" placeholder="16.0" step="0.1" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px;">Lean lbs (Hume)</label>
+                    <input type="number" id="quick-lean" placeholder="152.0" step="0.1" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px;">Water %</label>
+                    <input type="number" id="quick-water" placeholder="61.5" step="0.1" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px;">Calories</label>
+                    <input type="number" id="quick-calories" placeholder="2200" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary);">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 0.85em; color: var(--text-secondary); margin-bottom: 4px;">Protein (g)</label>
+                    <input type="number" id="quick-protein" placeholder="200" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary);">
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button onclick="quickAddEntry()" style="background: var(--accent-success); color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; flex: 1;">
                     ✓ Add Entry
                 </button>
+                <span style="font-size: 0.85em; color: var(--text-secondary);">Press Enter in any field to save</span>
             </div>
+            <p style="margin-top: 10px; font-size: 0.8em; color: var(--text-secondary); font-style: italic;">
+                * Required fields. Lean lbs from Hume scale preferred; if blank, will derive FFM (Weight - Fat).
+            </p>
+        </div>
             <p style="font-size: 0.85em; color: var(--text-secondary);">💡 Press Enter in any field to save instantly</p>
         </div>
 <table>
@@ -954,10 +979,9 @@ const MEASUREMENTS_KEY = 'body_measurements_v1';
 const TRAINING_KEY = 'training_log_v1';  
 const SETTINGS_KEY = 'tracker_settings_v1';
 const CORRELATIONS_KEY = 'correlation_cache_v1';
-        const MEASUREMENTS_KEY = 'bodyMeasurements_User1';
-        const TRAINING_KEY = 'trainingLog_User1';
-        const GOALS = {
-            target_weight: 215,
+        
+        
+        : 215,
             target_bf_percent: 10.0,
             target_bf_lbs: 21.5,
             target_calories: 2000,
@@ -1513,78 +1537,52 @@ const CORRELATIONS_KEY = 'correlation_cache_v1';
         });
         
         function saveEntry() {
-            const date = document.getElementById('entryDate').value;
-            const weight = parseFloat(document.getElementById('entryWeight').value);
-            const bf_percent = parseFloat(document.getElementById('entryBfPercent').value);
-            const lean_lbs = parseFloat(document.getElementById('entryLeanLbs').value);
-            
-            if (!date || !isFinite(weight) || !isFinite(bf_percent) || !isFinite(lean_lbs)) {
-                showToast('Please fill in required fields: Date, Weight, BF%, Lean Mass', true);
-                return;
-            }
-            
-            // Validate integrity
-            const integrity = computeIntegrityStatus(weight, bf_percent, lean_lbs);
-            
-            // Show warning for yellow or red status
-            if (integrity.status === 'red') {
-                const confirm = window.confirm(
-                    `⚠️ DATA INTEGRITY WARNING\n\n` +
-                    `${integrity.message}\n\n` +
-                    `${integrity.errors.join('\n')}\n\n` +
-                    `This may indicate a data entry error.\n` +
-                    `Please double-check your values from the Hume app.\n\n` +
-                    `Save anyway?`
-                );
-                if (!confirm) return;
-            } else if (integrity.status === 'yellow') {
-                const confirm = window.confirm(
-                    `⚠️ Slight Variance Detected\n\n` +
-                    `${integrity.message}\n\n` +
-                    `Residual: ${integrity.derived.residual.toFixed(2)} lbs\n` +
-                    `Baseline: ${integrity.baselineMedian.toFixed(2)} lbs\n` +
-                    `Delta: ${integrity.residualDelta.toFixed(2)} lbs\n\n` +
-                    `This is usually normal day-to-day variance.\n` +
-                    `Continue saving?`
-                );
-                if (!confirm) return;
-            }
-            
-            const entry = {
-                date,
-                weight,
-                bf_percent,
-                lean_lbs,
-                bf_lbs: integrity.derived.bf_lbs,
-                lean_percent: integrity.derived.lean_percent,
-                residual: integrity.derived.residual,
-                calories: parseFloat(document.getElementById('entryCalories').value) || null,
-                protein: parseFloat(document.getElementById('entryProtein').value) || null,
-                fat: parseFloat(document.getElementById('entryFat').value) || null,
-                carbs: parseFloat(document.getElementById('entryCarbs').value) || null,
-                steps: parseFloat(document.getElementById('entrySteps').value) || null,
-                rhr: parseFloat(document.getElementById('entryRhr').value) || null,
-                sleep_score: parseFloat(document.getElementById('entrySleepScore').value) || null,
-                sleep_duration_hrs: parseFloat(document.getElementById('entrySleepHours').value) || null,
-                refeed: document.getElementById('entryRefeed').checked,
-                notes: document.getElementById('entryNotes').value,
-                integrity_status: integrity.status,
-                integrity_message: integrity.message
-            };
-            
-            // Remove existing entry with same date
-            bodyData = bodyData.filter(e => e.date !== date);
-            bodyData.push(entry);
-            bodyData.sort((a, b) => a.date.localeCompare(b.date));
-            
-            saveData();
-            updateStats();
-            updateTable();
-            updateChart();
-            hideModal();
-            
-            showToast(`Entry saved for ${date}\nIntegrity: ${integrity.message}`);
-        }
+    const date = document.getElementById('date').value;
+    const weight = parseFloat(document.getElementById('weight').value);
+    const bf_percent = parseFloat(document.getElementById('bf_percent').value);
+    const lean_lbs = parseFloat(document.getElementById('lean_lbs').value);
+    const water_percent = parseFloat(document.getElementById('water_percent').value);
+    
+    if (!date || !weight || !bf_percent) {
+        alert('Date, Weight, and BF% are required!');
+        return;
+    }
+    
+    const entry = {
+        date: date,
+        weight: weight,
+        bf_percent: bf_percent,
+        bf_lbs: weight * (bf_percent / 100),
+        lean_lbs: lean_lbs || null,
+        water_percent: water_percent || null,
+        calories: parseInt(document.getElementById('calories').value) || null,
+        protein: parseInt(document.getElementById('protein').value) || null,
+        fat: parseInt(document.getElementById('fat').value) || null,
+        carbs: parseInt(document.getElementById('carbs').value) || null,
+        steps: parseInt(document.getElementById('steps').value) || null,
+        rhr: parseInt(document.getElementById('rhr').value) || null,
+        sleep_score: parseInt(document.getElementById('sleep_score').value) || null,
+        sleep_hrs: parseFloat(document.getElementById('sleep_hrs').value) || null,
+        refeed: document.getElementById('refeed').checked,
+        notes: document.getElementById('notes').value || ''
+    };
+    
+    // Normalize the entry
+    normalizeEntry(entry);
+    
+    // Check if entry exists for this date
+    const existingIndex = bodyData.findIndex(e => e.date === date);
+    if (existingIndex >= 0) {
+        bodyData[existingIndex] = entry;
+    } else {
+        bodyData.push(entry);
+    }
+    
+    saveData();
+    renderDataTable();
+    document.getElementById('entryModal').style.display = 'none';
+    clearForm();
+}
         
         function deleteEntry(date) {
             if (!confirm(`Delete entry for ${date}?`)) return;
@@ -1599,7 +1597,7 @@ const CORRELATIONS_KEY = 'correlation_cache_v1';
 
         // ===== CHART FUNCTIONS =====
         
-        function switchChart(chartType) {
+        function switchChart(chartType, clickedElement) {
             currentChartType = chartType;
             
             // Update active tab
@@ -3061,7 +3059,7 @@ const CORRELATIONS_KEY = 'correlation_cache_v1';
                     <p style="color: var(--text-secondary); margin-bottom: 15px;">
                         Start logging workouts to see training correlations with body composition changes.
                     </p>
-                    <button onclick="switchMainTab('training'); event.target.blur();" class="primary">Go to Training Log</button>
+                    <button onclick="switchMainTab('training'); clickedElement.blur();" class="primary">Go to Training Log</button>
                 </div>
                 `}
                 
@@ -4223,7 +4221,7 @@ function getFilteredData() {
                 bf_percent: entry.bf_percent,
                 bf_lbs: entry.bf_lbs,
                 lean_lbs: entry.lean_lbs,
-                water_percent: waterEstimates[entry.date] || (60 + Math.random() * 2), // 60-62% default
+                water_percent: waterEstimates[entry.date] || null * 2), // 60-62% default
                 residual: entry.residual,
                 calories: entry.calories,
                 protein: entry.protein,
@@ -4251,62 +4249,129 @@ window.addEventListener('load', preloadData);
 
 
 
+
+// ============================================================================
+// NORMALIZE ENTRY - Single canonical entry processing
+// ============================================================================
+function normalizeEntry(entry) {
+    // Ensure all numeric fields are proper numbers or null
+    const numericFields = ['weight', 'bf_percent', 'bf_lbs', 'lean_lbs', 'lean_percent', 
+                          'water_percent', 'residual', 'calories', 'protein', 'fat', 
+                          'carbs', 'steps', 'rhr', 'sleep_score', 'sleep_hrs'];
+    
+    numericFields.forEach(field => {
+        if (entry[field] === '' || entry[field] === undefined || isNaN(entry[field])) {
+            entry[field] = null;
+        } else if (entry[field] !== null) {
+            entry[field] = Number(entry[field]);
+        }
+    });
+    
+    // Compute derived fields if we have base data
+    if (entry.weight && entry.bf_percent) {
+        entry.bf_lbs = entry.weight * (entry.bf_percent / 100);
+        
+        // If we have Hume lean, calculate residual
+        if (entry.lean_lbs) {
+            entry.residual = entry.weight - entry.bf_lbs - entry.lean_lbs;
+            entry.lean_percent = (entry.lean_lbs / entry.weight) * 100;
+        }
+        
+        // Always calculate derived FFM for comparison
+        entry.derived_ffm = entry.weight - entry.bf_lbs;
+    }
+    
+    // Compute integrity status
+    entry.integrity_status = computeIntegrityStatus(entry);
+    
+    // Ensure refeed is boolean
+    entry.refeed = !!entry.refeed;
+    
+    return entry;
+}
+
+function computeIntegrityStatus(entry) {
+    // Basic integrity check
+    if (!entry.weight || !entry.bf_percent) return 'Incomplete';
+    
+    // Check if BF% is reasonable (4-50%)
+    if (entry.bf_percent < 4 || entry.bf_percent > 50) return 'Questionable';
+    
+    // Check if residual is reasonable (should be small)
+    if (entry.residual && Math.abs(entry.residual) > 5) return 'Questionable';
+    
+    // Check nutrition data completeness
+    const hasNutrition = entry.calories && entry.protein;
+    const hasActivity = entry.steps && entry.sleep_hrs;
+    
+    if (hasNutrition && hasActivity) return 'Complete';
+    if (hasNutrition || hasActivity) return 'Partial';
+    
+    return 'Good';
+}
+
 function quickAddEntry() {
     const today = new Date().toISOString().split('T')[0];
+    const weight = parseFloat(document.getElementById('quick-weight').value);
+    const bf = parseFloat(document.getElementById('quick-bf').value);
+    const lean = parseFloat(document.getElementById('quick-lean').value); // Hume Lean
+    const water = parseFloat(document.getElementById('quick-water').value);
+    const calories = parseInt(document.getElementById('quick-calories').value);
+    const protein = parseInt(document.getElementById('quick-protein').value);
     
-    // Get values from quick-add inputs
-    const weight = parseFloat(document.getElementById('qa-weight').value) || null;
-    const bf_percent = parseFloat(document.getElementById('qa-bf').value) || null;
-    const water_percent = parseFloat(document.getElementById('qa-water').value) || null;
-    const calories = parseInt(document.getElementById('qa-calories').value) || null;
-    const protein = parseInt(document.getElementById('qa-protein').value) || null;
-    const steps = parseInt(document.getElementById('qa-steps').value) || null;
+    if (!weight || !bf) {
+        alert('⚠️ Weight and BF% are required');
+        return;
+    }
     
-    // Create entry
+    // Calculate BF lbs from weight and BF%
+    const bf_lbs = weight * (bf / 100);
+    
+    // For Lean lbs: use Hume value if provided, otherwise derive FFM
+    // Label this clearly as "Derived FFM" if not from Hume
+    const lean_lbs = lean || (weight - bf_lbs); // Prefer Hume, fallback to FFM
+    const isHumeLean = !!lean;
+    
     const entry = {
         date: today,
         weight: weight,
-        bf_percent: bf_percent,
-        bf_lbs: weight && bf_percent ? weight * (bf_percent / 100) : null,
-        lean_lbs: weight && bf_percent ? weight * (1 - bf_percent / 100) : null,
-        water_percent: water_percent,
-        residual: null,
-        calories: calories,
-        protein: protein,
+        bf_percent: bf,
+        bf_lbs: bf_lbs,
+        lean_lbs: lean_lbs,
+        lean_percent: (lean_lbs / weight * 100),
+        water_percent: water || null, // Never generate random values
+        residual: weight - bf_lbs - lean_lbs,
+        calories: calories || null,
+        protein: protein || null,
         fat: null,
         carbs: null,
-        steps: steps,
+        steps: null,
         rhr: null,
         sleep_score: null,
         sleep_hrs: null,
         refeed: false,
-        integrity_status: null,
-        notes: ''
+        integrity_status: 'Good',
+        notes: isHumeLean ? '' : 'Derived FFM (not Hume Lean)',
+        derived_ffm: weight - bf_lbs // Always calculate pure FFM for comparison
     };
     
-    // Check if entry for today exists
-    const existingIndex = bodyData.findIndex(e => e.date === today);
-    if (existingIndex >= 0) {
-        // Update existing entry
-        bodyData[existingIndex] = { ...bodyData[existingIndex], ...entry };
-    } else {
-        // Add new entry
-        bodyData.push(entry);
-    }
+    // Remove existing entry for today if present
+    bodyData = bodyData.filter(e => e.date !== today);
+    bodyData.push(entry);
     
-    // Calculate integrity
-    calculateIntegrityForAll();
+    // Normalize the entry
+    normalizeEntry(entry);
+    
     saveData();
     renderDataTable();
-    renderCharts();
     
     // Clear inputs
-    ['qa-weight', 'qa-bf', 'qa-water', 'qa-calories', 'qa-protein', 'qa-steps'].forEach(id => {
-        document.getElementById(id).value = '';
+    ['quick-weight', 'quick-bf', 'quick-lean', 'quick-water', 'quick-calories', 'quick-protein'].forEach(id => {
+        const elem = document.getElementById(id);
+        if (elem) elem.value = '';
     });
     
-    // Show success message
-    alert('✅ Entry added successfully!');
+    console.log('✅ Quick-added entry for', today);
 }
 
 
@@ -4316,18 +4381,7 @@ function quickAddEntry() {
 
 
 // Quick Add Entry Function
-function quickAddEntry() {
-    const today = new Date().toISOString().split('T')[0];
-    const weight = parseFloat(document.getElementById('quick-weight').value);
-    const bf = parseFloat(document.getElementById('quick-bf').value);
-    const water = parseFloat(document.getElementById('quick-water').value);
-    const calories = parseInt(document.getElementById('quick-calories').value);
-    const protein = parseInt(document.getElementById('quick-protein').value);
-    
-    if (!weight || !bf) {
-        alert('⚠️ Weight and BF% are required');
-        return;
-    }
+
     
     const entry = {
         date: today,
@@ -4560,6 +4614,41 @@ function addRollingAverages() {
 
 
 // Consistency reminder badges
+
+function getCompletenessStatus(entry) {
+    const metrics = {
+        weight: !!entry.weight,
+        bf: !!entry.bf_percent,
+        lean: !!entry.lean_lbs,
+        water: !!entry.water_percent,
+        calories: !!entry.calories,
+        protein: !!entry.protein,
+        steps: !!entry.steps,
+        sleep: !!entry.sleep_hrs
+    };
+    
+    const total = Object.keys(metrics).length;
+    const complete = Object.values(metrics).filter(v => v).length;
+    const percent = Math.round((complete / total) * 100);
+    
+    let color, label;
+    if (percent === 100) {
+        color = 'var(--accent-success)';
+        label = 'Complete';
+    } else if (percent >= 75) {
+        color = 'var(--accent-cyan)';
+        label = 'Good';
+    } else if (percent >= 50) {
+        color = 'var(--accent-warning)';
+        label = 'Partial';
+    } else {
+        color = 'var(--accent-danger)';
+        label = 'Incomplete';
+    }
+    
+    return `<span style="color: ${color}; font-weight: 600;">${label} (${percent}%)</span>`;
+}
+
 function getConsistencyBadges(entry) {
     const badges = [];
     
@@ -4691,7 +4780,8 @@ function renderEnhancedDataTable() {
     let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr>';
     html += '<th>Date</th><th>Weight<br><small>(7d avg)</small></th><th>BF%<br><small>(7d avg)</small></th>';
     html += '<th>Lean lbs<br><small>(7d avg)</small></th><th>Water %</th><th>Calories</th><th>Protein</th>';
-    html += '<th>Integrity</th><th>Badges</th></tr></thead><tbody>';
+    html += '<th>Completeness</th>
+                    <th>Integrity</th><th>Badges</th></tr></thead><tbody>';
     
     filteredData.forEach(entry => {
         const avg = avgMap[entry.date] || {};
@@ -4703,6 +4793,7 @@ function renderEnhancedDataTable() {
         html += `<td>${formatNumber(entry.water_percent, 1)}%</td>`;
         html += `<td>${entry.calories || '-'}</td>`;
         html += `<td>${entry.protein || '-'}</td>`;
+        html += `<td>${getCompletenessStatus(entry)}</td>`;
         html += `<td>${entry.integrity_status || 'Unknown'}</td>`;
         html += `<td>${getConsistencyBadges(entry)}</td>`;
         html += '</tr>';
