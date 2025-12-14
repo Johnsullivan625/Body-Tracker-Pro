@@ -421,9 +421,63 @@
             gap: 5px;
         }
         
+        .tab-button {
+            padding: 12px 24px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .tab-button:hover {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+        
+        .tab-button.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            font-weight: 600;
+        }
+        
+        .main-tab-content {
+            display: none;
+        }
+        
+        .main-tab-content.active {
+            display: block;
+        }
+        
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
+        
+        .nutrition-card {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .nutrition-label {
+            font-size: 0.9em;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+        
+        .nutrition-value {
+            font-size: 1.8em;
+            font-weight: 700;
+            font-family: 'Space Mono', monospace;
+            color: var(--accent-cyan);
+        }
+        
         @media (max-width: 768px) {
             .header h1 { font-size: 1.8em; }
-            .grid-4 { grid-template-columns: 1fr; }
+            .grid-4, .grid-2 { grid-template-columns: 1fr; }
             .form-grid { grid-template-columns: 1fr; }
             table { font-size: 0.7em; }
             th, td { padding: 6px 3px; }
@@ -445,54 +499,122 @@
             </div>
         </div>
 
-        <div class="grid grid-4" id="statsGrid"></div>
-
-        <div class="card">
-            <h2>🎯 Goal Projection</h2>
-            <div id="goalContent"></div>
+        <!-- TAB NAVIGATION -->
+        <div style="display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; background: var(--bg-secondary); padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+            <button class="tab-button active" onclick="switchMainTab('dashboard')">📊 Dashboard</button>
+            <button class="tab-button" onclick="switchMainTab('nutrition')">🍽️ Nutrition</button>
+            <button class="tab-button" onclick="switchMainTab('measurements')">📏 Body Measurements</button>
+            <button class="tab-button" onclick="switchMainTab('training')">🏋️ Training Log</button>
+            <button class="tab-button" onclick="switchMainTab('correlations')">🔍 Correlations</button>
+            <button class="tab-button" onclick="switchMainTab('data')">📋 All Data</button>
         </div>
 
-        <div class="card">
-            <h2>📊 Body Composition Analysis</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 15px;">Choose a view to understand your transformation better</p>
-            <div class="chart-tabs">
-                <div class="chart-tab active" onclick="switchChart('fatVsLean')">Fat vs Lean Breakdown</div>
-                <div class="chart-tab" onclick="switchChart('weightTrend')">Weight & BF% Trend</div>
-                <div class="chart-tab" onclick="switchChart('rateOfChange')">Daily Rate of Change</div>
-                <div class="chart-tab" onclick="switchChart('nutrition')">Nutrition Tracking</div>
+        <!-- DASHBOARD TAB -->
+        <div id="dashboard-tab" class="main-tab-content active">
+            <div class="grid grid-4" id="statsGrid"></div>
+
+            <div class="card">
+                <h2>🎯 Goal Projection</h2>
+                <div id="goalContent"></div>
             </div>
-            <div class="chart-wrapper">
-                <canvas id="mainChart"></canvas>
+
+            <div class="card">
+                <h2>📊 Body Composition Analysis</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">Choose a view to understand your transformation better</p>
+                <div class="chart-tabs">
+                    <div class="chart-tab active" onclick="switchChart('fatVsLean')">Fat vs Lean Breakdown</div>
+                    <div class="chart-tab" onclick="switchChart('weightTrend')">Weight & BF% Trend</div>
+                    <div class="chart-tab" onclick="switchChart('rateOfChange')">Daily Rate of Change</div>
+                    <div class="chart-tab" onclick="switchChart('nutrition')">Nutrition Tracking</div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="mainChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <div class="card">
-            <h2>📋 Complete Data Log (<span id="entryCount">0</span> entries)</h2>
-            <p style="color: var(--text-secondary); margin-bottom: 15px;">Click any row to edit • Red rows = refeed days • Badges show data integrity</p>
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>✓</th>
-                            <th>Weight</th>
-                            <th>BF%</th>
-                            <th>BF lbs</th>
-                            <th>Lean</th>
-                            <th>Cal</th>
-                            <th>Pro</th>
-                            <th>Fat</th>
-                            <th>Carbs</th>
-                            <th>Steps</th>
-                            <th>RHR</th>
-                            <th>Sleep</th>
-                            <th>Sleep Hrs</th>
-                            <th>Refeed</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dataTable"></tbody>
-                </table>
+        <!-- NUTRITION TAB -->
+        <div id="nutrition-tab" class="main-tab-content">
+            <div class="card">
+                <h2>🍽️ Nutrition Goals & Analysis</h2>
+                <div id="nutritionGoals"></div>
+            </div>
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3>📊 Total Averages (All Time)</h3>
+                    <div id="totalAverages"></div>
+                </div>
+                <div class="card">
+                    <h3>📈 Rolling 7-Day Averages</h3>
+                    <div id="rollingAverages"></div>
+                </div>
+            </div>
+            <div class="card">
+                <h2>💡 Calorie Recommendations</h2>
+                <div id="recommendations"></div>
+            </div>
+            <div class="card">
+                <h2>🎯 What-If Calculator</h2>
+                <div id="whatIfCalc"></div>
+            </div>
+        </div>
+
+        <!-- MEASUREMENTS TAB -->
+        <div id="measurements-tab" class="main-tab-content">
+            <div class="card">
+                <h2>📏 Body Measurements</h2>
+                <button onclick="showAddMeasurement()" class="primary" style="margin-bottom: 20px;">+ Add Measurement</button>
+                <div id="measurementsContent"></div>
+            </div>
+        </div>
+
+        <!-- TRAINING TAB -->
+        <div id="training-tab" class="main-tab-content">
+            <div class="card">
+                <h2>🏋️ Training Log</h2>
+                <button onclick="showAddWorkout()" class="primary" style="margin-bottom: 20px;">+ Add Workout</button>
+                <div id="trainingContent"></div>
+            </div>
+        </div>
+
+        <!-- CORRELATIONS TAB -->
+        <div id="correlations-tab" class="main-tab-content">
+            <div class="card">
+                <h2>🔍 Correlations & Insights</h2>
+                <div id="correlationsContent"></div>
+            </div>
+        </div>
+
+        <!-- DATA TAB -->
+        <div id="data-tab" class="main-tab-content">
+            <div class="card">
+                <h2>📋 Complete Data Log (<span id="entryCount">0</span> entries)</h2>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">Click any row to edit • Red rows = refeed days • Badges show data integrity</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>✓</th>
+                                <th>Weight</th>
+                                <th>BF%</th>
+                                <th>BF lbs</th>
+                                <th>Lean</th>
+                                <th>Cal</th>
+                                <th>Pro</th>
+                                <th>Fat</th>
+                                <th>Carbs</th>
+                                <th>Steps</th>
+                                <th>RHR</th>
+                                <th>Sleep</th>
+                                <th>Sleep Hrs</th>
+                                <th>Refeed</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTable"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -606,6 +728,12 @@
             </div>
         </div>
     </div>
+
+    <!-- MEASUREMENTS MODAL -->
+    <div class="modal-overlay" id="measurementsModal"></div>
+
+    <!-- TRAINING MODAL -->
+    <div class="modal-overlay" id="trainingModal"></div>
 
     <div class="toast" id="toast"></div>
 
@@ -1599,6 +1727,1045 @@
             showToast('Backup created successfully!');
         }
         
+        
+        // ===== TAB NAVIGATION =====
+        
+        function switchMainTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.main-tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Set button active
+            event.target.classList.add('active');
+            
+            // Update content for specific tabs
+            if (tabName === 'nutrition') updateNutritionTab();
+            if (tabName === 'measurements') updateMeasurementsTab();
+            if (tabName === 'training') updateTrainingTab();
+            if (tabName === 'correlations') updateCorrelationsTab();
+        }
+        
+        // ===== NUTRITION TAB FUNCTIONS =====
+        
+        function updateNutritionTab() {
+            updateNutritionGoals();
+            updateTotalAverages();
+            updateRollingAverages();
+            updateRecommendations();
+            updateWhatIfCalculator();
+        }
+        
+        function updateNutritionGoals() {
+            const html = `
+                <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px;">
+                    <h3 style="color: var(--accent-purple); margin-bottom: 15px;">Your Nutrition Targets</h3>
+                    <div class="grid grid-4">
+                        <div>
+                            <div class="nutrition-label">Target Calories</div>
+                            <div class="nutrition-value">${GOALS.target_calories}</div>
+                        </div>
+                        <div>
+                            <div class="nutrition-label">Target Protein (g)</div>
+                            <div class="nutrition-value">${GOALS.target_protein}</div>
+                        </div>
+                        <div>
+                            <div class="nutrition-label">Target Fat (g)</div>
+                            <div class="nutrition-value">${GOALS.target_fat}</div>
+                        </div>
+                        <div>
+                            <div class="nutrition-label">Target Carbs (g)</div>
+                            <div class="nutrition-value">${GOALS.target_carbs}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('nutritionGoals').innerHTML = html;
+        }
+        
+        function updateTotalAverages() {
+            const withNutrition = bodyData.filter(d => d.calories && d.protein);
+            
+            if (withNutrition.length === 0) {
+                document.getElementById('totalAverages').innerHTML = '<p style="color: var(--text-secondary);">No nutrition data yet</p>';
+                return;
+            }
+            
+            const avgCals = withNutrition.reduce((sum, d) => sum + (d.calories || 0), 0) / withNutrition.length;
+            const avgProtein = withNutrition.reduce((sum, d) => sum + (d.protein || 0), 0) / withNutrition.length;
+            const avgFat = withNutrition.reduce((sum, d) => sum + (d.fat || 0), 0) / withNutrition.length;
+            const avgCarbs = withNutrition.reduce((sum, d) => sum + (d.carbs || 0), 0) / withNutrition.length;
+            
+            const latest = bodyData[bodyData.length - 1];
+            const avgProteinPerLb = latest.lean_lbs ? avgProtein / latest.lean_lbs : 0;
+            
+            const html = `
+                <div class="nutrition-card">
+                    <div class="nutrition-label">Average Calories</div>
+                    <div class="nutrition-value">${Math.round(avgCals)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">
+                        Based on ${withNutrition.length} days
+                    </div>
+                </div>
+                <div class="nutrition-card">
+                    <div class="nutrition-label">Average Protein</div>
+                    <div class="nutrition-value">${Math.round(avgProtein)}g</div>
+                    <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">
+                        ${avgProteinPerLb.toFixed(2)}g per lb lean mass
+                    </div>
+                </div>
+                <div class="nutrition-card">
+                    <div class="nutrition-label">Average Fat</div>
+                    <div class="nutrition-value">${Math.round(avgFat)}g</div>
+                </div>
+                <div class="nutrition-card">
+                    <div class="nutrition-label">Average Carbs</div>
+                    <div class="nutrition-value">${Math.round(avgCarbs)}g</div>
+                </div>
+            `;
+            
+            document.getElementById('totalAverages').innerHTML = html;
+        }
+        
+        function updateRollingAverages() {
+            const sorted = bodyData.slice().sort((a, b) => a.date.localeCompare(b.date));
+            const recent7 = sorted.slice(-7).filter(d => d.calories && d.protein);
+            
+            if (recent7.length === 0) {
+                document.getElementById('rollingAverages').innerHTML = '<p style="color: var(--text-secondary);">Need at least 7 days of nutrition data</p>';
+                return;
+            }
+            
+            const avgCals = recent7.reduce((sum, d) => sum + (d.calories || 0), 0) / recent7.length;
+            const avgProtein = recent7.reduce((sum, d) => sum + (d.protein || 0), 0) / recent7.length;
+            const avgFat = recent7.reduce((sum, d) => sum + (d.fat || 0), 0) / recent7.length;
+            const avgCarbs = recent7.reduce((sum, d) => sum + (d.carbs || 0), 0) / recent7.length;
+            
+            const html = `
+                <div class="nutrition-card">
+                    <div class="nutrition-label">7-Day Avg Calories</div>
+                    <div class="nutrition-value">${Math.round(avgCals)}</div>
+                    <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">
+                        Last ${recent7.length} days
+                    </div>
+                </div>
+                <div class="nutrition-card">
+                    <div class="nutrition-label">7-Day Avg Protein</div>
+                    <div class="nutrition-value">${Math.round(avgProtein)}g</div>
+                </div>
+                <div class="nutrition-card">
+                    <div class="nutrition-label">7-Day Avg Fat</div>
+                    <div class="nutrition-value">${Math.round(avgFat)}g</div>
+                </div>
+                <div class="nutrition-card">
+                    <div class="nutrition-label">7-Day Avg Carbs</div>
+                    <div class="nutrition-value">${Math.round(avgCarbs)}g</div>
+                </div>
+            `;
+            
+            document.getElementById('rollingAverages').innerHTML = html;
+        }
+        
+        function updateRecommendations() {
+            const sorted = bodyData.slice().sort((a, b) => a.date.localeCompare(b.date));
+            const latest = sorted[sorted.length - 1];
+            
+            if (!latest) {
+                document.getElementById('recommendations').innerHTML = '<p style="color: var(--text-secondary);">No data available</p>';
+                return;
+            }
+            
+            // Calculate TDEE estimate based on recent fat loss
+            const recent14 = sorted.slice(-14);
+            if (recent14.length < 2) {
+                document.getElementById('recommendations').innerHTML = '<p style="color: var(--text-secondary);">Need at least 14 days of data for recommendations</p>';
+                return;
+            }
+            
+            const first14 = recent14[0];
+            const last14 = recent14[recent14.length - 1];
+            const days = 14;
+            
+            const fatLost = (first14.weight * first14.bf_percent / 100) - (last14.weight * last14.bf_percent / 100);
+            const fatLostPerDay = fatLost / days;
+            const fatLostPerWeek = fatLostPerDay * 7;
+            
+            // 1 lb fat = 3500 calories
+            const calorieDeficit = fatLostPerDay * 3500;
+            
+            const avgCals = recent14.filter(d => d.calories).reduce((sum, d) => sum + d.calories, 0) / recent14.filter(d => d.calories).length;
+            const estimatedTDEE = avgCals + calorieDeficit;
+            
+            // Max fat burn = 1% body weight per week
+            const maxFatBurnPerWeek = latest.weight * 0.01;
+            const maxFatBurnCals = estimatedTDEE - (maxFatBurnPerWeek * 3500 / 7);
+            
+            // Muscle retention = 0.5% body weight per week
+            const muscleRetentionFatLoss = latest.weight * 0.005;
+            const muscleRetentionCals = estimatedTDEE - (muscleRetentionFatLoss * 3500 / 7);
+            
+            const proteinRec = latest.lean_lbs ? latest.lean_lbs * 1.0 : 180;
+            
+            const html = `
+                <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                    <h3 style="color: var(--accent-purple); margin-bottom: 10px;">Estimated TDEE</h3>
+                    <div class="nutrition-value" style="color: var(--accent-success);">${Math.round(estimatedTDEE)} cals/day</div>
+                    <p style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">
+                        Based on ${fatLostPerWeek.toFixed(2)} lbs/week fat loss
+                    </p>
+                </div>
+                
+                <div class="grid grid-2">
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px;">
+                        <h3 style="color: var(--accent-purple); margin-bottom: 10px;">🔥 Max Fat Burn Rate</h3>
+                        <div class="nutrition-value">${Math.round(maxFatBurnCals)}</div>
+                        <p style="font-size: 0.85em; color: var(--text-secondary); margin-top: 10px;">
+                            Target: ~${maxFatBurnPerWeek.toFixed(2)} lbs/week loss (1% body weight)<br>
+                            Deficit: ${Math.round(estimatedTDEE - maxFatBurnCals)} cals/day
+                        </p>
+                    </div>
+                    
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px;">
+                        <h3 style="color: var(--accent-purple); margin-bottom: 10px;">💪 Muscle Retention</h3>
+                        <div class="nutrition-value">${Math.round(muscleRetentionCals)}</div>
+                        <p style="font-size: 0.85em; color: var(--text-secondary); margin-top: 10px;">
+                            Target: ~${muscleRetentionFatLoss.toFixed(2)} lbs/week loss (0.5% body weight)<br>
+                            Deficit: ${Math.round(estimatedTDEE - muscleRetentionCals)} cals/day
+                        </p>
+                    </div>
+                </div>
+                
+                <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-top: 15px;">
+                    <h3 style="color: var(--accent-purple); margin-bottom: 10px;">🥩 Protein Recommendation</h3>
+                    <div class="nutrition-value">${Math.round(proteinRec)}g/day</div>
+                    <p style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">
+                        Based on 1.0g per lb lean mass (${latest.lean_lbs?.toFixed(1)} lbs)
+                    </p>
+                </div>
+            `;
+            
+            document.getElementById('recommendations').innerHTML = html;
+        }
+        
+        function updateWhatIfCalculator() {
+            const sorted = bodyData.slice().sort((a, b) => a.date.localeCompare(b.date));
+            const latest = sorted[sorted.length - 1];
+            
+            if (!latest) {
+                document.getElementById('whatIfCalc').innerHTML = '<p style="color: var(--text-secondary);">No data available</p>';
+                return;
+            }
+            
+            const currentFatLbs = latest.weight * latest.bf_percent / 100;
+            const targetFatLbs = GOALS.target_bf_lbs;
+            const fatToLose = currentFatLbs - targetFatLbs;
+            
+            // Calculate current rate
+            const recent14 = sorted.slice(-14);
+            let avgFatLossPerWeek = 0;
+            if (recent14.length >= 2) {
+                const first = recent14[0];
+                const last = recent14[recent14.length - 1];
+                const fatLost = (first.weight * first.bf_percent / 100) - (last.weight * last.bf_percent / 100);
+                avgFatLossPerWeek = (fatLost / 14) * 7;
+            }
+            
+            const weeksToGoal = avgFatLossPerWeek > 0 ? fatToLose / avgFatLossPerWeek : 0;
+            const daysToGoal = weeksToGoal * 7;
+            
+            const goalDate = new Date(latest.date);
+            goalDate.setDate(goalDate.getDate() + daysToGoal);
+            
+            // Different scenarios
+            const scenarios = [
+                { rate: 0.5, name: 'Conservative (0.5 lb/week)' },
+                { rate: 1.0, name: 'Moderate (1.0 lb/week)' },
+                { rate: 1.5, name: 'Aggressive (1.5 lb/week)' },
+                { rate: 2.0, name: 'Very Aggressive (2.0 lb/week)' }
+            ];
+            
+            let scenariosHtml = '';
+            scenarios.forEach(scenario => {
+                const weeks = fatToLose / scenario.rate;
+                const date = new Date(latest.date);
+                date.setDate(date.getDate() + (weeks * 7));
+                
+                scenariosHtml += `
+                    <div style="background: var(--bg-tertiary); padding: 15px; border-radius: 8px;">
+                        <div style="font-weight: 600; margin-bottom: 5px;">${scenario.name}</div>
+                        <div style="font-size: 1.3em; font-family: 'Space Mono', monospace; color: var(--accent-cyan);">
+                            ${date.toLocaleDateString()}
+                        </div>
+                        <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 5px;">
+                            ${Math.round(weeks)} weeks (${Math.round(weeks * 7)} days)
+                        </div>
+                    </div>
+                `;
+            });
+            
+            const html = `
+                <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                    <h3 style="color: var(--accent-purple); margin-bottom: 10px;">Current Progress</h3>
+                    <div class="grid grid-4">
+                        <div>
+                            <div class="nutrition-label">Current Fat Mass</div>
+                            <div class="nutrition-value" style="font-size: 1.3em;">${currentFatLbs.toFixed(1)} lbs</div>
+                        </div>
+                        <div>
+                            <div class="nutrition-label">Target Fat Mass</div>
+                            <div class="nutrition-value" style="font-size: 1.3em;">${targetFatLbs.toFixed(1)} lbs</div>
+                        </div>
+                        <div>
+                            <div class="nutrition-label">Fat to Lose</div>
+                            <div class="nutrition-value" style="font-size: 1.3em;">${fatToLose.toFixed(1)} lbs</div>
+                        </div>
+                        <div>
+                            <div class="nutrition-label">Current Rate</div>
+                            <div class="nutrition-value" style="font-size: 1.3em;">${avgFatLossPerWeek.toFixed(2)} lb/wk</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-bottom: 15px;">Goal Date Scenarios</h3>
+                <div class="grid grid-2">
+                    ${scenariosHtml}
+                </div>
+                
+                ${avgFatLossPerWeek > 0 ? `
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 20px; border-radius: 10px; margin-top: 15px; border-left: 4px solid var(--accent-cyan);">
+                    <h3 style="color: var(--accent-cyan); margin-bottom: 10px;">At Your Current Rate</h3>
+                    <div style="font-size: 1.5em; font-family: 'Space Mono', monospace; margin-bottom: 10px;">
+                        ${goalDate.toLocaleDateString()}
+                    </div>
+                    <p style="color: var(--text-secondary);">
+                        ${Math.round(weeksToGoal)} weeks (${Math.round(daysToGoal)} days) to reach ${GOALS.target_weight} lbs @ ${GOALS.target_bf_percent}% BF
+                    </p>
+                </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('whatIfCalc').innerHTML = html;
+        }
+        
+        // ===== MEASUREMENTS TAB =====
+        
+        let measurements = [];
+        
+        function loadMeasurements() {
+            const stored = localStorage.getItem(MEASUREMENTS_KEY);
+            if (stored) {
+                measurements = JSON.parse(stored);
+            }
+        }
+        
+        function saveMeasurements() {
+            localStorage.setItem(MEASUREMENTS_KEY, JSON.stringify(measurements));
+        }
+        
+        function updateMeasurementsTab() {
+            if (measurements.length === 0) {
+                document.getElementById('measurementsContent').innerHTML = `
+                    <div style="background: var(--bg-tertiary); padding: 30px; border-radius: 10px; text-align: center;">
+                        <h3 style="color: var(--accent-purple); margin-bottom: 15px;">📏 No Measurements Yet</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                            Start tracking body measurements like neck, chest, waist, hips, arms, thighs, and calves.
+                        </p>
+                        <button onclick="showAddMeasurement()" class="primary">+ Add First Measurement</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const sorted = measurements.slice().sort((a, b) => b.date.localeCompare(a.date));
+            const latest = sorted[0];
+            const oldest = sorted[sorted.length - 1];
+            
+            let tableRows = '';
+            sorted.forEach(m => {
+                tableRows += `
+                    <tr onclick="editMeasurement('${m.date}')">
+                        <td>${m.date}</td>
+                        <td>${m.neck || '-'}</td>
+                        <td>${m.chest || '-'}</td>
+                        <td>${m.waist || '-'}</td>
+                        <td>${m.hips || '-'}</td>
+                        <td>${m.arms || '-'}</td>
+                        <td>${m.thighs || '-'}</td>
+                        <td>${m.calves || '-'}</td>
+                        <td>
+                            <button class="danger" onclick="event.stopPropagation(); deleteMeasurement('${m.date}')">×</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            const html = `
+                <div style="margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-purple); margin-bottom: 15px;">Latest Measurements (${latest.date})</h3>
+                    <div class="grid grid-4">
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Neck</div>
+                            <div class="nutrition-value" style="font-size: 1.5em;">${latest.neck || '-'}"</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Chest</div>
+                            <div class="nutrition-value" style="font-size: 1.5em;">${latest.chest || '-'}"</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Waist</div>
+                            <div class="nutrition-value" style="font-size: 1.5em;">${latest.waist || '-'}"</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Hips</div>
+                            <div class="nutrition-value" style="font-size: 1.5em;">${latest.hips || '-'}"</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Arms</div>
+                            <div class="nutrition-value" style="font-size: 1.5em;">${latest.arms || '-'}"</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Thighs</div>
+                            <div class="nutrition-value" style="font-size: 1.5em;">${latest.thighs || '-'}"</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Calves</div>
+                            <div class="nutrition-value" style="font-size: 1.5em;">${latest.calves || '-'}"</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 style="margin: 20px 0 15px 0;">Measurement History</h3>
+                <div class="table-container" style="max-height: 400px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Neck</th>
+                                <th>Chest</th>
+                                <th>Waist</th>
+                                <th>Hips</th>
+                                <th>Arms</th>
+                                <th>Thighs</th>
+                                <th>Calves</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('measurementsContent').innerHTML = html;
+        }
+        
+        function showAddMeasurement() {
+            const modal = document.getElementById('measurementsModal');
+            modal.innerHTML = `
+                <div class="modal">
+                    <h2>Add Body Measurements</h2>
+                    <div class="form-section">
+                        <h3>Date & Core Measurements</h3>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label class="required">Date</label>
+                                <input type="date" id="measDate" value="${new Date().toISOString().split('T')[0]}">
+                            </div>
+                            <div class="form-field">
+                                <label>Neck (inches)</label>
+                                <input type="number" step="0.25" id="measNeck">
+                            </div>
+                            <div class="form-field">
+                                <label>Chest (inches)</label>
+                                <input type="number" step="0.25" id="measChest">
+                            </div>
+                            <div class="form-field">
+                                <label>Waist (inches)</label>
+                                <input type="number" step="0.25" id="measWaist">
+                            </div>
+                            <div class="form-field">
+                                <label>Hips (inches)</label>
+                                <input type="number" step="0.25" id="measHips">
+                            </div>
+                            <div class="form-field">
+                                <label>Arms (inches)</label>
+                                <input type="number" step="0.25" id="measArms">
+                            </div>
+                            <div class="form-field">
+                                <label>Thighs (inches)</label>
+                                <input type="number" step="0.25" id="measThighs">
+                            </div>
+                            <div class="form-field">
+                                <label>Calves (inches)</label>
+                                <input type="number" step="0.25" id="measCalves">
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="saveMeasurement()" class="primary">Save Measurements</button>
+                        <button onclick="hideMeasurementsModal()">Cancel</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.add('show');
+        }
+        
+        function saveMeasurement() {
+            const date = document.getElementById('measDate').value;
+            if (!date) {
+                showToast('Please enter a date', true);
+                return;
+            }
+            
+            const measurement = {
+                date,
+                neck: parseFloat(document.getElementById('measNeck').value) || null,
+                chest: parseFloat(document.getElementById('measChest').value) || null,
+                waist: parseFloat(document.getElementById('measWaist').value) || null,
+                hips: parseFloat(document.getElementById('measHips').value) || null,
+                arms: parseFloat(document.getElementById('measArms').value) || null,
+                thighs: parseFloat(document.getElementById('measThighs').value) || null,
+                calves: parseFloat(document.getElementById('measCalves').value) || null
+            };
+            
+            measurements = measurements.filter(m => m.date !== date);
+            measurements.push(measurement);
+            measurements.sort((a, b) => a.date.localeCompare(b.date));
+            
+            saveMeasurements();
+            updateMeasurementsTab();
+            hideMeasurementsModal();
+            showToast('Measurements saved!');
+        }
+        
+        function editMeasurement(date) {
+            const meas = measurements.find(m => m.date === date);
+            if (!meas) return;
+            
+            const modal = document.getElementById('measurementsModal');
+            modal.innerHTML = `
+                <div class="modal">
+                    <h2>Edit Measurements</h2>
+                    <div class="form-section">
+                        <h3>Date & Core Measurements</h3>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label class="required">Date</label>
+                                <input type="date" id="measDate" value="${meas.date}">
+                            </div>
+                            <div class="form-field">
+                                <label>Neck (inches)</label>
+                                <input type="number" step="0.25" id="measNeck" value="${meas.neck || ''}">
+                            </div>
+                            <div class="form-field">
+                                <label>Chest (inches)</label>
+                                <input type="number" step="0.25" id="measChest" value="${meas.chest || ''}">
+                            </div>
+                            <div class="form-field">
+                                <label>Waist (inches)</label>
+                                <input type="number" step="0.25" id="measWaist" value="${meas.waist || ''}">
+                            </div>
+                            <div class="form-field">
+                                <label>Hips (inches)</label>
+                                <input type="number" step="0.25" id="measHips" value="${meas.hips || ''}">
+                            </div>
+                            <div class="form-field">
+                                <label>Arms (inches)</label>
+                                <input type="number" step="0.25" id="measArms" value="${meas.arms || ''}">
+                            </div>
+                            <div class="form-field">
+                                <label>Thighs (inches)</label>
+                                <input type="number" step="0.25" id="measThighs" value="${meas.thighs || ''}">
+                            </div>
+                            <div class="form-field">
+                                <label>Calves (inches)</label>
+                                <input type="number" step="0.25" id="measCalves" value="${meas.calves || ''}">
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="saveMeasurement()" class="primary">Save Changes</button>
+                        <button onclick="hideMeasurementsModal()">Cancel</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.add('show');
+        }
+        
+        function deleteMeasurement(date) {
+            if (!confirm(`Delete measurements from ${date}?`)) return;
+            measurements = measurements.filter(m => m.date !== date);
+            saveMeasurements();
+            updateMeasurementsTab();
+            showToast('Measurements deleted');
+        }
+        
+        function hideMeasurementsModal() {
+            document.getElementById('measurementsModal').classList.remove('show');
+        }
+        
+        // ===== TRAINING TAB =====
+        
+        let trainingLog = [];
+        
+        function loadTraining() {
+            const stored = localStorage.getItem(TRAINING_KEY);
+            if (stored) {
+                trainingLog = JSON.parse(stored);
+            }
+        }
+        
+        function saveTraining() {
+            localStorage.setItem(TRAINING_KEY, JSON.stringify(trainingLog));
+        }
+        
+        function updateTrainingTab() {
+            if (trainingLog.length === 0) {
+                document.getElementById('trainingContent').innerHTML = `
+                    <div style="background: var(--bg-tertiary); padding: 30px; border-radius: 10px; text-align: center;">
+                        <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🏋️ No Workouts Logged Yet</h3>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                            Start tracking your training sessions with exercises, sets, reps, and weight.
+                        </p>
+                        <button onclick="showAddWorkout()" class="primary">+ Log First Workout</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const sorted = trainingLog.slice().sort((a, b) => b.date.localeCompare(a.date));
+            
+            let workoutCards = '';
+            sorted.forEach(workout => {
+                let exercisesHtml = '';
+                if (workout.exercises && workout.exercises.length > 0) {
+                    workout.exercises.forEach(ex => {
+                        exercisesHtml += `
+                            <div style="background: var(--bg-primary); padding: 10px; border-radius: 6px; margin: 5px 0;">
+                                <div style="font-weight: 600; margin-bottom: 5px;">${ex.name}</div>
+                                <div style="font-size: 0.85em; color: var(--text-secondary); font-family: 'Space Mono', monospace;">
+                                    ${ex.sets} sets × ${ex.reps} reps @ ${ex.weight} lbs
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    exercisesHtml = '<p style="color: var(--text-secondary); font-style: italic;">No exercises logged</p>';
+                }
+                
+                workoutCards += `
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                            <div>
+                                <h3 style="color: var(--accent-purple); margin-bottom: 5px;">${workout.type || 'Workout'}</h3>
+                                <div style="font-size: 0.9em; color: var(--text-secondary);">${workout.date}</div>
+                            </div>
+                            <div style="display: flex; gap: 5px;">
+                                <button onclick="editWorkout('${workout.date}')" style="padding: 5px 10px; font-size: 0.8em;">Edit</button>
+                                <button class="danger" onclick="deleteWorkout('${workout.date}')">×</button>
+                            </div>
+                        </div>
+                        ${exercisesHtml}
+                        ${workout.notes ? `<div style="margin-top: 10px; padding: 10px; background: var(--bg-primary); border-radius: 6px; font-size: 0.9em; color: var(--text-secondary);">${workout.notes}</div>` : ''}
+                    </div>
+                `;
+            });
+            
+            document.getElementById('trainingContent').innerHTML = workoutCards;
+        }
+        
+        function showAddWorkout() {
+            const modal = document.getElementById('trainingModal');
+            modal.innerHTML = `
+                <div class="modal">
+                    <h2>Log Workout</h2>
+                    <div class="form-section">
+                        <h3>Workout Details</h3>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label class="required">Date</label>
+                                <input type="date" id="workoutDate" value="${new Date().toISOString().split('T')[0]}">
+                            </div>
+                            <div class="form-field">
+                                <label>Workout Type</label>
+                                <select id="workoutType">
+                                    <option>Upper Body</option>
+                                    <option>Lower Body</option>
+                                    <option>Full Body</option>
+                                    <option>Push</option>
+                                    <option>Pull</option>
+                                    <option>Legs</option>
+                                    <option>Cardio</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Exercises</h3>
+                        <div id="exercisesList"></div>
+                        <button onclick="addExerciseRow()" style="margin-top: 10px;">+ Add Exercise</button>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-field">
+                            <label>Notes</label>
+                            <textarea id="workoutNotes" rows="2" placeholder="How did it feel? Any PRs?"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="saveWorkout()" class="primary">Save Workout</button>
+                        <button onclick="hideTrainingModal()">Cancel</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.add('show');
+            addExerciseRow(); // Add first exercise row
+        }
+        
+        let exerciseCount = 0;
+        
+        function addExerciseRow() {
+            const list = document.getElementById('exercisesList');
+            const id = exerciseCount++;
+            const row = document.createElement('div');
+            row.id = `exercise-${id}`;
+            row.style.cssText = 'background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px;';
+            row.innerHTML = `
+                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="color: var(--accent-cyan); flex: 1;">Exercise ${id + 1}</h4>
+                    <button class="danger" onclick="removeExerciseRow(${id})" style="padding: 3px 8px;">×</button>
+                </div>
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label>Exercise Name</label>
+                        <input type="text" id="exName-${id}" placeholder="e.g., Bench Press">
+                    </div>
+                    <div class="form-field">
+                        <label>Sets</label>
+                        <input type="number" id="exSets-${id}" placeholder="3">
+                    </div>
+                    <div class="form-field">
+                        <label>Reps</label>
+                        <input type="number" id="exReps-${id}" placeholder="10">
+                    </div>
+                    <div class="form-field">
+                        <label>Weight (lbs)</label>
+                        <input type="number" id="exWeight-${id}" placeholder="135">
+                    </div>
+                </div>
+            `;
+            list.appendChild(row);
+        }
+        
+        function removeExerciseRow(id) {
+            const row = document.getElementById(`exercise-${id}`);
+            if (row) row.remove();
+        }
+        
+        function saveWorkout() {
+            const date = document.getElementById('workoutDate').value;
+            if (!date) {
+                showToast('Please enter a date', true);
+                return;
+            }
+            
+            const exercises = [];
+            for (let i = 0; i < exerciseCount; i++) {
+                const nameEl = document.getElementById(`exName-${i}`);
+                if (nameEl && nameEl.value) {
+                    exercises.push({
+                        name: nameEl.value,
+                        sets: parseInt(document.getElementById(`exSets-${i}`).value) || 0,
+                        reps: parseInt(document.getElementById(`exReps-${i}`).value) || 0,
+                        weight: parseFloat(document.getElementById(`exWeight-${i}`).value) || 0
+                    });
+                }
+            }
+            
+            const workout = {
+                date,
+                type: document.getElementById('workoutType').value,
+                exercises,
+                notes: document.getElementById('workoutNotes').value
+            };
+            
+            trainingLog = trainingLog.filter(w => w.date !== date);
+            trainingLog.push(workout);
+            trainingLog.sort((a, b) => a.date.localeCompare(b.date));
+            
+            saveTraining();
+            updateTrainingTab();
+            hideTrainingModal();
+            showToast('Workout logged!');
+            exerciseCount = 0;
+        }
+        
+        function editWorkout(date) {
+            const workout = trainingLog.find(w => w.date === date);
+            if (!workout) return;
+            
+            const modal = document.getElementById('trainingModal');
+            modal.innerHTML = `
+                <div class="modal">
+                    <h2>Edit Workout</h2>
+                    <div class="form-section">
+                        <h3>Workout Details</h3>
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label class="required">Date</label>
+                                <input type="date" id="workoutDate" value="${workout.date}">
+                            </div>
+                            <div class="form-field">
+                                <label>Workout Type</label>
+                                <select id="workoutType">
+                                    <option ${workout.type === 'Upper Body' ? 'selected' : ''}>Upper Body</option>
+                                    <option ${workout.type === 'Lower Body' ? 'selected' : ''}>Lower Body</option>
+                                    <option ${workout.type === 'Full Body' ? 'selected' : ''}>Full Body</option>
+                                    <option ${workout.type === 'Push' ? 'selected' : ''}>Push</option>
+                                    <option ${workout.type === 'Pull' ? 'selected' : ''}>Pull</option>
+                                    <option ${workout.type === 'Legs' ? 'selected' : ''}>Legs</option>
+                                    <option ${workout.type === 'Cardio' ? 'selected' : ''}>Cardio</option>
+                                    <option ${workout.type === 'Other' ? 'selected' : ''}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>Exercises</h3>
+                        <div id="exercisesList"></div>
+                        <button onclick="addExerciseRow()" style="margin-top: 10px;">+ Add Exercise</button>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-field">
+                            <label>Notes</label>
+                            <textarea id="workoutNotes" rows="2">${workout.notes || ''}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button onclick="saveWorkout()" class="primary">Save Changes</button>
+                        <button onclick="hideTrainingModal()">Cancel</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.add('show');
+            
+            // Add existing exercises
+            if (workout.exercises && workout.exercises.length > 0) {
+                workout.exercises.forEach(ex => {
+                    addExerciseRow();
+                    const id = exerciseCount - 1;
+                    document.getElementById(`exName-${id}`).value = ex.name;
+                    document.getElementById(`exSets-${id}`).value = ex.sets;
+                    document.getElementById(`exReps-${id}`).value = ex.reps;
+                    document.getElementById(`exWeight-${id}`).value = ex.weight;
+                });
+            } else {
+                addExerciseRow();
+            }
+        }
+        
+        function deleteWorkout(date) {
+            if (!confirm(`Delete workout from ${date}?`)) return;
+            trainingLog = trainingLog.filter(w => w.date !== date);
+            saveTraining();
+            updateTrainingTab();
+            showToast('Workout deleted');
+        }
+        
+        function hideTrainingModal() {
+            document.getElementById('trainingModal').classList.remove('show');
+            exerciseCount = 0;
+        }
+        
+        // ===== CORRELATIONS TAB =====
+        
+        function updateCorrelationsTab() {
+            const sorted = bodyData.slice().sort((a, b) => a.date.localeCompare(b.date));
+            
+            if (sorted.length < 14) {
+                document.getElementById('correlationsContent').innerHTML = `
+                    <div style="background: var(--bg-tertiary); padding: 30px; border-radius: 10px; text-align: center;">
+                        <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🔍 Not Enough Data Yet</h3>
+                        <p style="color: var(--text-secondary);">
+                            Need at least 14 days of data to show meaningful correlations.<br>
+                            You have ${sorted.length} days - keep tracking!
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Calculate correlations
+            const withNutrition = sorted.filter(d => d.calories && d.protein);
+            const recent30 = sorted.slice(-30);
+            
+            // Fat loss correlation with protein intake
+            let proteinCorrelation = 'Unknown';
+            if (withNutrition.length >= 14) {
+                const avgProtein = withNutrition.reduce((sum, d) => sum + d.protein, 0) / withNutrition.length;
+                const latest = withNutrition[withNutrition.length - 1];
+                const proteinPerLb = latest.lean_lbs ? avgProtein / latest.lean_lbs : 0;
+                
+                if (proteinPerLb >= 1.0) {
+                    proteinCorrelation = 'Excellent';
+                } else if (proteinPerLb >= 0.8) {
+                    proteinCorrelation = 'Good';
+                } else if (proteinPerLb >= 0.6) {
+                    proteinCorrelation = 'Fair';
+                } else {
+                    proteinCorrelation = 'Low';
+                }
+            }
+            
+            // Calculate fat loss rate
+            const first = recent30[0];
+            const last = recent30[recent30.length - 1];
+            const fatLost = (first.weight * first.bf_percent / 100) - (last.weight * last.bf_percent / 100);
+            const leanChange = last.lean_lbs - first.lean_lbs;
+            const daysSpan = recent30.length;
+            const fatLossRate = (fatLost / daysSpan) * 7;
+            
+            // Sleep correlation
+            const withSleep = recent30.filter(d => d.sleep_duration_hrs);
+            let avgSleep = 0;
+            if (withSleep.length > 0) {
+                avgSleep = withSleep.reduce((sum, d) => sum + d.sleep_duration_hrs, 0) / withSleep.length;
+            }
+            
+            // Steps correlation
+            const withSteps = recent30.filter(d => d.steps);
+            let avgSteps = 0;
+            if (withSteps.length > 0) {
+                avgSteps = withSteps.reduce((sum, d) => sum + d.steps, 0) / withSteps.length;
+            }
+            
+            const html = `
+                <div class="grid grid-2">
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px;">
+                        <h3 style="color: var(--accent-purple); margin-bottom: 15px;">📉 Fat Loss Progress (Last 30 Days)</h3>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Fat Loss Rate</div>
+                            <div class="nutrition-value">${fatLossRate.toFixed(2)} lbs/week</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Total Fat Lost</div>
+                            <div class="nutrition-value">${fatLost.toFixed(1)} lbs</div>
+                        </div>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Lean Mass Change</div>
+                            <div class="nutrition-value" style="color: ${leanChange >= 0 ? 'var(--accent-success)' : 'var(--accent-danger)'}">
+                                ${leanChange >= 0 ? '+' : ''}${leanChange.toFixed(1)} lbs
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px;">
+                        <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🥩 Protein Intake Analysis</h3>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Protein Status</div>
+                            <div class="nutrition-value" style="font-size: 1.3em; color: ${
+                                proteinCorrelation === 'Excellent' ? 'var(--accent-success)' :
+                                proteinCorrelation === 'Good' ? 'var(--accent-cyan)' :
+                                proteinCorrelation === 'Fair' ? 'var(--accent-warning)' : 'var(--accent-danger)'
+                            }">
+                                ${proteinCorrelation}
+                            </div>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 10px;">
+                            ${proteinCorrelation === 'Excellent' ? 'Great job! Your protein intake is supporting lean mass retention.' :
+                              proteinCorrelation === 'Good' ? 'Good protein intake. Consider increasing slightly for better muscle retention.' :
+                              proteinCorrelation === 'Fair' ? 'Protein is adequate but could be higher for optimal muscle retention.' :
+                              'Consider increasing protein intake to preserve lean mass during fat loss.'}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-2" style="margin-top: 20px;">
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px;">
+                        <h3 style="color: var(--accent-purple); margin-bottom: 15px;">😴 Sleep Analysis</h3>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Average Sleep</div>
+                            <div class="nutrition-value">${avgSleep > 0 ? avgSleep.toFixed(1) + ' hrs' : 'No data'}</div>
+                        </div>
+                        ${avgSleep > 0 ? `
+                        <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 10px;">
+                            ${avgSleep >= 7.5 ? '✅ Excellent sleep duration supports recovery and fat loss.' :
+                              avgSleep >= 6.5 ? '⚠️ Sleep is adequate but could be improved for better results.' :
+                              '❌ Sleep duration is low. Aim for 7-9 hours for optimal recovery.'}
+                        </p>
+                        ` : ''}
+                    </div>
+                    
+                    <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px;">
+                        <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🚶 Activity Level</h3>
+                        <div class="nutrition-card">
+                            <div class="nutrition-label">Average Daily Steps</div>
+                            <div class="nutrition-value">${avgSteps > 0 ? Math.round(avgSteps).toLocaleString() : 'No data'}</div>
+                        </div>
+                        ${avgSteps > 0 ? `
+                        <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 10px;">
+                            ${avgSteps >= 10000 ? '✅ Excellent activity level! This supports your fat loss goals.' :
+                              avgSteps >= 7500 ? '👍 Good activity level. Consider increasing to 10k+ for faster progress.' :
+                              avgSteps >= 5000 ? '⚠️ Moderate activity. Increasing steps could accelerate fat loss.' :
+                              '❌ Low activity. Increasing daily movement would help with fat loss.'}
+                        </p>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                ${trainingLog.length > 0 ? `
+                <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-top: 20px;">
+                    <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🏋️ Training Frequency</h3>
+                    <div class="nutrition-card">
+                        <div class="nutrition-label">Total Workouts Logged</div>
+                        <div class="nutrition-value">${trainingLog.length}</div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 10px;">
+                        ${trainingLog.length >= 20 ? '🔥 Excellent training consistency! Keep it up!' :
+                          trainingLog.length >= 10 ? '💪 Good training frequency. Stay consistent!' :
+                          '📈 Building training history. Consistency is key for results!'}
+                    </p>
+                </div>
+                ` : `
+                <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-top: 20px; text-align: center;">
+                    <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🏋️ No Training Data Yet</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                        Start logging workouts to see training correlations with body composition changes.
+                    </p>
+                    <button onclick="switchMainTab('training'); event.target.blur();" class="primary">Go to Training Log</button>
+                </div>
+                `}
+                
+                <div style="background: rgba(6, 182, 212, 0.1); padding: 20px; border-radius: 10px; margin-top: 20px; border-left: 4px solid var(--accent-cyan);">
+                    <h3 style="color: var(--accent-cyan); margin-bottom: 10px;">💡 Key Insights</h3>
+                    <ul style="color: var(--text-secondary); line-height: 1.8;">
+                        <li>You're losing ${fatLossRate.toFixed(2)} lbs of fat per week on average</li>
+                        <li>Lean mass change: ${leanChange >= 0 ? 'gaining' : 'losing'} ${Math.abs(leanChange).toFixed(1)} lbs (${leanChange >= -1 ? 'good retention' : 'consider increasing protein'})</li>
+                        ${avgSleep > 0 ? `<li>Average sleep: ${avgSleep.toFixed(1)} hours (${avgSleep >= 7.5 ? 'optimal' : 'could improve'})</li>` : ''}
+                        ${avgSteps > 0 ? `<li>Daily steps: ${Math.round(avgSteps).toLocaleString()} (${avgSteps >= 10000 ? 'excellent' : 'room for improvement'})</li>` : ''}
+                        <li>Keep tracking consistently for more detailed correlations</li>
+                    </ul>
+                </div>
+            `;
+            
+            document.getElementById('correlationsContent').innerHTML = html;
+        }
+        
         // ===== UTILITY FUNCTIONS =====
         
         function showToast(message, isError = false) {
@@ -1648,28 +2815,42 @@
         // ===== INITIALIZATION =====
         
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🚀 Body Tracker Pro - Ultimate Edition');
-            console.log('✨ With Intelligent Data Integrity Validation');
+            console.log('🚀 Body Tracker Pro - Complete Ultimate Edition');
+            console.log('✨ With All Features: Nutrition, Measurements, Training, Correlations, Integrity Validation');
             
             loadData();
+            loadMeasurements();
+            loadTraining();
+            
             updateStats();
             updateTable();
             updateChart();
             
-            console.log(`✅ Loaded ${bodyData.length} entries`);
+            console.log(`✅ Loaded ${bodyData.length} body composition entries`);
+            console.log(`✅ Loaded ${measurements.length} measurement records`);
+            console.log(`✅ Loaded ${trainingLog.length} training sessions`);
+            
+            // Auto-update inputs on modal
+            ['entryWeight', 'entryBfPercent', 'entryLeanLbs'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', updateModalDerivedFields);
+            });
             
             // Show welcome message for first-time users
-            const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+            const hasSeenWelcome = localStorage.getItem('hasSeenWelcome_v2');
             if (!hasSeenWelcome) {
                 setTimeout(() => {
                     showToast(
-                        '🎉 Welcome to Body Tracker Pro Ultimate!\n\n' +
-                        '✨ Now with intelligent data validation\n' +
-                        '🛡️ Automatic error detection\n' +
-                        '📊 All 48 days pre-loaded\n\n' +
-                        'Look for integrity badges (✓ ⚠ ✗) in your data!'
+                        '🎉 Welcome to Body Tracker Pro - Complete Edition!\n\n' +
+                        '✨ 6 powerful tabs\n' +
+                        '📊 Nutrition analysis & recommendations\n' +
+                        '📏 Body measurements tracking\n' +
+                        '🏋️ Training log\n' +
+                        '🔍 Correlations & insights\n' +
+                        '🛡️ Data integrity validation\n\n' +
+                        'All 48 days pre-loaded!'
                     );
-                    localStorage.setItem('hasSeenWelcome', 'true');
+                    localStorage.setItem('hasSeenWelcome_v2', 'true');
                 }, 500);
             }
         });
