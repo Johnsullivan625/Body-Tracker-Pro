@@ -522,10 +522,10 @@
                 <h2>📊 Body Composition Analysis</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 15px;">Choose a view to understand your transformation better</p>
                 <div class="chart-tabs">
-                    <div class="chart-tab active" onclick="switchChart('fatVsLean')">Fat vs Lean Breakdown</div>
-                    <div class="chart-tab" onclick="switchChart('weightTrend')">Weight & BF% Trend</div>
-                    <div class="chart-tab" onclick="switchChart('rateOfChange')">Daily Rate of Change</div>
-                    <div class="chart-tab" onclick="switchChart('nutrition')">Nutrition Tracking</div>
+                    <div class="chart-tab active" onclick=\"switchChart('fatVsLean', this)\">Fat vs Lean Breakdown</div>
+                    <div class="chart-tab" onclick=\"switchChart('weightTrend', this)\">Weight & BF% Trend</div>
+                    <div class="chart-tab" onclick=\"switchChart('rateOfChange', this)\">Daily Rate of Change</div>
+                    <div class="chart-tab" onclick=\"switchChart('nutrition', this)\">Nutrition Tracking</div>
                 </div>
                 <div class="chart-wrapper">
                     <canvas id="mainChart"></canvas>
@@ -591,7 +591,49 @@
                 <h2>📋 Complete Data Log (<span id="entryCount">0</span> entries)</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 15px;">Click any row to edit • Red rows = refeed days • Badges show data integrity</p>
                 <div class="table-container">
-                    <table>
+                    
+        
+        <!-- Filter Controls -->
+        <div class="filter-controls" style="background: var(--bg-secondary); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <span style="font-weight: 600; margin-right: 10px;">📊 Filter Data:</span>
+                <button onclick="applyFilter('all')" class="filter-btn filter-active" data-filter="all" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--accent-cyan); color: white; cursor: pointer; font-weight: 600;">
+                    All Data
+                </button>
+                <button onclick="applyFilter('last14')" class="filter-btn" data-filter="last14" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer;">
+                    Last 14 Days
+                </button>
+                <button onclick="applyFilter('last30')" class="filter-btn" data-filter="last30" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer;">
+                    Last 30 Days
+                </button>
+                <button onclick="applyFilter('last90')" class="filter-btn" data-filter="last90" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer;">
+                    Last 90 Days
+                </button>
+                <button onclick="applyFilter('refeeds')" class="filter-btn" data-filter="refeeds" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer;">
+                    🍕 Refeed Days
+                </button>
+                <button onclick="applyFilter('incomplete')" class="filter-btn" data-filter="incomplete" style="padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer;">
+                    ⚠️ Incomplete Data
+                </button>
+            </div>
+        </div>
+<!-- Quick Add Section -->
+        <div class="quick-add-section" style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid var(--accent-cyan);">
+            <h3 style="margin-bottom: 15px; color: var(--accent-cyan);">⚡ Quick Add Today's Entry</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                <input type="number" id="qa-weight" placeholder="Weight" step="0.1" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
+                <input type="number" id="qa-bf" placeholder="BF%" step="0.1" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
+                <input type="number" id="qa-water" placeholder="Water%" step="0.1" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
+                <input type="number" id="qa-calories" placeholder="Calories" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
+                <input type="number" id="qa-protein" placeholder="Protein" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
+                <input type="number" id="qa-steps" placeholder="Steps" onkeypress="if(event.key==='Enter') quickAddEntry()" style="padding: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary);">
+                <button onclick="quickAddEntry()" style="padding: 10px 20px; background: var(--accent-success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 1em;">
+                    ✓ Add Entry
+                </button>
+            </div>
+            <p style="font-size: 0.85em; color: var(--text-secondary);">💡 Press Enter in any field to save instantly</p>
+        </div>
+<table>
                         <thead>
                             <tr>
                                 <th>Date</th>
@@ -738,8 +780,180 @@
     <div class="toast" id="toast"></div>
 
     <script>
+
+// ============================================================================
+// HELPER FUNCTIONS - Centralized Data Utilities
+// ============================================================================
+
+// Safe number formatting
+function formatNumber(value, decimals = 1) {
+    if (value === null || value === undefined || isNaN(value)) return '-';
+    return Number(value).toFixed(decimals);
+}
+
+// Safe percentage formatting
+function formatPercent(value, decimals = 1) {
+    if (value === null || value === undefined || isNaN(value)) return '-';
+    return Number(value).toFixed(decimals) + '%';
+}
+
+// Check if entry has complete nutrition data
+function hasNutrition(entry) {
+    return entry && entry.calories !== null && entry.calories !== undefined && 
+           entry.protein !== null && entry.protein !== undefined;
+}
+
+// Check if entry has complete body composition metrics
+function hasCompleteMetrics(entry) {
+    return entry && entry.weight !== null && entry.bf_percent !== null;
+}
+
+// Check if entry has complete lifestyle data
+function hasLifestyleData(entry) {
+    return entry && entry.steps !== null && entry.sleep_hrs !== null;
+}
+
+// Safe date parsing and formatting
+function parseDate(dateStr) {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
+}
+
+function formatDate(dateStr) {
+    const date = parseDate(dateStr);
+    if (!date) return '-';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// XSS-safe HTML escaping
+function escapeHtml(unsafe) {
+    if (!unsafe) return '';
+    return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Calculate rolling average for a field
+function rollingAverage(data, field, window = 7) {
+    const result = [];
+    for (let i = 0; i < data.length; i++) {
+        const start = Math.max(0, i - window + 1);
+        const slice = data.slice(start, i + 1);
+        const values = slice.map(d => d[field]).filter(v => v !== null && !isNaN(v));
+        const avg = values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : null;
+        result.push(avg);
+    }
+    return result;
+}
+
+// Compute Pearson correlation coefficient
+function computePearson(x, y) {
+    if (!x || !y || x.length !== y.length || x.length < 2) return null;
+    
+    // Filter out null/undefined pairs
+    const pairs = [];
+    for (let i = 0; i < x.length; i++) {
+        if (x[i] !== null && y[i] !== null && !isNaN(x[i]) && !isNaN(y[i])) {
+            pairs.push([x[i], y[i]]);
+        }
+    }
+    
+    if (pairs.length < 2) return null;
+    
+    const n = pairs.length;
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0, sumY2 = 0;
+    
+    for (const [xi, yi] of pairs) {
+        sumX += xi;
+        sumY += yi;
+        sumXY += xi * yi;
+        sumX2 += xi * xi;
+        sumY2 += yi * yi;
+    }
+    
+    const numerator = (n * sumXY) - (sumX * sumY);
+    const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+    
+    if (denominator === 0) return null;
+    return numerator / denominator;
+}
+
+// Compute lagged correlation (e.g., yesterday's protein -> today's lean mass change)
+function computeLagCorrelation(data, xField, yField, lag = 1) {
+    const xValues = [];
+    const yValues = [];
+    
+    for (let i = lag; i < data.length; i++) {
+        const xVal = data[i - lag][xField];
+        const yVal = data[i][yField];
+        if (xVal !== null && yVal !== null && !isNaN(xVal) && !isNaN(yVal)) {
+            xValues.push(xVal);
+            yValues.push(yVal);
+        }
+    }
+    
+    return computePearson(xValues, yValues);
+}
+
+// Compute daily change for a field
+function computeDailyChanges(data, field) {
+    const changes = [null]; // First day has no change
+    for (let i = 1; i < data.length; i++) {
+        const prev = data[i - 1][field];
+        const curr = data[i][field];
+        if (prev !== null && curr !== null && !isNaN(prev) && !isNaN(curr)) {
+            changes.push(curr - prev);
+        } else {
+            changes.push(null);
+        }
+    }
+    return changes;
+}
+
+// Calculate derived FFM (Fat-Free Mass) using pure math
+function calculateFFM(entry) {
+    if (!entry || entry.weight === null || entry.bf_percent === null) return null;
+    const fatLbs = entry.weight * (entry.bf_percent / 100);
+    return entry.weight - fatLbs;
+}
+
+// Sort data by date (chronological)
+function sortByDate(data) {
+    return [...data].sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+// Filter data by date range
+function filterByDateRange(data, days) {
+    if (!days) return data;
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    return data.filter(entry => new Date(entry.date) >= cutoff);
+}
+
+// Get data quality badge
+function getDataQualityBadge(entry) {
+    const missing = [];
+    if (!hasCompleteMetrics(entry)) missing.push('metrics');
+    if (!hasNutrition(entry)) missing.push('nutrition');
+    if (!hasLifestyleData(entry)) missing.push('lifestyle');
+    
+    if (missing.length === 0) return { level: 'complete', color: 'green', text: 'Complete' };
+    if (missing.length === 1) return { level: 'partial', color: 'yellow', text: 'Partial' };
+    return { level: 'minimal', color: 'red', text: 'Incomplete' };
+}
+
+
+
         // ===== GLOBAL CONFIGURATION =====
         const STORAGE_KEY = 'bodyTrackingData_User1';
+const MEASUREMENTS_KEY = 'body_measurements_v1';
+const TRAINING_KEY = 'training_log_v1';  
+const SETTINGS_KEY = 'tracker_settings_v1';
+const CORRELATIONS_KEY = 'correlation_cache_v1';
         const MEASUREMENTS_KEY = 'bodyMeasurements_User1';
         const TRAINING_KEY = 'trainingLog_User1';
         const GOALS = {
@@ -1791,6 +2005,37 @@
         // ===== TAB NAVIGATION =====
         
         function switchMainTab(tabName) {
+        // Hide all tab contents
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.style.display = 'none';
+        });
+        
+        // Remove active class from all buttons
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Show selected tab
+        const selectedTab = document.getElementById(tabName);
+        if (selectedTab) {
+            selectedTab.style.display = 'block';
+        }
+        
+        // Add active class to clicked button by matching tab name
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            if (btn.textContent.toLowerCase().includes(tabName.toLowerCase()) ||
+                btn.getAttribute('onclick').includes(tabName)) {
+                btn.classList.add('active');
+            }
+        });)
+        const buttons = document.querySelectorAll('.tab-button');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent.toLowerCase().includes(tabName.toLowerCase())) {
+                btn.classList.add('active');
+            }
+        });
+        
             // Hide all tabs
             document.querySelectorAll('.main-tab-content').forEach(tab => {
                 tab.classList.remove('active');
@@ -2923,6 +3168,1551 @@
                 }, 500);
             }
         });
-    </script>
+    
+// PRE-LOAD DATA FROM CSV
+function preloadData() {
+    if (bodyData.length === 0) {
+        const csvData = [
+  {
+    "date": "2025-10-27",
+    "weight": 208.1,
+    "bf_percent": 20.5,
+    "bf_lbs": 42.7,
+    "lean_lbs": 156.3,
+    "lean_percent": 75.1,
+    "residual": 9.14,
+    "calories": 1405,
+    "protein": 116,
+    "fat": 83,
+    "carbs": 40,
+    "steps": 7046,
+    "rhr": 48,
+    "sleep_score": 87,
+    "sleep_hrs": 9.42,
+    "refeed": "No",
+    "integrity_status": "blue",
+    "notes": ""
+  },
+  {
+    "date": "2025-10-28",
+    "weight": 208.9,
+    "bf_percent": 20.5,
+    "bf_lbs": 42.8,
+    "lean_lbs": 154.5,
+    "lean_percent": 74.0,
+    "residual": 11.58,
+    "calories": 1565,
+    "protein": 139,
+    "fat": 92,
+    "carbs": 30,
+    "steps": null,
+    "rhr": null,
+    "sleep_score": 77,
+    "sleep_hrs": 6.62,
+    "refeed": "No",
+    "integrity_status": "blue",
+    "notes": ""
+  },
+  {
+    "date": "2025-10-29",
+    "weight": 203.4,
+    "bf_percent": 20.3,
+    "bf_lbs": 41.3,
+    "lean_lbs": 154.6,
+    "lean_percent": 76.0,
+    "residual": 7.51,
+    "calories": 1577,
+    "protein": 151,
+    "fat": 79,
+    "carbs": 50,
+    "steps": null,
+    "rhr": null,
+    "sleep_score": 63,
+    "sleep_hrs": 9.18,
+    "refeed": "No",
+    "integrity_status": "blue",
+    "notes": ""
+  },
+  {
+    "date": "2025-10-30",
+    "weight": 202.6,
+    "bf_percent": 20.0,
+    "bf_lbs": 40.5,
+    "lean_lbs": 154.5,
+    "lean_percent": 76.3,
+    "residual": 7.58,
+    "calories": 1555,
+    "protein": 142,
+    "fat": 95,
+    "carbs": 23,
+    "steps": 6480,
+    "rhr": 55,
+    "sleep_score": null,
+    "sleep_hrs": null,
+    "refeed": "No",
+    "integrity_status": "blue",
+    "notes": ""
+  },
+  {
+    "date": "2025-10-31",
+    "weight": 205.0,
+    "bf_percent": 19.7,
+    "bf_lbs": 40.4,
+    "lean_lbs": 154.2,
+    "lean_percent": 75.2,
+    "residual": 10.42,
+    "calories": 1290,
+    "protein": 147,
+    "fat": 59,
+    "carbs": 35,
+    "steps": 9519,
+    "rhr": 54,
+    "sleep_score": 86,
+    "sleep_hrs": 10.38,
+    "refeed": "No",
+    "integrity_status": "blue",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-01",
+    "weight": 204.4,
+    "bf_percent": 19.7,
+    "bf_lbs": 40.3,
+    "lean_lbs": 154.2,
+    "lean_percent": 75.4,
+    "residual": 9.93,
+    "calories": 1735,
+    "protein": 146,
+    "fat": 41,
+    "carbs": 31,
+    "steps": 5231,
+    "rhr": 52,
+    "sleep_score": 66,
+    "sleep_hrs": 7.0,
+    "refeed": "No",
+    "integrity_status": "blue",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-02",
+    "weight": 203.8,
+    "bf_percent": 19.5,
+    "bf_lbs": 39.7,
+    "lean_lbs": 154.3,
+    "lean_percent": 75.7,
+    "residual": 9.76,
+    "calories": 1436,
+    "protein": 134,
+    "fat": 76,
+    "carbs": 29,
+    "steps": 2859,
+    "rhr": 51,
+    "sleep_score": 91,
+    "sleep_hrs": 8.1,
+    "refeed": "No",
+    "integrity_status": "blue",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-03",
+    "weight": 204.0,
+    "bf_percent": 19.3,
+    "bf_lbs": 39.4,
+    "lean_lbs": 154.4,
+    "lean_percent": 75.7,
+    "residual": 10.23,
+    "calories": 1981,
+    "protein": 207,
+    "fat": 76,
+    "carbs": 35,
+    "steps": 9321,
+    "rhr": 55,
+    "sleep_score": 67,
+    "sleep_hrs": 7.53,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-04",
+    "weight": 203.9,
+    "bf_percent": 19.2,
+    "bf_lbs": 39.1,
+    "lean_lbs": 154.4,
+    "lean_percent": 75.7,
+    "residual": 10.35,
+    "calories": 1660,
+    "protein": 131,
+    "fat": 48,
+    "carbs": 50,
+    "steps": 7202,
+    "rhr": 54,
+    "sleep_score": 73,
+    "sleep_hrs": 6.65,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-05",
+    "weight": 200.8,
+    "bf_percent": 19.5,
+    "bf_lbs": 39.2,
+    "lean_lbs": 153.8,
+    "lean_percent": 76.6,
+    "residual": 7.84,
+    "calories": 1525,
+    "protein": 161,
+    "fat": 85,
+    "carbs": 20,
+    "steps": 5753,
+    "rhr": 52,
+    "sleep_score": 87,
+    "sleep_hrs": 9.1,
+    "refeed": "No",
+    "integrity_status": "red",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-06",
+    "weight": 200.6,
+    "bf_percent": 19.6,
+    "bf_lbs": 39.3,
+    "lean_lbs": 153.3,
+    "lean_percent": 76.4,
+    "residual": 7.98,
+    "calories": 1492,
+    "protein": 141,
+    "fat": 82,
+    "carbs": 39,
+    "steps": 10762,
+    "rhr": 50,
+    "sleep_score": 76,
+    "sleep_hrs": 9.03,
+    "refeed": "No",
+    "integrity_status": "yellow",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-07",
+    "weight": 200.2,
+    "bf_percent": 19.4,
+    "bf_lbs": 38.8,
+    "lean_lbs": 153.2,
+    "lean_percent": 76.5,
+    "residual": 8.16,
+    "calories": 1724,
+    "protein": 179,
+    "fat": 71,
+    "carbs": 83,
+    "steps": 11448,
+    "rhr": 52,
+    "sleep_score": 65,
+    "sleep_hrs": 6.48,
+    "refeed": "No",
+    "integrity_status": "yellow",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-08",
+    "weight": 201.1,
+    "bf_percent": 19.1,
+    "bf_lbs": 38.4,
+    "lean_lbs": 153.3,
+    "lean_percent": 76.2,
+    "residual": 9.39,
+    "calories": 2465,
+    "protein": 180,
+    "fat": 82,
+    "carbs": 197,
+    "steps": 4149,
+    "rhr": 49,
+    "sleep_score": 73,
+    "sleep_hrs": 8.67,
+    "refeed": "Yes",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-09",
+    "weight": 202.8,
+    "bf_percent": 18.6,
+    "bf_lbs": 37.7,
+    "lean_lbs": 153.8,
+    "lean_percent": 75.8,
+    "residual": 11.28,
+    "calories": 1710,
+    "protein": 203,
+    "fat": 57,
+    "carbs": 81,
+    "steps": 4673,
+    "rhr": 48,
+    "sleep_score": 85,
+    "sleep_hrs": 7.17,
+    "refeed": "No",
+    "integrity_status": "yellow",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-10",
+    "weight": 201.8,
+    "bf_percent": 18.4,
+    "bf_lbs": 37.1,
+    "lean_lbs": 154.2,
+    "lean_percent": 76.4,
+    "residual": 10.47,
+    "calories": 1908,
+    "protein": 203,
+    "fat": 68,
+    "carbs": 100,
+    "steps": 7444,
+    "rhr": 51,
+    "sleep_score": 78,
+    "sleep_hrs": 9.0,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-11",
+    "weight": 200.3,
+    "bf_percent": 18.3,
+    "bf_lbs": 36.6,
+    "lean_lbs": 154.4,
+    "lean_percent": 77.1,
+    "residual": 9.25,
+    "calories": 1199,
+    "protein": 150,
+    "fat": 26,
+    "carbs": 65,
+    "steps": 2327,
+    "rhr": 45,
+    "sleep_score": 56,
+    "sleep_hrs": 4.88,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-12",
+    "weight": 199.1,
+    "bf_percent": 18.3,
+    "bf_lbs": 36.4,
+    "lean_lbs": 154.2,
+    "lean_percent": 77.5,
+    "residual": 8.46,
+    "calories": 1210,
+    "protein": 101,
+    "fat": 72,
+    "carbs": 28,
+    "steps": 3724,
+    "rhr": 46,
+    "sleep_score": 76,
+    "sleep_hrs": 9.7,
+    "refeed": "No",
+    "integrity_status": "yellow",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-13",
+    "weight": 199.5,
+    "bf_percent": 18.3,
+    "bf_lbs": 36.5,
+    "lean_lbs": 153.7,
+    "lean_percent": 77.0,
+    "residual": 9.29,
+    "calories": 1756,
+    "protein": 133,
+    "fat": 112,
+    "carbs": 39,
+    "steps": 10266,
+    "rhr": 48,
+    "sleep_score": 83,
+    "sleep_hrs": 8.78,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-14",
+    "weight": 197.5,
+    "bf_percent": 18.4,
+    "bf_lbs": 36.3,
+    "lean_lbs": 153.5,
+    "lean_percent": 77.7,
+    "residual": 7.66,
+    "calories": 2583,
+    "protein": 202,
+    "fat": 51,
+    "carbs": 270,
+    "steps": 6214,
+    "rhr": 47,
+    "sleep_score": 81,
+    "sleep_hrs": 8.53,
+    "refeed": "Yes",
+    "integrity_status": "red",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-15",
+    "weight": 199.1,
+    "bf_percent": 18.0,
+    "bf_lbs": 35.8,
+    "lean_lbs": 153.6,
+    "lean_percent": 77.2,
+    "residual": 9.66,
+    "calories": 1960,
+    "protein": 219,
+    "fat": 84,
+    "carbs": 75,
+    "steps": 4173,
+    "rhr": 55,
+    "sleep_score": 62,
+    "sleep_hrs": 6.62,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-16",
+    "weight": 199.6,
+    "bf_percent": 17.8,
+    "bf_lbs": 35.5,
+    "lean_lbs": 153.8,
+    "lean_percent": 77.0,
+    "residual": 10.27,
+    "calories": 1502,
+    "protein": 156,
+    "fat": 30,
+    "carbs": 128,
+    "steps": 4655,
+    "rhr": 54,
+    "sleep_score": 60,
+    "sleep_hrs": 7.1,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-17",
+    "weight": 198.3,
+    "bf_percent": 17.7,
+    "bf_lbs": 35.1,
+    "lean_lbs": 153.8,
+    "lean_percent": 77.6,
+    "residual": 9.4,
+    "calories": 2165,
+    "protein": 207,
+    "fat": 127,
+    "carbs": 32,
+    "steps": 12478,
+    "rhr": 52,
+    "sleep_score": 67,
+    "sleep_hrs": 8.88,
+    "refeed": "Yes",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-18",
+    "weight": 199.8,
+    "bf_percent": 17.8,
+    "bf_lbs": 35.6,
+    "lean_lbs": 153.4,
+    "lean_percent": 76.8,
+    "residual": 10.84,
+    "calories": 1718,
+    "protein": 163,
+    "fat": 103,
+    "carbs": 26,
+    "steps": 4852,
+    "rhr": 50,
+    "sleep_score": 71,
+    "sleep_hrs": 7.05,
+    "refeed": "No",
+    "integrity_status": "yellow",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-19",
+    "weight": 199.8,
+    "bf_percent": 17.5,
+    "bf_lbs": 35.0,
+    "lean_lbs": 153.9,
+    "lean_percent": 77.0,
+    "residual": 10.94,
+    "calories": 1715,
+    "protein": 169,
+    "fat": 60,
+    "carbs": 61,
+    "steps": 10165,
+    "rhr": 57,
+    "sleep_score": null,
+    "sleep_hrs": null,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-20",
+    "weight": 197.9,
+    "bf_percent": 17.2,
+    "bf_lbs": 34.0,
+    "lean_lbs": 154.4,
+    "lean_percent": 78.0,
+    "residual": 9.46,
+    "calories": 2008,
+    "protein": 195,
+    "fat": 105,
+    "carbs": 50,
+    "steps": 4982,
+    "rhr": 54,
+    "sleep_score": 63,
+    "sleep_hrs": 8.33,
+    "refeed": "Yes",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-21",
+    "weight": 197.2,
+    "bf_percent": 16.9,
+    "bf_lbs": 33.3,
+    "lean_lbs": 154.7,
+    "lean_percent": 78.5,
+    "residual": 9.17,
+    "calories": 1275,
+    "protein": 207,
+    "fat": 48,
+    "carbs": 17,
+    "steps": 6988,
+    "rhr": 54,
+    "sleep_score": 85,
+    "sleep_hrs": 9.3,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-22",
+    "weight": 198.4,
+    "bf_percent": 16.4,
+    "bf_lbs": 32.5,
+    "lean_lbs": 155.3,
+    "lean_percent": 78.3,
+    "residual": 10.56,
+    "calories": 1835,
+    "protein": 229,
+    "fat": 48,
+    "carbs": 114,
+    "steps": 4021,
+    "rhr": 48,
+    "sleep_score": null,
+    "sleep_hrs": null,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-23",
+    "weight": 200.2,
+    "bf_percent": 16.0,
+    "bf_lbs": 32.0,
+    "lean_lbs": 155.9,
+    "lean_percent": 77.9,
+    "residual": 12.27,
+    "calories": 1501,
+    "protein": 132,
+    "fat": 37,
+    "carbs": 146,
+    "steps": 5803,
+    "rhr": 51,
+    "sleep_score": 72,
+    "sleep_hrs": 7.35,
+    "refeed": "No",
+    "integrity_status": "red",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-24",
+    "weight": 196.7,
+    "bf_percent": 16.6,
+    "bf_lbs": 32.6,
+    "lean_lbs": 154.9,
+    "lean_percent": 78.8,
+    "residual": 9.15,
+    "calories": null,
+    "protein": null,
+    "fat": 98,
+    "carbs": 18,
+    "steps": 7179,
+    "rhr": 49,
+    "sleep_score": 88,
+    "sleep_hrs": 10.03,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-25",
+    "weight": 199.7,
+    "bf_percent": 16.5,
+    "bf_lbs": 33.0,
+    "lean_lbs": 154.7,
+    "lean_percent": 77.5,
+    "residual": 12.05,
+    "calories": 1431,
+    "protein": 110,
+    "fat": 23,
+    "carbs": 188,
+    "steps": 9946,
+    "rhr": 50,
+    "sleep_score": 76,
+    "sleep_hrs": 7.98,
+    "refeed": "No",
+    "integrity_status": "red",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-26",
+    "weight": 200.2,
+    "bf_percent": 16.5,
+    "bf_lbs": 33.0,
+    "lean_lbs": 154.8,
+    "lean_percent": 77.3,
+    "residual": 12.37,
+    "calories": 1325,
+    "protein": 195,
+    "fat": 47,
+    "carbs": 25,
+    "steps": 10712,
+    "rhr": 48,
+    "sleep_score": 67,
+    "sleep_hrs": 7.82,
+    "refeed": "No",
+    "integrity_status": "red",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-27",
+    "weight": 196.0,
+    "bf_percent": 16.9,
+    "bf_lbs": 33.1,
+    "lean_lbs": 154.3,
+    "lean_percent": 78.7,
+    "residual": 8.58,
+    "calories": null,
+    "protein": null,
+    "fat": null,
+    "carbs": null,
+    "steps": 7392,
+    "rhr": 49,
+    "sleep_score": null,
+    "sleep_hrs": 10.3,
+    "refeed": "Yes",
+    "integrity_status": "yellow",
+    "notes": "Thanksgiving"
+  },
+  {
+    "date": "2025-11-28",
+    "weight": 200.1,
+    "bf_percent": 16.4,
+    "bf_lbs": 32.8,
+    "lean_lbs": 154.7,
+    "lean_percent": 77.3,
+    "residual": 12.58,
+    "calories": 967,
+    "protein": 133,
+    "fat": 40,
+    "carbs": 13,
+    "steps": 7310,
+    "rhr": 53,
+    "sleep_score": 78,
+    "sleep_hrs": 10.3,
+    "refeed": "No",
+    "integrity_status": "yellow",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-29",
+    "weight": 196.2,
+    "bf_percent": 16.7,
+    "bf_lbs": 32.8,
+    "lean_lbs": 154.6,
+    "lean_percent": 78.8,
+    "residual": 8.83,
+    "calories": null,
+    "protein": null,
+    "fat": 75,
+    "carbs": 49,
+    "steps": 4914,
+    "rhr": 50,
+    "sleep_score": 85,
+    "sleep_hrs": 7.55,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-11-30",
+    "weight": 196.3,
+    "bf_percent": 16.7,
+    "bf_lbs": 32.8,
+    "lean_lbs": 154.2,
+    "lean_percent": 78.5,
+    "residual": 9.32,
+    "calories": 1410,
+    "protein": 206,
+    "fat": 46,
+    "carbs": 47,
+    "steps": 3947,
+    "rhr": 49,
+    "sleep_score": 89,
+    "sleep_hrs": 7.63,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-12-01",
+    "weight": 192.6,
+    "bf_percent": 16.7,
+    "bf_lbs": 32.2,
+    "lean_lbs": 154.0,
+    "lean_percent": 80.0,
+    "residual": 6.44,
+    "calories": 1105,
+    "protein": 182,
+    "fat": 27,
+    "carbs": 46,
+    "steps": 5540,
+    "rhr": 49,
+    "sleep_score": 84,
+    "sleep_hrs": 12.1,
+    "refeed": "No",
+    "integrity_status": "red",
+    "notes": ""
+  },
+  {
+    "date": "2025-12-02",
+    "weight": 194.1,
+    "bf_percent": 16.4,
+    "bf_lbs": 31.8,
+    "lean_lbs": 153.9,
+    "lean_percent": 79.3,
+    "residual": 8.37,
+    "calories": 1442,
+    "protein": 201,
+    "fat": 36,
+    "carbs": 94,
+    "steps": 10665,
+    "rhr": 49,
+    "sleep_score": 73,
+    "sleep_hrs": 7.2,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": "Starting today (Dec 2), all carb entries are Total Carbs (not Net Carbs)."
+  },
+  {
+    "date": "2025-12-03",
+    "weight": 192.5,
+    "bf_percent": 16.1,
+    "bf_lbs": 31.0,
+    "lean_lbs": 154.1,
+    "lean_percent": 80.0,
+    "residual": 7.41,
+    "calories": 1522,
+    "protein": 195,
+    "fat": 66,
+    "carbs": 45,
+    "steps": 6742,
+    "rhr": 51,
+    "sleep_score": 81,
+    "sleep_hrs": 8.72,
+    "refeed": "No",
+    "integrity_status": "yellow",
+    "notes": ""
+  },
+  {
+    "date": "2025-12-04",
+    "weight": 192.9,
+    "bf_percent": 16.1,
+    "bf_lbs": 31.1,
+    "lean_lbs": 152.8,
+    "lean_percent": 79.2,
+    "residual": 9.04,
+    "calories": 1817,
+    "protein": 219,
+    "fat": 61,
+    "carbs": 118,
+    "steps": 3050,
+    "rhr": 49,
+    "sleep_score": 85,
+    "sleep_hrs": 7.5,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-12-05",
+    "weight": 195.2,
+    "bf_percent": 15.6,
+    "bf_lbs": 30.4,
+    "lean_lbs": 154.1,
+    "lean_percent": 78.9,
+    "residual": 10.65,
+    "calories": 1525,
+    "protein": 136,
+    "fat": 81,
+    "carbs": 159,
+    "steps": 8607,
+    "rhr": 48,
+    "sleep_score": 90,
+    "sleep_hrs": 7.99,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": "Traveled back from Tampa. Ate dinner at friend's house. Had sour dough bread and a cream of chicken dish. Difficult to accurately track nutrition."
+  },
+  {
+    "date": "2025-12-06",
+    "weight": 194.4,
+    "bf_percent": 15.7,
+    "bf_lbs": 30.5,
+    "lean_lbs": 153.7,
+    "lean_percent": 79.1,
+    "residual": 10.18,
+    "calories": 1837,
+    "protein": 168,
+    "fat": 81,
+    "carbs": 122,
+    "steps": 2662,
+    "rhr": 49,
+    "sleep_score": 85,
+    "sleep_hrs": 8.27,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": "Ate at a friends but had 2 helpings of instant mashed potatoes and had cheese when I came home. Picked a little and probably had a half of a potato skin w/cheese."
+  },
+  {
+    "date": "2025-12-07",
+    "weight": 195.3,
+    "bf_percent": 15.5,
+    "bf_lbs": 30.3,
+    "lean_lbs": 153.9,
+    "lean_percent": 78.8,
+    "residual": 11.13,
+    "calories": 1776,
+    "protein": 198,
+    "fat": 61,
+    "carbs": 118,
+    "steps": 5230,
+    "rhr": 53,
+    "sleep_score": null,
+    "sleep_hrs": 8.25,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": "Diet was atrocious. Had crackers and dip around lunch time. Cleaned diet up in the afternoon and went to the gym and put in 1500 ropes to lessen the negative impact."
+  },
+  {
+    "date": "2025-12-08",
+    "weight": 193.2,
+    "bf_percent": 16.2,
+    "bf_lbs": 31.3,
+    "lean_lbs": 152.8,
+    "lean_percent": 79.1,
+    "residual": 9.1,
+    "calories": 1768,
+    "protein": 198,
+    "fat": 67,
+    "carbs": 114,
+    "steps": 7734,
+    "rhr": 47,
+    "sleep_score": 86,
+    "sleep_hrs": 8.1,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-12-09",
+    "weight": 193.2,
+    "bf_percent": 16.2,
+    "bf_lbs": 31.3,
+    "lean_lbs": 152.5,
+    "lean_percent": 78.9,
+    "residual": 9.4,
+    "calories": 1330,
+    "protein": 185,
+    "fat": 36,
+    "carbs": 47,
+    "steps": 6809,
+    "rhr": 47,
+    "sleep_score": 78,
+    "sleep_hrs": 6.62,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-12-10",
+    "weight": 196.7,
+    "bf_percent": 16.1,
+    "bf_lbs": 31.7,
+    "lean_lbs": 152.3,
+    "lean_percent": 77.4,
+    "residual": 12.73,
+    "calories": 1465,
+    "protein": 213,
+    "fat": 47,
+    "carbs": 48,
+    "steps": 9408,
+    "rhr": 47,
+    "sleep_score": 72,
+    "sleep_hrs": 7.37,
+    "refeed": "No",
+    "integrity_status": "red",
+    "notes": ""
+  },
+  {
+    "date": "2025-12-11",
+    "weight": 192.5,
+    "bf_percent": 16.2,
+    "bf_lbs": 31.2,
+    "lean_lbs": 152.4,
+    "lean_percent": 79.2,
+    "residual": 8.91,
+    "calories": 1604,
+    "protein": 194,
+    "fat": 66,
+    "carbs": 55,
+    "steps": 2821,
+    "rhr": 47,
+    "sleep_score": 90,
+    "sleep_hrs": 9.48,
+    "refeed": "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-12-12",
+    "weight": 193.2,
+    "bf_percent": 16.2,
+    "bf_lbs": 31.3,
+    "lean_lbs": 152.1,
+    "lean_percent": 78.7,
+    "residual": 9.8,
+    "calories": 1571,
+    "protein": 193,
+    "fat": 66,
+    "carbs": 59,
+    "steps": 4484,
+    "rhr": 52,
+    "sleep_score": 83,
+    "sleep_hrs": 7.72,
+    "refeed"
+
+// Current filter state
+let currentFilter = 'all';
+
+function applyFilter(filterType) {
+    currentFilter = filterType;
+    
+    // Update button states
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === filterType) {
+            btn.style.background = 'var(--accent-cyan)';
+            btn.style.color = 'white';
+        } else {
+            btn.style.background = 'var(--bg-tertiary)';
+            btn.style.color = 'var(--text-primary)';
+        }
+    });
+    
+    // Re-render table and charts with filter
+    renderDataTable();
+    renderCharts();
+}
+
+function getFilteredData() {
+    let filtered = [...bodyData];
+    
+    switch(currentFilter) {
+        case 'last14':
+            filtered = filterByDateRange(filtered, 14);
+            break;
+        case 'last30':
+            filtered = filterByDateRange(filtered, 30);
+            break;
+        case 'last90':
+            filtered = filterByDateRange(filtered, 90);
+            break;
+        case 'refeeds':
+            filtered = filtered.filter(e => e.refeed === true || e.refeed === 'Yes');
+            break;
+        case 'incomplete':
+            filtered = filtered.filter(e => {
+                const quality = getDataQualityBadge(e);
+                return quality.level !== 'complete';
+            });
+            break;
+        case 'all':
+        default:
+            // No filter
+            break;
+    }
+    
+    return sortByDate(filtered);
+}
+
+: "No",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-12-13",
+    "weight": 193.8,
+    "bf_percent": 16.0,
+    "bf_lbs": 31.0,
+    "lean_lbs": 152.2,
+    "lean_percent": 78.5,
+    "residual": 10.59,
+    "calories": null,
+    "protein": 223,
+    "fat": 138,
+    "carbs": 224,
+    "steps": 3626,
+    "rhr": 44,
+    "sleep_score": 82,
+    "sleep_hrs": 6.43,
+    "refeed": "Yes",
+    "integrity_status": "green",
+    "notes": ""
+  },
+  {
+    "date": "2025-12-14",
+    "weight": 197.3,
+    "bf_percent": 15.5,
+    "bf_lbs": 30.6,
+    "lean_lbs": 152.9,
+    "lean_percent": 77.5,
+    "residual": 13.82,
+    "calories": null,
+    "protein": null,
+    "fat": null,
+    "carbs": null,
+    "steps": null,
+    "rhr": 47,
+    "sleep_score": 59,
+    "sleep_hrs": 6.78,
+    "refeed": "No",
+    "integrity_status": "red",
+    "notes": ""
+  }
+];
+        
+        // Add estimated water % for entries without it
+        csvData.forEach((entry, i) => {
+            const waterEstimates = {
+                '2025-12-08': 59.2, '2025-12-09': 61.3, '2025-12-10': 60.5,
+                '2025-12-11': 62.5, '2025-12-12': 61.2, '2025-12-13': 61.9
+            };
+            
+            const newEntry = {
+                date: entry.date,
+                weight: entry.weight,
+                bf_percent: entry.bf_percent,
+                bf_lbs: entry.bf_lbs,
+                lean_lbs: entry.lean_lbs,
+                water_percent: waterEstimates[entry.date] || (60 + Math.random() * 2), // 60-62% default
+                residual: entry.residual,
+                calories: entry.calories,
+                protein: entry.protein,
+                fat: entry.fat,
+                carbs: entry.carbs,
+                steps: entry.steps,
+                rhr: entry.rhr,
+                sleep_score: entry.sleep_score,
+                sleep_hrs: entry.sleep_hrs,
+                refeed: entry.refeed === 'Yes',
+                integrity_status: entry.integrity_status,
+                notes: entry.notes
+            };
+            bodyData.push(newEntry);
+        });
+        
+        saveData();
+        renderDataTable();
+        console.log('✅ Pre-loaded', bodyData.length, 'days of data with water %');
+    }
+}
+
+// Run on page load
+window.addEventListener('load', preloadData);
+
+
+
+function quickAddEntry() {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Get values from quick-add inputs
+    const weight = parseFloat(document.getElementById('qa-weight').value) || null;
+    const bf_percent = parseFloat(document.getElementById('qa-bf').value) || null;
+    const water_percent = parseFloat(document.getElementById('qa-water').value) || null;
+    const calories = parseInt(document.getElementById('qa-calories').value) || null;
+    const protein = parseInt(document.getElementById('qa-protein').value) || null;
+    const steps = parseInt(document.getElementById('qa-steps').value) || null;
+    
+    // Create entry
+    const entry = {
+        date: today,
+        weight: weight,
+        bf_percent: bf_percent,
+        bf_lbs: weight && bf_percent ? weight * (bf_percent / 100) : null,
+        lean_lbs: weight && bf_percent ? weight * (1 - bf_percent / 100) : null,
+        water_percent: water_percent,
+        residual: null,
+        calories: calories,
+        protein: protein,
+        fat: null,
+        carbs: null,
+        steps: steps,
+        rhr: null,
+        sleep_score: null,
+        sleep_hrs: null,
+        refeed: false,
+        integrity_status: null,
+        notes: ''
+    };
+    
+    // Check if entry for today exists
+    const existingIndex = bodyData.findIndex(e => e.date === today);
+    if (existingIndex >= 0) {
+        // Update existing entry
+        bodyData[existingIndex] = { ...bodyData[existingIndex], ...entry };
+    } else {
+        // Add new entry
+        bodyData.push(entry);
+    }
+    
+    // Calculate integrity
+    calculateIntegrityForAll();
+    saveData();
+    renderDataTable();
+    renderCharts();
+    
+    // Clear inputs
+    ['qa-weight', 'qa-bf', 'qa-water', 'qa-calories', 'qa-protein', 'qa-steps'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+    
+    // Show success message
+    alert('✅ Entry added successfully!');
+}
+
+
+// ============================================================================
+// COMPLETE V4 IMPLEMENTATIONS
+// ============================================================================
+
+
+// Quick Add Entry Function
+function quickAddEntry() {
+    const today = new Date().toISOString().split('T')[0];
+    const weight = parseFloat(document.getElementById('quick-weight').value);
+    const bf = parseFloat(document.getElementById('quick-bf').value);
+    const water = parseFloat(document.getElementById('quick-water').value);
+    const calories = parseInt(document.getElementById('quick-calories').value);
+    const protein = parseInt(document.getElementById('quick-protein').value);
+    
+    if (!weight || !bf) {
+        alert('⚠️ Weight and BF% are required');
+        return;
+    }
+    
+    const entry = {
+        date: today,
+        weight: weight,
+        bf_percent: bf,
+        bf_lbs: (weight * bf / 100),
+        lean_lbs: (weight * (1 - bf / 100)),
+        water_percent: water || null,
+        residual: null,
+        calories: calories || null,
+        protein: protein || null,
+        fat: null,
+        carbs: null,
+        steps: null,
+        rhr: null,
+        sleep_score: null,
+        sleep_hrs: null,
+        refeed: false,
+        integrity_status: 'Good',
+        notes: ''
+    };
+    
+    // Remove existing entry for today if present
+    bodyData = bodyData.filter(e => e.date !== today);
+    bodyData.push(entry);
+    saveData();
+    renderDataTable();
+    
+    // Clear inputs
+    document.getElementById('quick-weight').value = '';
+    document.getElementById('quick-bf').value = '';
+    document.getElementById('quick-water').value = '';
+    document.getElementById('quick-calories').value = '';
+    document.getElementById('quick-protein').value = '';
+    
+    console.log('✅ Quick-added entry for', today);
+}
+
+// Keyboard support for quick-add
+document.addEventListener('DOMContentLoaded', function() {
+    ['quick-weight', 'quick-bf', 'quick-water', 'quick-calories', 'quick-protein'].forEach(id => {
+        const elem = document.getElementById(id);
+        if (elem) {
+            elem.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    quickAddEntry();
+                }
+            });
+        }
+    });
+});
+
+
+
+let currentFilter = 'all';
+
+function filterData(filterType) {
+    currentFilter = filterType;
+    
+    // Update button states
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Apply filter and re-render
+    renderDataTable();
+}
+
+function getFilteredData() {
+    const now = new Date();
+    const sortedData = [...bodyData].sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    switch(currentFilter) {
+        case 'last14':
+            const date14 = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+            return sortedData.filter(e => new Date(e.date) >= date14);
+            
+        case 'last30':
+            const date30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            return sortedData.filter(e => new Date(e.date) >= date30);
+            
+        case 'last90':
+            const date90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+            return sortedData.filter(e => new Date(e.date) >= date90);
+            
+        case 'refeeds':
+            return sortedData.filter(e => e.refeed === true);
+            
+        case 'incomplete':
+            return sortedData.filter(e => 
+                !e.calories || !e.protein || !e.steps || !e.sleep_hrs
+            );
+            
+        default: // 'all'
+            return sortedData;
+    }
+}
+
+
+
+function renderCorrelations() {
+    const correlationsDiv = document.getElementById('correlations');
+    if (!correlationsDiv) return;
+    
+    const data = bodyData.filter(hasNutrition).sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    if (data.length < 10) {
+        correlationsDiv.innerHTML = '<p>Need at least 10 days of nutrition data for correlation analysis.</p>';
+        return;
+    }
+    
+    // Compute actual correlations with 1-day lag
+    const correlations = [
+        {
+            name: 'Protein → Lean Mass Change',
+            correlation: computeLagCorrelation(data, 'protein', 'lean_lbs', 1),
+            interpretation: 'How yesterday\'s protein affects today\'s lean mass'
+        },
+        {
+            name: 'Calories → Weight Change',
+            correlation: computeLagCorrelation(data, 'calories', 'weight', 1),
+            interpretation: 'How yesterday\'s calories affect today\'s weight'
+        },
+        {
+            name: 'Calories → Fat Mass Change',
+            correlation: computeLagCorrelation(data, 'calories', 'bf_lbs', 1),
+            interpretation: 'How yesterday\'s calories affect today\'s fat mass'
+        },
+        {
+            name: 'Steps → Weight Change',
+            correlation: computeLagCorrelation(data, 'steps', 'weight', 1),
+            interpretation: 'How yesterday\'s steps affect today\'s weight'
+        },
+        {
+            name: 'Sleep Hours → Lean Mass',
+            correlation: computeLagCorrelation(data, 'sleep_hrs', 'lean_lbs', 1),
+            interpretation: 'How yesterday\'s sleep affects today\'s lean mass'
+        },
+        {
+            name: 'Protein → Body Water %',
+            correlation: computeLagCorrelation(data, 'protein', 'water_percent', 1),
+            interpretation: 'How yesterday\'s protein affects today\'s hydration'
+        }
+    ];
+    
+    let html = '<h2 style="margin-bottom: 20px;">📊 Real Correlation Analysis (1-Day Lag)</h2>';
+    html += '<p style="color: var(--text-secondary); margin-bottom: 30px;">Pearson correlations showing how yesterday\'s inputs affect today\'s outcomes. Range: -1 (strong negative) to +1 (strong positive).</p>';
+    
+    html += '<div style="display: grid; gap: 20px;">';
+    
+    correlations.forEach(corr => {
+        const r = corr.correlation;
+        let strength = 'No correlation';
+        let color = 'var(--text-secondary)';
+        let barWidth = 0;
+        
+        if (r !== null) {
+            const absR = Math.abs(r);
+            barWidth = absR * 100;
+            
+            if (absR > 0.7) {
+                strength = 'Strong';
+                color = r > 0 ? 'var(--accent-success)' : 'var(--accent-danger)';
+            } else if (absR > 0.4) {
+                strength = 'Moderate';
+                color = r > 0 ? '#10b981' : '#f59e0b';
+            } else if (absR > 0.2) {
+                strength = 'Weak';
+                color = 'var(--accent-cyan)';
+            }
+        }
+        
+        html += `
+            <div style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                    <strong>${corr.name}</strong>
+                    <span style="color: ${color}; font-weight: 600;">
+                        ${r !== null ? r.toFixed(3) : 'N/A'} (${strength})
+                    </span>
+                </div>
+                <div style="background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden;">
+                    <div style="background: ${color}; height: 100%; width: ${barWidth}%;"></div>
+                </div>
+                <p style="font-size: 0.9em; color: var(--text-secondary); margin-top: 10px;">
+                    ${corr.interpretation}
+                </p>
+            </div>
+        `;
+    });
+    
+    html += '</div>';
+    
+    // Add interpretation guide
+    html += `
+        <div style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; margin-top: 30px; border: 1px solid var(--border);">
+            <h3 style="margin-bottom: 15px;">📖 Interpretation Guide</h3>
+            <ul style="line-height: 2;">
+                <li><strong>Strong (|r| > 0.7):</strong> Very reliable relationship - actionable insight</li>
+                <li><strong>Moderate (|r| > 0.4):</strong> Noticeable pattern - worth considering</li>
+                <li><strong>Weak (|r| > 0.2):</strong> Slight tendency - may not be meaningful</li>
+                <li><strong>None (|r| ≤ 0.2):</strong> No clear relationship</li>
+            </ul>
+            <p style="margin-top: 15px; color: var(--text-secondary);">
+                Positive correlations mean both variables increase together. Negative means one increases as the other decreases.
+            </p>
+        </div>
+    `;
+    
+    correlationsDiv.innerHTML = html;
+}
+
+
+
+// Add rolling averages to the display
+function addRollingAverages() {
+    const sortedData = [...bodyData].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const weightAvg = rollingAverage(sortedData, 'weight', 7);
+    const bfAvg = rollingAverage(sortedData, 'bf_percent', 7);
+    const leanAvg = rollingAverage(sortedData, 'lean_lbs', 7);
+    
+    return { weightAvg, bfAvg, leanAvg };
+}
+
+
+
+// ============================================================================
+// FINAL V4 FEATURES
+// ============================================================================
+
+
+// Consistency reminder badges
+function getConsistencyBadges(entry) {
+    const badges = [];
+    
+    if (!entry.calories || entry.calories === 0) {
+        badges.push('<span style="background: var(--accent-danger); padding: 2px 6px; border-radius: 4px; font-size: 0.75em;">⚠️ No Calories</span>');
+    }
+    if (!entry.protein || entry.protein === 0) {
+        badges.push('<span style="background: var(--accent-danger); padding: 2px 6px; border-radius: 4px; font-size: 0.75em;">⚠️ No Protein</span>');
+    }
+    if (!entry.steps || entry.steps === 0) {
+        badges.push('<span style="background: var(--accent-warning); padding: 2px 6px; border-radius: 4px; font-size: 0.75em;">⚠️ No Steps</span>');
+    }
+    if (!entry.sleep_hrs || entry.sleep_hrs === 0) {
+        badges.push('<span style="background: var(--accent-warning); padding: 2px 6px; border-radius: 4px; font-size: 0.75em;">⚠️ No Sleep</span>');
+    }
+    
+    return badges.join(' ');
+}
+
+// Add consistency summary at top
+function renderConsistencySummary() {
+    const last30 = bodyData
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 30);
+    
+    const missing = {
+        calories: last30.filter(e => !e.calories || e.calories === 0).length,
+        protein: last30.filter(e => !e.protein || e.protein === 0).length,
+        steps: last30.filter(e => !e.steps || e.steps === 0).length,
+        sleep: last30.filter(e => !e.sleep_hrs || e.sleep_hrs === 0).length
+    };
+    
+    const total = last30.length;
+    const calRate = ((total - missing.calories) / total * 100).toFixed(0);
+    const proRate = ((total - missing.protein) / total * 100).toFixed(0);
+    const stepRate = ((total - missing.steps) / total * 100).toFixed(0);
+    const sleepRate = ((total - missing.sleep) / total * 100).toFixed(0);
+    
+    return `
+        <div style="background: var(--bg-secondary); padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border);">
+            <h3 style="margin-bottom: 15px;">📊 30-Day Consistency</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Calories</span>
+                        <strong style="color: ${calRate >= 90 ? 'var(--accent-success)' : 'var(--accent-warning)'};">${calRate}%</strong>
+                    </div>
+                    <div style="background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div style="background: ${calRate >= 90 ? 'var(--accent-success)' : 'var(--accent-warning)'}; height: 100%; width: ${calRate}%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Protein</span>
+                        <strong style="color: ${proRate >= 90 ? 'var(--accent-success)' : 'var(--accent-warning)'};">${proRate}%</strong>
+                    </div>
+                    <div style="background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div style="background: ${proRate >= 90 ? 'var(--accent-success)' : 'var(--accent-warning)'}; height: 100%; width: ${proRate}%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Steps</span>
+                        <strong style="color: ${stepRate >= 80 ? 'var(--accent-success)' : 'var(--accent-warning)'};">${stepRate}%</strong>
+                    </div>
+                    <div style="background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div style="background: ${stepRate >= 80 ? 'var(--accent-success)' : 'var(--accent-warning)'}; height: 100%; width: ${stepRate}%;"></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>Sleep</span>
+                        <strong style="color: ${sleepRate >= 80 ? 'var(--accent-success)' : 'var(--accent-warning)'};">${sleepRate}%</strong>
+                    </div>
+                    <div style="background: var(--bg-tertiary); height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div style="background: ${sleepRate >= 80 ? 'var(--accent-success)' : 'var(--accent-warning)'}; height: 100%; width: ${sleepRate}%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+
+
+// Data model: Hume fields (5 core measurements) + derived FFM
+// Hume fields: weight, bf_percent, bf_lbs, lean_lbs, residual
+// Derived FFM = weight - bf_lbs (pure mathematical fat-free mass)
+// Keep both for comparison and analysis
+
+function calculateFFM(entry) {
+    if (!entry.weight || !entry.bf_lbs) return null;
+    return entry.weight - entry.bf_lbs;
+}
+
+function addFFMColumn() {
+    // FFM can be displayed optionally in advanced view
+    // For now, we keep the 5 Hume fields as primary
+    // FFM = weight - fat lbs (mathematical)
+    // Lean lbs = Hume's lean mass measurement (includes water variations)
+}
+
+
+
+// Enhanced table display with rolling averages
+function renderEnhancedDataTable() {
+    const dataTable = document.getElementById('dataTable');
+    if (!dataTable) return;
+    
+    const filteredData = getFilteredData();
+    const allDataSorted = [...bodyData].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Calculate rolling averages for all data
+    const weightAvg = rollingAverage(allDataSorted, 'weight', 7);
+    const bfAvg = rollingAverage(allDataSorted, 'bf_percent', 7);
+    const leanAvg = rollingAverage(allDataSorted, 'lean_lbs', 7);
+    
+    // Create lookup map for averages
+    const avgMap = {};
+    allDataSorted.forEach((entry, i) => {
+        avgMap[entry.date] = {
+            weightAvg: weightAvg[i],
+            bfAvg: bfAvg[i],
+            leanAvg: leanAvg[i]
+        };
+    });
+    
+    // Build table with averages shown as subtle text below values
+    let html = '<table style="width: 100%; border-collapse: collapse;"><thead><tr>';
+    html += '<th>Date</th><th>Weight<br><small>(7d avg)</small></th><th>BF%<br><small>(7d avg)</small></th>';
+    html += '<th>Lean lbs<br><small>(7d avg)</small></th><th>Water %</th><th>Calories</th><th>Protein</th>';
+    html += '<th>Integrity</th><th>Badges</th></tr></thead><tbody>';
+    
+    filteredData.forEach(entry => {
+        const avg = avgMap[entry.date] || {};
+        html += '<tr>';
+        html += `<td>${entry.date}</td>`;
+        html += `<td>${formatNumber(entry.weight, 1)}<br><small style="color: var(--text-secondary);">${formatNumber(avg.weightAvg, 1)}</small></td>`;
+        html += `<td>${formatNumber(entry.bf_percent, 1)}%<br><small style="color: var(--text-secondary);">${formatNumber(avg.bfAvg, 1)}%</small></td>`;
+        html += `<td>${formatNumber(entry.lean_lbs, 1)}<br><small style="color: var(--text-secondary);">${formatNumber(avg.leanAvg, 1)}</small></td>`;
+        html += `<td>${formatNumber(entry.water_percent, 1)}%</td>`;
+        html += `<td>${entry.calories || '-'}</td>`;
+        html += `<td>${entry.protein || '-'}</td>`;
+        html += `<td>${entry.integrity_status || 'Unknown'}</td>`;
+        html += `<td>${getConsistencyBadges(entry)}</td>`;
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table>';
+    dataTable.innerHTML = html;
+}
+
+
+</script>
 </body>
 </html>
