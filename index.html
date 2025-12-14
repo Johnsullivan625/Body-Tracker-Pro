@@ -740,10 +740,16 @@
     <script>
         // ===== GLOBAL CONFIGURATION =====
         const STORAGE_KEY = 'bodyTrackingData_User1';
+        const MEASUREMENTS_KEY = 'bodyMeasurements_User1';
+        const TRAINING_KEY = 'trainingLog_User1';
         const GOALS = {
             target_weight: 215,
             target_bf_percent: 10.0,
-            target_bf_lbs: 21.5
+            target_bf_lbs: 21.5,
+            target_calories: 2000,
+            target_protein: 200,
+            target_fat: 70,
+            target_carbs: 150
         };
         
         // Integrity validation thresholds
@@ -858,7 +864,7 @@
             return { status: 'valid', message: 'Entry passes sanity checks', errors: [], derived };
         }
         
-        function computeIntegrityStatus(weight, bfPercent, leanMass) {
+        function computeIntegrityStatus(weight, bfPercent, leanMass, priorEntriesOnly = null) {
             const validation = validateEntry(weight, bfPercent, leanMass);
             
             if (validation.status === 'red' || validation.status === 'gray') {
@@ -866,9 +872,18 @@
             }
             
             // Get historical residuals for baseline
-            const validEntries = bodyData.filter(e => 
-                isFinite(e.weight) && isFinite(e.bf_percent) && isFinite(e.lean_lbs) && e.residual !== undefined
-            ).sort((a, b) => a.date.localeCompare(b.date));
+            // If priorEntriesOnly is provided, use only those (sequential calculation)
+            // Otherwise use all bodyData (for real-time entry)
+            let validEntries;
+            if (priorEntriesOnly !== null) {
+                validEntries = priorEntriesOnly.filter(e => 
+                    isFinite(e.weight) && isFinite(e.bf_percent) && isFinite(e.lean_lbs) && e.residual !== undefined
+                ).sort((a, b) => a.date.localeCompare(b.date));
+            } else {
+                validEntries = bodyData.filter(e => 
+                    isFinite(e.weight) && isFinite(e.bf_percent) && isFinite(e.lean_lbs) && e.residual !== undefined
+                ).sort((a, b) => a.date.localeCompare(b.date));
+            }
             
             const recent = validEntries.slice(-INTEGRITY_CONFIG.baselineWindow);
             
@@ -882,27 +897,42 @@
                 };
             }
             
-            const residuals = recent.map(e => e.residual);
-            const baselineMean = residuals.reduce((sum, r) => sum + r, 0) / residuals.length;
-            const residualDelta = Math.abs(validation.derived.residual - baselineMean);
+            // Use ROBUST statistics: median + MAD (Median Absolute Deviation)
+            const residuals = recent.map(e => e.residual).sort((a, b) => a - b);
+            const median = residuals[Math.floor(residuals.length / 2)];
             
-            if (residualDelta <= INTEGRITY_CONFIG.greenThreshold) {
+            // Calculate MAD (Median Absolute Deviation)
+            const deviations = residuals.map(r => Math.abs(r - median)).sort((a, b) => a - b);
+            const mad = deviations[Math.floor(deviations.length / 2)];
+            
+            // Use median as baseline instead of mean (more robust to outliers)
+            const baselineMedian = median;
+            const residualDelta = Math.abs(validation.derived.residual - baselineMedian);
+            
+            // Adaptive thresholds based on MAD
+            // MAD * 1.4826 ≈ standard deviation for normal distribution
+            const adaptiveGreen = Math.max(INTEGRITY_CONFIG.greenThreshold, mad * 1.5);
+            const adaptiveYellow = Math.max(INTEGRITY_CONFIG.yellowThreshold, mad * 2.5);
+            
+            if (residualDelta <= adaptiveGreen) {
                 return {
                     status: 'green',
                     message: 'Good - Values align with baseline',
                     errors: [],
                     derived: validation.derived,
-                    baselineMean,
-                    residualDelta
+                    baselineMedian,
+                    residualDelta,
+                    mad
                 };
-            } else if (residualDelta <= INTEGRITY_CONFIG.yellowThreshold) {
+            } else if (residualDelta <= adaptiveYellow) {
                 return {
                     status: 'yellow',
                     message: 'Warning - Slight variance detected',
                     errors: [],
                     derived: validation.derived,
-                    baselineMean,
-                    residualDelta
+                    baselineMedian,
+                    residualDelta,
+                    mad
                 };
             } else {
                 return {
@@ -910,9 +940,35 @@
                     message: `Check data - Residual shifted ${residualDelta.toFixed(1)} lbs from baseline`,
                     errors: ['Possible entry error - verify values from Hume app'],
                     derived: validation.derived,
-                    baselineMean,
-                    residualDelta
+                    baselineMedian,
+                    residualDelta,
+                    mad
                 };
+            }
+        }
+        
+        // Sequential integrity recalculation for all entries
+        function recomputeAllIntegrity() {
+            const sorted = bodyData.slice().sort((a, b) => a.date.localeCompare(b.date));
+            
+            for (let i = 0; i < sorted.length; i++) {
+                const entry = sorted[i];
+                // Only use prior entries (0 to i-1) as baseline
+                const priorEntries = sorted.slice(0, i);
+                
+                const integrity = computeIntegrityStatus(
+                    entry.weight,
+                    entry.bf_percent,
+                    entry.lean_lbs,
+                    priorEntries
+                );
+                
+                // Update the entry in bodyData
+                const index = bodyData.findIndex(e => e.date === entry.date);
+                if (index >= 0) {
+                    bodyData[index].integrity_status = integrity.status;
+                    bodyData[index].integrity_message = integrity.message;
+                }
             }
         }
         
@@ -954,15 +1010,9 @@
                 console.log(`✅ Loaded ${bodyData.length} entries from INITIAL_DATA`);
             }
             
-            // Recompute integrity for all entries
-            bodyData = bodyData.map(entry => {
-                const integrity = computeIntegrityStatus(entry.weight, entry.bf_percent, entry.lean_lbs);
-                return {
-                    ...entry,
-                    integrity_status: integrity.status,
-                    integrity_message: integrity.message
-                };
-            });
+            // Recompute integrity for all entries SEQUENTIALLY
+            // This ensures each entry only uses prior entries as baseline
+            recomputeAllIntegrity();
         }
         
         function saveData() {
@@ -1227,7 +1277,7 @@
                 if (integrity.residualDelta !== undefined) {
                     details += `<p style="margin: 5px 0; font-size: 0.85em; font-family: 'Space Mono', monospace; color: var(--text-secondary);">
                         Residual: ${integrity.derived.residual.toFixed(2)} lbs | 
-                        Baseline: ${integrity.baselineMean?.toFixed(2) || 'N/A'} lbs | 
+                        Baseline: ${integrity.baselineMedian?.toFixed(2) || 'N/A'} lbs | 
                         Delta: ${integrity.residualDelta.toFixed(2)} lbs
                     </p>`;
                 }
@@ -1278,7 +1328,7 @@
                     `⚠️ Slight Variance Detected\n\n` +
                     `${integrity.message}\n\n` +
                     `Residual: ${integrity.derived.residual.toFixed(2)} lbs\n` +
-                    `Baseline: ${integrity.baselineMean.toFixed(2)} lbs\n` +
+                    `Baseline: ${integrity.baselineMedian.toFixed(2)} lbs\n` +
                     `Delta: ${integrity.residualDelta.toFixed(2)} lbs\n\n` +
                     `This is usually normal day-to-day variance.\n` +
                     `Continue saving?`
@@ -1339,8 +1389,18 @@
             currentChartType = chartType;
             
             // Update active tab
-            document.querySelectorAll('.chart-tab').forEach(tab => tab.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelectorAll('.chart-tab').forEach(tab => {
+                tab.classList.remove('active');
+                // Set active on the tab that matches this chart type
+                if (tab.textContent.includes(
+                    chartType === 'fatVsLean' ? 'Fat vs Lean' :
+                    chartType === 'weightTrend' ? 'Weight & BF%' :
+                    chartType === 'rateOfChange' ? 'Rate of Change' :
+                    'Nutrition'
+                )) {
+                    tab.classList.add('active');
+                }
+            });
             
             updateChart();
         }
@@ -1739,13 +1799,22 @@
             // Remove active from all buttons
             document.querySelectorAll('.tab-button').forEach(btn => {
                 btn.classList.remove('active');
+                // Set active on button that triggers this tab
+                const btnText = btn.textContent.toLowerCase();
+                if (
+                    (tabName === 'dashboard' && btnText.includes('dashboard')) ||
+                    (tabName === 'nutrition' && btnText.includes('nutrition')) ||
+                    (tabName === 'measurements' && btnText.includes('measurements')) ||
+                    (tabName === 'training' && btnText.includes('training')) ||
+                    (tabName === 'correlations' && btnText.includes('correlations')) ||
+                    (tabName === 'data' && btnText.includes('all data'))
+                ) {
+                    btn.classList.add('active');
+                }
             });
             
             // Show selected tab
             document.getElementById(tabName + '-tab').classList.add('active');
-            
-            // Set button active
-            event.target.classList.add('active');
             
             // Update content for specific tabs
             if (tabName === 'nutrition') updateNutritionTab();
