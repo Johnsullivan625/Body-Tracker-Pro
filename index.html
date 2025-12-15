@@ -337,7 +337,7 @@
             font-weight: 500;
         }
         
-        .form-field input, .form-field textarea {
+        .form-field input, .form-field textarea, .form-field select {
             width: 100%;
             background: var(--bg-secondary);
             border: 1px solid var(--border);
@@ -496,6 +496,7 @@
                 <button onclick="exportBackup()">💾 Backup JSON</button>
                 <button onclick="reloadData()" style="background: var(--accent-purple);">🔄 Reload Data</button>
                 <button onclick="debugData()" style="background: var(--accent-warning);">🔧 Debug Data</button>
+                <button onclick="openSyncModal()" style="background: var(--accent-success);">☁️ Sync</button>
             </div>
         </div>
 
@@ -526,6 +527,7 @@
                     <div class="chart-tab" onclick="switchChart('weightTrend', this)">Weight & BF% Trend</div>
                     <div class="chart-tab" onclick="switchChart('rateOfChange', this)">Daily Rate of Change</div>
                     <div class="chart-tab" onclick="switchChart('nutrition', this)">Nutrition Tracking</div>
+                    <div class="chart-tab" onclick="switchChart('waterOverlay', this)">Body Water % Overlay</div>
                 </div>
                 <div class="chart-wrapper">
                     <canvas id="mainChart"></canvas>
@@ -600,6 +602,8 @@
                                 <th>BF%</th>
                                 <th>BF lbs</th>
                                 <th>Lean</th>
+                                <th>Lean%</th>
+                                <th>Water%</th>
                                 <th>Cal</th>
                                 <th>Pro</th>
                                 <th>Fat</th>
@@ -709,6 +713,10 @@
                         <label>Sleep Hours</label>
                         <input type="number" step="0.1" id="entrySleepHours">
                     </div>
+                    <div class="form-field">
+                        <label>Body Water % (Optional)</label>
+                        <input type="number" step="0.1" id="entryBodyWater">
+                    </div>
                 </div>
             </div>
 
@@ -734,6 +742,9 @@
 
     <!-- TRAINING MODAL -->
     <div class="modal-overlay" id="trainingModal"></div>
+
+    <!-- SYNC MODAL -->
+    <div class="modal-overlay" id="syncModal"></div>
 
     <div class="toast" id="toast"></div>
 
@@ -1126,6 +1137,8 @@ const GOALS = {
                     <td>${entry.bf_percent?.toFixed(1) || ''}%</td>
                     <td>${entry.bf_lbs?.toFixed(1) || ''}</td>
                     <td>${entry.lean_lbs?.toFixed(1) || ''}</td>
+                    <td>${entry.lean_percent?.toFixed(1) || ''}%</td>
+                    <td>${entry.body_water_percent?.toFixed(1) || ''}%</td>
                     <td>${entry.calories || ''}</td>
                     <td>${entry.protein || ''}</td>
                     <td>${entry.fat || ''}</td>
@@ -1179,6 +1192,7 @@ const GOALS = {
             document.getElementById('entryRhr').value = entry.rhr || '';
             document.getElementById('entrySleepScore').value = entry.sleep_score || '';
             document.getElementById('entrySleepHours').value = entry.sleep_duration_hrs || '';
+            document.getElementById('entryBodyWater').value = entry.body_water_percent || '';
             document.getElementById('entryRefeed').checked = entry.refeed || false;
             document.getElementById('entryNotes').value = entry.notes || '';
             
@@ -1203,6 +1217,7 @@ const GOALS = {
             document.getElementById('entryRhr').value = '';
             document.getElementById('entrySleepScore').value = '';
             document.getElementById('entrySleepHours').value = '';
+            document.getElementById('entryBodyWater').value = '';
             document.getElementById('entryRefeed').checked = false;
             document.getElementById('entryNotes').value = '';
             updateModalDerivedFields();
@@ -1313,6 +1328,7 @@ const GOALS = {
                 rhr: parseFloat(document.getElementById('entryRhr').value) || null,
                 sleep_score: parseFloat(document.getElementById('entrySleepScore').value) || null,
                 sleep_duration_hrs: parseFloat(document.getElementById('entrySleepHours').value) || null,
+                body_water_percent: parseFloat(document.getElementById('entryBodyWater').value) || null,
                 refeed: document.getElementById('entryRefeed').checked,
                 notes: document.getElementById('entryNotes').value,
                 integrity_status: integrity.status,
@@ -1348,16 +1364,27 @@ const GOALS = {
         
         function switchChart(chartType, el) {
             currentChartType = chartType;
-            
+
             // Update active tab
             document.querySelectorAll('.chart-tab').forEach(tab => tab.classList.remove('active'));
-            if (el) {
+            if (el && el.classList) {
                 el.classList.add('active');
             } else {
-                const tabEl = Array.from(document.querySelectorAll('.chart-tab')).find(t => (t.getAttribute('onclick') || '').includes("switchChart('" + chartType + "'"));
-                if (tabEl) tabEl.classList.add('active');
+                const map = {
+                    fatVsLean: 'Fat vs Lean Breakdown',
+                    weightTrend: 'Weight & BF% Trend',
+                    rateOfChange: 'Daily Rate of Change',
+                    nutrition: 'Nutrition Tracking',
+                    waterOverlay: 'Body Water % Overlay'
+                };
+                const label = map[chartType];
+                if (label) {
+                    document.querySelectorAll('.chart-tab').forEach(tab => {
+                        if ((tab.textContent || '').trim() === label) tab.classList.add('active');
+                    });
+                }
             }
-            
+
             updateChart();
         }
         
@@ -1385,7 +1412,11 @@ const GOALS = {
                 case 'nutrition':
                     currentChart = createNutritionChart(ctx, sorted);
                     break;
-            }
+            
+                case 'waterOverlay':
+                    currentChart = createWaterOverlayChart(ctx, sorted);
+                    break;
+}
         }
         
         function createFatVsLeanChart(ctx, data) {
@@ -1666,6 +1697,97 @@ const GOALS = {
             });
         }
 
+        
+        
+        function createWaterOverlayChart(ctx, data) {
+            const withWater = data.filter(d => d.body_water_percent != null && isFinite(d.body_water_percent));
+            if (withWater.length < 2) {
+                return createWeightTrendChart(ctx, data);
+            }
+            return new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: withWater.map(d => d.date),
+                    datasets: [
+                        {
+                            label: 'Weight (lbs)',
+                            data: withWater.map(d => d.weight),
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            borderColor: 'rgba(6, 182, 212, 1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Body Water %',
+                            data: withWater.map(d => d.body_water_percent),
+                            backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                            borderColor: 'rgba(16, 185, 129, 1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.3,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Weight with Body Water % Overlay',
+                            color: '#f1f5f9',
+                            font: { size: 16 }
+                        },
+                        legend: {
+                            labels: { color: '#f1f5f9' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const v = context.parsed.y;
+                                    if (label.includes('%')) return `${label}: ${v.toFixed(1)}%`;
+                                    return `${label}: ${v.toFixed(1)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' }
+                        },
+                        y: {
+                            type: 'linear',
+                            position: 'left',
+                            ticks: { color: '#94a3b8' },
+                            grid: { color: 'rgba(51, 65, 85, 0.3)' },
+                            title: {
+                                display: true,
+                                text: 'Weight (lbs)',
+                                color: '#06b6d4'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            position: 'right',
+                            ticks: { color: '#94a3b8' },
+                            grid: { display: false },
+                            title: {
+                                display: true,
+                                text: 'Body Water %',
+                                color: '#10b981'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
         // ===== EXPORT FUNCTIONS =====
         
         function exportCSV() {
@@ -1677,7 +1799,7 @@ const GOALS = {
             const headers = [
                 'Date', 'Weight', 'BF%', 'BF lbs', 'Lean lbs', 'Lean%', 'Residual',
                 'Calories', 'Protein', 'Fat', 'Carbs', 'Steps', 'RHR', 
-                'Sleep Score', 'Sleep Hrs', 'Refeed', 'Integrity', 'Notes'
+                'Sleep Score', 'Sleep Hrs', 'Water %', 'Refeed', 'Integrity', 'Notes'
             ];
             
             const rows = bodyData
@@ -1699,6 +1821,7 @@ const GOALS = {
                     d.rhr || '',
                     d.sleep_score || '',
                     d.sleep_duration_hrs?.toFixed(2) || '',
+                    d.body_water_percent?.toFixed(1) || '',
                     d.refeed ? 'Yes' : 'No',
                     d.integrity_status || '',
                     `"${(d.notes || '').replace(/"/g, '""')}"`
@@ -2334,65 +2457,246 @@ const GOALS = {
             document.getElementById('measurementsModal').classList.remove('show');
         }
         
-        // ===== TRAINING TAB =====
         
+        // ===== TRAINING TAB (V6) =====
+        // Set-by-set tracking, warmups, supersets, planning card, multiple sessions/day, exercise library, optional GitHub Gist sync.
+        const TRAINING_KEY = 'trainingLog_User1_v6';
+        const EXERCISE_LIB_KEY = 'exerciseLibrary_User1_v6';
+        const SYNC_CONFIG_KEY = 'syncConfig_User1_v6';
+
         let trainingLog = [];
-        
+        let exerciseLibrary = [];
+        let activeWorkoutId = null;
+        let exerciseBlockCount = 0;
+
+        function newId(prefix='x') {
+            return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+        }
+
+        function getTodayISO() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function loadExerciseLibrary() {
+            const stored = localStorage.getItem(EXERCISE_LIB_KEY);
+            if (stored) {
+                try { exerciseLibrary = JSON.parse(stored) || []; } catch { exerciseLibrary = []; }
+            } else {
+                exerciseLibrary = [];
+            }
+            if (!Array.isArray(exerciseLibrary)) exerciseLibrary = [];
+
+            if (exerciseLibrary.length < 10) {
+                const seed = ["Bench Press", "Incline Bench Press", "Dumbbell Bench Press", "Overhead Press", "Dumbbell Shoulder Press", "Barbell Row", "Dumbbell Row", "Lat Pulldown", "Pull-Up", "Chin-Up", "Seated Cable Row", "Squat", "Front Squat", "Leg Press", "Romanian Deadlift", "Deadlift", "Hip Thrust", "Lunge", "Bulgarian Split Squat", "Leg Extension", "Leg Curl", "Calf Raise", "Bicep Curl", "Hammer Curl", "Tricep Pushdown", "Skull Crushers", "Dips", "Lateral Raise", "Rear Delt Fly", "Face Pull", "Plank", "Hanging Leg Raise", "Cable Crunch", "Treadmill", "Bike", "Row Erg", "Jump Rope"];
+                const set = new Set(exerciseLibrary.map(x => (x||'').trim()).filter(Boolean).map(x=>x.toLowerCase()));
+                seed.forEach(n => { if (!set.has(n.toLowerCase())) exerciseLibrary.push(n); });
+                saveExerciseLibrary();
+            }
+        }
+
+        function saveExerciseLibrary() {
+            localStorage.setItem(EXERCISE_LIB_KEY, JSON.stringify(exerciseLibrary.slice().sort((a,b)=>a.localeCompare(b))));
+        }
+
+        function normalizeExerciseName(name) {
+            return (name || '').toString().trim();
+        }
+
+        function upsertExerciseToLibrary(name) {
+            const n = normalizeExerciseName(name);
+            if (!n) return;
+            const lower = n.toLowerCase();
+            const exists = exerciseLibrary.some(x => (x||'').toLowerCase() === lower);
+            if (!exists) {
+                exerciseLibrary.push(n);
+                saveExerciseLibrary();
+            }
+        }
+
+        function hydrateExerciseDatalist() {
+            const existing = document.getElementById('exerciseOptions');
+            if (existing) existing.remove();
+            const dl = document.createElement('datalist');
+            dl.id = 'exerciseOptions';
+            exerciseLibrary.slice().sort((a,b)=>a.localeCompare(b)).forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                dl.appendChild(opt);
+            });
+            document.body.appendChild(dl);
+        }
+
         function loadTraining() {
             const stored = localStorage.getItem(TRAINING_KEY);
             if (stored) {
-                trainingLog = JSON.parse(stored);
+                try { trainingLog = JSON.parse(stored) || []; } catch { trainingLog = []; }
+            } else {
+                trainingLog = [];
             }
+            if (!Array.isArray(trainingLog)) trainingLog = [];
         }
-        
+
         function saveTraining() {
             localStorage.setItem(TRAINING_KEY, JSON.stringify(trainingLog));
         }
-        
+
+        function sumWorkingVolumeForExercise(ex) {
+            if (!ex || !Array.isArray(ex.sets)) return 0;
+            return ex.sets.reduce((sum,s)=>{
+                const warm = !!s.warmup;
+                const done = (s.completed === undefined) ? true : !!s.completed;
+                const reps = Number(s.reps);
+                const wt = Number(s.weight);
+                if (!warm && done && isFinite(reps) && isFinite(wt)) return sum + reps*wt;
+                return sum;
+            },0);
+        }
+
+        function sumWorkingSets(ex) {
+            if (!ex || !Array.isArray(ex.sets)) return 0;
+            return ex.sets.reduce((c,s)=>{
+                const warm = !!s.warmup;
+                const done = (s.completed === undefined) ? true : !!s.completed;
+                return c + ((!warm && done) ? 1 : 0);
+            },0);
+        }
+
+        function workoutSummary(session) {
+            const exercises = session.exercises || [];
+            const totalWorkingSets = exercises.reduce((sum, ex)=> sum + sumWorkingSets(ex), 0);
+            const totalVolume = exercises.reduce((sum, ex)=> sum + sumWorkingVolumeForExercise(ex), 0);
+            const supersetGroups = new Set(exercises.map(ex => (ex.superset || '').trim()).filter(Boolean));
+            return { totalWorkingSets, totalVolume, supersetGroups: [...supersetGroups] };
+        }
+
+        function renderWorkoutMiniCard(workout) {
+            const { totalWorkingSets, totalVolume, supersetGroups } = workoutSummary(workout);
+            const when = workout.startTime ? `${workout.startTime}` : '—';
+            return `
+                <div style="background: var(--bg-primary); padding: 14px; border-radius: 10px; border: 1px solid var(--border);">
+                    <div style="display:flex; justify-content: space-between; gap: 10px; align-items: start;">
+                        <div>
+                            <div style="font-weight:700; color: var(--accent-purple);">${escapeHTML(workout.title || workout.type || 'Workout')}</div>
+                            <div style="color: var(--text-secondary); font-family:'Space Mono', monospace; font-size:0.85em; margin-top:4px;">Start: ${when}</div>
+                        </div>
+                        <div style="display:flex; gap:6px; flex-wrap: wrap;">
+                            <button onclick="editWorkoutById('${workout.id}')" style="padding: 6px 10px; font-size:0.8em;">Open</button>
+                        </div>
+                    </div>
+                    <div style="margin-top:10px; color: var(--text-secondary); font-family:'Space Mono', monospace; font-size:0.85em;">
+                        Sets: ${totalWorkingSets} • Vol: ${Math.round(totalVolume).toLocaleString()} • Supersets: ${supersetGroups.length || 0}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderExerciseSummary(ex) {
+            const sets = ex.sets || [];
+            const warmups = sets.filter(s=>!!s.warmup).length;
+            const work = sets.filter(s=>!s.warmup).length;
+            const vol = Math.round(sumWorkingVolumeForExercise(ex)).toLocaleString();
+            return `
+                <div style="background: var(--bg-secondary); padding: 10px; border-radius: 8px; margin: 6px 0; border: 1px solid var(--border);">
+                    <div style="display:flex; justify-content: space-between; gap: 10px; align-items: start;">
+                        <div style="font-weight: 700;">${escapeHTML(ex.name || 'Exercise')}</div>
+                        <div style="font-family:'Space Mono', monospace; color: var(--text-secondary); font-size:0.85em;">Vol: ${vol}</div>
+                    </div>
+                    <div style="font-size: 0.85em; color: var(--text-secondary); font-family: 'Space Mono', monospace; margin-top:6px;">
+                        Sets: ${work} work • ${warmups} warmup
+                    </div>
+                </div>
+            `;
+        }
+
         function updateTrainingTab() {
+            const today = getTodayISO();
+            const sessionsToday = trainingLog
+                .filter(w => w.date === today)
+                .sort((a,b)=> (a.startTime||'').localeCompare(b.startTime||''));
+
+            const planCard = `
+                <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <div style="display:flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <div>
+                            <h3 style="color: var(--accent-cyan); margin-bottom: 6px;">📌 Workout for Today (${today})</h3>
+                            <div style="color: var(--text-secondary); font-size: 0.9em;">
+                                Plan the work • Work the plan • Warmup sets do not count toward volume
+                            </div>
+                        </div>
+                        <div style="display:flex; gap: 8px; flex-wrap: wrap;">
+                            <button onclick="showAddWorkout('${today}')" class="primary">+ Plan Workout</button>
+                            <button onclick="duplicateLastWorkoutToToday()" style="background: var(--accent-purple);">↩︎ Duplicate Last</button>
+                        </div>
+                    </div>
+                    ${sessionsToday.length === 0 ? `
+                        <div style="margin-top: 15px; color: var(--text-secondary);">
+                            No workouts planned/logged for today yet.
+                        </div>
+                    ` : `
+                        <div style="margin-top: 15px; display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+                            ${sessionsToday.map(s => renderWorkoutMiniCard(s)).join('')}
+                        </div>
+                    `}
+                </div>
+            `;
+
             if (trainingLog.length === 0) {
-                document.getElementById('trainingContent').innerHTML = `
+                document.getElementById('trainingContent').innerHTML = planCard + `
                     <div style="background: var(--bg-tertiary); padding: 30px; border-radius: 10px; text-align: center;">
                         <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🏋️ No Workouts Logged Yet</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 20px;">
-                            Start tracking your training sessions with exercises, sets, reps, and weight.
+                            Track sessions with individual sets, warmups, and supersets.
                         </p>
-                        <button onclick="showAddWorkout()" class="primary">+ Log First Workout</button>
+                        <button onclick="showAddWorkout('${today}')" class="primary">+ Log First Workout</button>
                     </div>
                 `;
                 return;
             }
-            
-            const sorted = trainingLog.slice().sort((a, b) => b.date.localeCompare(a.date));
-            
+
+            const sorted = trainingLog.slice().sort((a,b)=>
+                b.date.localeCompare(a.date) || (b.startTime||'').localeCompare(a.startTime||'')
+            );
+
             let workoutCards = '';
             sorted.forEach(workout => {
+                const { totalWorkingSets, totalVolume, supersetGroups } = workoutSummary(workout);
+                const exercises = workout.exercises || [];
                 let exercisesHtml = '';
-                if (workout.exercises && workout.exercises.length > 0) {
-                    workout.exercises.forEach(ex => {
-                        exercisesHtml += `
-                            <div style="background: var(--bg-primary); padding: 10px; border-radius: 6px; margin: 5px 0;">
-                                <div style="font-weight: 600; margin-bottom: 5px;">${ex.name}</div>
-                                <div style="font-size: 0.85em; color: var(--text-secondary); font-family: 'Space Mono', monospace;">
-                                    ${ex.sets} sets × ${ex.reps} reps @ ${ex.weight} lbs
-                                </div>
-                            </div>
-                        `;
+
+                if (exercises.length > 0) {
+                    const groups = {};
+                    exercises.forEach(ex => {
+                        const k = (ex.superset || '').trim();
+                        const key = k ? `Superset ${escapeHTML(k)}` : 'Exercises';
+                        groups[key] = groups[key] || [];
+                        groups[key].push(ex);
+                    });
+                    Object.keys(groups).sort().forEach(groupName => {
+                        exercisesHtml += `<div style="margin-top: 10px;">
+                            <div style="font-family:'Space Mono', monospace; color: var(--text-secondary); margin-bottom: 6px;">${groupName}</div>
+                            ${groups[groupName].map(ex => renderExerciseSummary(ex)).join('')}
+                        </div>`;
                     });
                 } else {
                     exercisesHtml = '<p style="color: var(--text-secondary); font-style: italic;">No exercises logged</p>';
                 }
-                
+
+                const label = workout.startTime ? `${workout.date} • ${workout.startTime}` : workout.date;
+
                 workoutCards += `
                     <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; gap: 10px;">
                             <div>
-                                <h3 style="color: var(--accent-purple); margin-bottom: 5px;">${workout.type || 'Workout'}</h3>
-                                <div style="font-size: 0.9em; color: var(--text-secondary);">${workout.date}</div>
+                                <h3 style="color: var(--accent-purple); margin-bottom: 5px;">${escapeHTML(workout.title || workout.type || 'Workout')}</h3>
+                                <div style="font-size: 0.9em; color: var(--text-secondary); font-family:'Space Mono', monospace;">${label}</div>
+                                <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 6px; font-family:'Space Mono', monospace;">
+                                    Working Sets: ${totalWorkingSets} • Volume: ${Math.round(totalVolume).toLocaleString()} • Supersets: ${supersetGroups.length || 0}
+                                </div>
                             </div>
-                            <div style="display: flex; gap: 5px;">
-                                <button onclick="editWorkout('${workout.date}')" style="padding: 5px 10px; font-size: 0.8em;">Edit</button>
-                                <button class="danger" onclick="deleteWorkout('${workout.date}')">×</button>
+                            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                                <button onclick="editWorkoutById('${workout.id}')" style="padding: 5px 10px; font-size: 0.8em;">Edit</button>
+                                <button onclick="duplicateWorkout('${workout.id}')" style="padding: 5px 10px; font-size: 0.8em; background: var(--accent-purple);">Duplicate</button>
+                                <button class="danger" onclick="deleteWorkout('${workout.id}')">×</button>
                             </div>
                         </div>
                         ${exercisesHtml}
@@ -2400,219 +2704,832 @@ const GOALS = {
                     </div>
                 `;
             });
-            
-            document.getElementById('trainingContent').innerHTML = workoutCards;
+
+            document.getElementById('trainingContent').innerHTML = planCard + workoutCards;
         }
-        
-        function showAddWorkout() {
+
+        function showAddWorkout(defaultDate) {
+            loadExerciseLibrary();
+            hydrateExerciseDatalist();
+            exerciseBlockCount = 0;
+            activeWorkoutId = null;
+
+            const date = defaultDate || getTodayISO();
             const modal = document.getElementById('trainingModal');
-            modal.innerHTML = `
+            modal.innerHTML = renderWorkoutModal({
+                id: newId('w'),
+                date,
+                startTime: '',
+                type: 'Workout',
+                title: '',
+                notes: '',
+                exercises: []
+            }, true);
+            modal.classList.add('show');
+
+            addExerciseBlock();
+        }
+
+        function editWorkoutById(id) {
+            const w = trainingLog.find(x => x.id === id);
+            if (!w) return;
+
+            loadExerciseLibrary();
+            hydrateExerciseDatalist();
+            exerciseBlockCount = 0;
+            activeWorkoutId = id;
+
+            const modal = document.getElementById('trainingModal');
+            modal.innerHTML = renderWorkoutModal(w, false);
+            modal.classList.add('show');
+
+            if (Array.isArray(w.exercises) && w.exercises.length) {
+                w.exercises.forEach(ex => addExerciseBlock(ex));
+            } else {
+                addExerciseBlock();
+            }
+        }
+
+        function renderWorkoutModal(workout, isNew) {
+            const title = isNew ? 'Plan / Log Workout' : 'Edit Workout';
+            return `
                 <div class="modal">
-                    <h2>Log Workout</h2>
+                    <h2>${title}</h2>
+                    <div class="integrity-notice" style="margin-top: 10px;">
+                        <h4>🏋️ Set-by-Set Training Log (V6)</h4>
+                        <p>Track each set individually • Mark warmups (excluded from volume) • Supersets supported • Multiple sessions/day supported.</p>
+                        <p style="margin-top:6px;">Tip: Build the workout first, then update weights/reps live during training.</p>
+                    </div>
+
                     <div class="form-section">
                         <h3>Workout Details</h3>
                         <div class="form-grid">
                             <div class="form-field">
                                 <label class="required">Date</label>
-                                <input type="date" id="workoutDate" value="${new Date().toISOString().split('T')[0]}">
+                                <input type="date" id="workoutDate" value="${escapeHTML(workout.date)}">
+                            </div>
+                            <div class="form-field">
+                                <label>Start Time (optional)</label>
+                                <input type="time" id="workoutStartTime" value="${escapeHTML(workout.startTime || '')}">
+                                <div style="font-size:0.75em; color: var(--text-secondary); margin-top:3px;">Use for two-a-days</div>
+                            </div>
+                            <div class="form-field">
+                                <label>Workout Title</label>
+                                <input type="text" id="workoutTitle" placeholder="e.g., Push Day A" value="${escapeHTML(workout.title || '')}">
                             </div>
                             <div class="form-field">
                                 <label>Workout Type</label>
                                 <select id="workoutType">
-                                    <option>Upper Body</option>
-                                    <option>Lower Body</option>
-                                    <option>Full Body</option>
-                                    <option>Push</option>
-                                    <option>Pull</option>
-                                    <option>Legs</option>
-                                    <option>Cardio</option>
-                                    <option>Other</option>
+                                    ${['Upper Body','Lower Body','Full Body','Push','Pull','Legs','Cardio','Other']
+                                        .map(opt => `<option ${(workout.type||'')===opt?'selected':''}>${opt}</option>`).join('')}
                                 </select>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="form-section">
-                        <h3>Exercises</h3>
-                        <div id="exercisesList"></div>
-                        <button onclick="addExerciseRow()" style="margin-top: 10px;">+ Add Exercise</button>
+                        <h3>Exercises (with Sets)</h3>
+                        <div id="exerciseBlocks"></div>
+                        <div style="display:flex; gap:10px; flex-wrap: wrap; margin-top: 10px;">
+                            <button onclick="addExerciseBlock()">+ Add Exercise</button>
+                            <button onclick="addSupersetPair()" style="background: var(--accent-purple);">+ Superset (2)</button>
+                        </div>
                     </div>
-                    
+
                     <div class="form-section">
                         <div class="form-field">
                             <label>Notes</label>
-                            <textarea id="workoutNotes" rows="2" placeholder="How did it feel? Any PRs?"></textarea>
+                            <textarea id="workoutNotes" rows="2" placeholder="How did it feel? Any PRs?">${escapeHTML(workout.notes || '')}</textarea>
                         </div>
                     </div>
-                    
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button onclick="saveWorkout()" class="primary">Save Workout</button>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                        <button onclick="saveWorkoutV6()" class="primary">${isNew ? 'Save Workout' : 'Save Changes'}</button>
                         <button onclick="hideTrainingModal()">Cancel</button>
                     </div>
+
+                    <input type="hidden" id="workoutId" value="${escapeHTML(workout.id)}">
                 </div>
             `;
-            modal.classList.add('show');
-            addExerciseRow(); // Add first exercise row
         }
-        
-        let exerciseCount = 0;
-        
-        function addExerciseRow() {
-            const list = document.getElementById('exercisesList');
-            const id = exerciseCount++;
-            const row = document.createElement('div');
-            row.id = `exercise-${id}`;
-            row.style.cssText = 'background: var(--bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 10px;';
-            row.innerHTML = `
-                <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
-                    <h4 style="color: var(--accent-cyan); flex: 1;">Exercise ${id + 1}</h4>
-                    <button class="danger" onclick="removeExerciseRow(${id})" style="padding: 3px 8px;">×</button>
+
+        function addExerciseBlock(prefill=null) {
+            const container = document.getElementById('exerciseBlocks');
+            if (!container) return;
+
+            const id = exerciseBlockCount++;
+            const ex = prefill || { id: newId('ex'), name: '', superset: '', notes: '', sets: [] };
+
+            const block = document.createElement('div');
+            block.id = `exerciseBlock-${id}`;
+            block.style.cssText = 'background: var(--bg-primary); padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid var(--border);';
+
+            block.innerHTML = `
+                <div style="display:flex; justify-content: space-between; gap: 10px; align-items: start; margin-bottom: 10px;">
+                    <div style="flex:1;">
+                        <div style="display:flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                            <div style="font-weight: 700; color: var(--accent-cyan);">Exercise</div>
+                            <input type="text" list="exerciseOptions" id="exName-${id}" placeholder="Start typing (e.g., Bench Press)" value="${escapeHTML(ex.name||'')}" style="flex: 1; min-width: 220px;">
+                            <div style="display:flex; gap: 8px; align-items: center;">
+                                <label style="font-size:0.85em; color: var(--text-secondary);">Superset</label>
+                                <input type="text" id="exSuperset-${id}" placeholder="A" value="${escapeHTML(ex.superset||'')}" style="width: 70px;">
+                            </div>
+                        </div>
+                        <div style="margin-top: 8px;">
+                            <textarea id="exNotes-${id}" rows="1" placeholder="Exercise notes (optional)" style="width: 100%;">${escapeHTML(ex.notes||'')}</textarea>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap: 6px; flex-wrap: wrap;">
+                        <button onclick="addSetRow(${id}, false)" style="padding: 6px 10px; font-size:0.85em;">+ Set</button>
+                        <button onclick="addSetRow(${id}, true)" style="padding: 6px 10px; font-size:0.85em; background: var(--accent-warning);">+ Warmup</button>
+                        <button class="danger" onclick="removeExerciseBlock(${id})" style="padding: 4px 10px;">×</button>
+                    </div>
                 </div>
-                <div class="form-grid">
-                    <div class="form-field">
-                        <label>Exercise Name</label>
-                        <input type="text" id="exName-${id}" placeholder="e.g., Bench Press">
-                    </div>
-                    <div class="form-field">
-                        <label>Sets</label>
-                        <input type="number" id="exSets-${id}" placeholder="3">
-                    </div>
-                    <div class="form-field">
-                        <label>Reps</label>
-                        <input type="number" id="exReps-${id}" placeholder="10">
-                    </div>
-                    <div class="form-field">
-                        <label>Weight (lbs)</label>
-                        <input type="number" id="exWeight-${id}" placeholder="135">
-                    </div>
+
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; font-size: 0.85em;">
+                        <thead>
+                            <tr>
+                                <th style="min-width:40px;">#</th>
+                                <th style="min-width:90px;">Warmup</th>
+                                <th style="min-width:90px;">Reps</th>
+                                <th style="min-width:120px;">Weight</th>
+                                <th style="min-width:90px;">Done</th>
+                                <th style="min-width:110px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="setRows-${id}"></tbody>
+                    </table>
                 </div>
+                <div style="margin-top: 8px; color: var(--text-secondary); font-family:'Space Mono', monospace; font-size:0.85em;">
+                    Working volume excludes warmup sets.
+                </div>
+
+                <input type="hidden" id="exId-${id}" value="${escapeHTML(ex.id || newId('ex'))}">
             `;
-            list.appendChild(row);
-        }
-        
-        function removeExerciseRow(id) {
-            const row = document.getElementById(`exercise-${id}`);
-            if (row) row.remove();
-        }
-        
-        function saveWorkout() {
-            const date = document.getElementById('workoutDate').value;
-            if (!date) {
-                showToast('Please enter a date', true);
-                return;
+
+            container.appendChild(block);
+
+            if (Array.isArray(ex.sets) && ex.sets.length) {
+                ex.sets.forEach(s => addSetRow(id, !!s.warmup, s));
+            } else {
+                addSetRow(id, false);
+                addSetRow(id, false);
+                addSetRow(id, false);
             }
-            
-            const exercises = [];
-            for (let i = 0; i < exerciseCount; i++) {
-                const nameEl = document.getElementById(`exName-${i}`);
-                if (nameEl && nameEl.value) {
-                    exercises.push({
-                        name: nameEl.value,
-                        sets: parseInt(document.getElementById(`exSets-${i}`).value) || 0,
-                        reps: parseInt(document.getElementById(`exReps-${i}`).value) || 0,
-                        weight: parseFloat(document.getElementById(`exWeight-${i}`).value) || 0
+
+            // Update library when user selects/enters exercise
+            setTimeout(()=>{
+                const nameEl = document.getElementById(`exName-${id}`);
+                if (nameEl) {
+                    nameEl.addEventListener('change', ()=>{
+                        upsertExerciseToLibrary(nameEl.value);
+                        hydrateExerciseDatalist();
                     });
                 }
+            }, 0);
+        }
+
+        function addSupersetPair() {
+            const used = new Set();
+            for (let i=0; i<exerciseBlockCount; i++) {
+                const el = document.getElementById(`exSuperset-${i}`);
+                if (el && el.value.trim()) used.add(el.value.trim().toUpperCase());
             }
-            
-            const workout = {
-                date,
-                type: document.getElementById('workoutType').value,
-                exercises,
-                notes: document.getElementById('workoutNotes').value
-            };
-            
-            trainingLog = trainingLog.filter(w => w.date !== date);
-            trainingLog.push(workout);
-            trainingLog.sort((a, b) => a.date.localeCompare(b.date));
-            
+            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            const next = letters.find(l => !used.has(l)) || 'A';
+            addExerciseBlock({ id: newId('ex'), name:'', superset: next, notes:'', sets:[] });
+            addExerciseBlock({ id: newId('ex'), name:'', superset: next, notes:'', sets:[] });
+        }
+
+        function removeExerciseBlock(id) {
+            const block = document.getElementById(`exerciseBlock-${id}`);
+            if (block) block.remove();
+        }
+
+        function addSetRow(exBlockId, isWarmup=false, prefill=null) {
+            const tbody = document.getElementById(`setRows-${exBlockId}`);
+            if (!tbody) return;
+            const idx = tbody.children.length + 1;
+            const s = prefill || { reps: '', weight: '', warmup: isWarmup, completed: true };
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td style="font-family:'Space Mono', monospace;">${idx}</td>
+                <td><input type="checkbox" id="setWarm-${exBlockId}-${idx}" ${(!!s.warmup)?'checked':''}></td>
+                <td><input type="number" step="1" id="setReps-${exBlockId}-${idx}" value="${(s.reps ?? '')}" style="width:100%;"></td>
+                <td><input type="number" step="0.5" id="setWt-${exBlockId}-${idx}" value="${(s.weight ?? '')}" style="width:100%;"></td>
+                <td><input type="checkbox" id="setDone-${exBlockId}-${idx}" ${(s.completed===undefined || s.completed)?'checked':''}></td>
+                <td>
+                    <button onclick="removeSetRow(this)" class="danger" style="padding: 3px 8px;">×</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        }
+
+        function removeSetRow(btn) {
+            const tr = btn.closest('tr');
+            if (!tr) return;
+            const tbody = tr.parentElement;
+            tr.remove();
+            Array.from(tbody.children).forEach((r,i)=>{
+                const td = r.querySelector('td');
+                if (td) td.textContent = String(i+1);
+            });
+        }
+
+        function collectWorkoutFromModal() {
+            const id = document.getElementById('workoutId').value || newId('w');
+            const date = document.getElementById('workoutDate').value;
+            const startTime = document.getElementById('workoutStartTime').value || '';
+            const title = document.getElementById('workoutTitle').value || '';
+            const type = document.getElementById('workoutType').value || 'Workout';
+            const notes = document.getElementById('workoutNotes').value || '';
+
+            const exercises = [];
+            for (let exBlockId=0; exBlockId<exerciseBlockCount; exBlockId++) {
+                const block = document.getElementById(`exerciseBlock-${exBlockId}`);
+                if (!block) continue;
+
+                const exId = document.getElementById(`exId-${exBlockId}`)?.value || newId('ex');
+                const name = normalizeExerciseName(document.getElementById(`exName-${exBlockId}`)?.value || '');
+                const superset = (document.getElementById(`exSuperset-${exBlockId}`)?.value || '').trim().toUpperCase();
+                const exNotes = document.getElementById(`exNotes-${exBlockId}`)?.value || '';
+
+                const tbody = document.getElementById(`setRows-${exBlockId}`);
+                const setCount = tbody ? tbody.children.length : 0;
+
+                const sets = [];
+                for (let i=1; i<=setCount; i++) {
+                    const repsRaw = document.getElementById(`setReps-${exBlockId}-${i}`)?.value;
+                    const wtRaw = document.getElementById(`setWt-${exBlockId}-${i}`)?.value;
+                    const warmup = !!document.getElementById(`setWarm-${exBlockId}-${i}`)?.checked;
+                    const completed = !!document.getElementById(`setDone-${exBlockId}-${i}`)?.checked;
+
+                    const reps = (repsRaw === '' || repsRaw === undefined) ? null : Number(repsRaw);
+                    const weight = (wtRaw === '' || wtRaw === undefined) ? null : Number(wtRaw);
+
+                    // drop totally empty rows unless warmup is marked
+                    if (reps === null && weight === null && !warmup) continue;
+
+                    sets.push({ reps, weight, warmup, completed });
+                }
+
+                if (!name && sets.length === 0) continue;
+
+                if (name) upsertExerciseToLibrary(name);
+
+                exercises.push({
+                    id: exId,
+                    name: name || 'Exercise',
+                    superset,
+                    notes: exNotes,
+                    sets
+                });
+            }
+
+            return { id, date, startTime, title, type, notes, exercises };
+        }
+
+        function saveWorkoutV6() {
+            const date = document.getElementById('workoutDate').value;
+            if (!date) {
+                showToast('Please enter a workout date', true);
+                return;
+            }
+
+            const workout = collectWorkoutFromModal();
+
+            const idx = trainingLog.findIndex(w => w.id === workout.id);
+            if (idx >= 0) trainingLog[idx] = workout;
+            else trainingLog.push(workout);
+
+            trainingLog.sort((a,b)=> a.date.localeCompare(b.date) || (a.startTime||'').localeCompare(b.startTime||''));
+            saveTraining();
+            hideTrainingModal();
+            updateTrainingTab();
+            showToast('Workout saved!');
+        }
+
+        function duplicateWorkout(id) {
+            const w = trainingLog.find(x => x.id === id);
+            if (!w) return;
+            const copy = JSON.parse(JSON.stringify(w));
+            copy.id = newId('w');
+            copy.date = getTodayISO();
+            copy.startTime = '';
+            copy.title = (copy.title ? (copy.title + ' (Copy)') : 'Workout (Copy)');
+            trainingLog.push(copy);
+            trainingLog.sort((a,b)=> a.date.localeCompare(b.date) || (a.startTime||'').localeCompare(b.startTime||''));
             saveTraining();
             updateTrainingTab();
-            hideTrainingModal();
-            showToast('Workout logged!');
-            exerciseCount = 0;
+            showToast('Duplicated to today');
         }
-        
-        function editWorkout(date) {
-            const workout = trainingLog.find(w => w.date === date);
-            if (!workout) return;
-            
-            const modal = document.getElementById('trainingModal');
-            modal.innerHTML = `
-                <div class="modal">
-                    <h2>Edit Workout</h2>
-                    <div class="form-section">
-                        <h3>Workout Details</h3>
-                        <div class="form-grid">
-                            <div class="form-field">
-                                <label class="required">Date</label>
-                                <input type="date" id="workoutDate" value="${workout.date}">
-                            </div>
-                            <div class="form-field">
-                                <label>Workout Type</label>
-                                <select id="workoutType">
-                                    <option ${workout.type === 'Upper Body' ? 'selected' : ''}>Upper Body</option>
-                                    <option ${workout.type === 'Lower Body' ? 'selected' : ''}>Lower Body</option>
-                                    <option ${workout.type === 'Full Body' ? 'selected' : ''}>Full Body</option>
-                                    <option ${workout.type === 'Push' ? 'selected' : ''}>Push</option>
-                                    <option ${workout.type === 'Pull' ? 'selected' : ''}>Pull</option>
-                                    <option ${workout.type === 'Legs' ? 'selected' : ''}>Legs</option>
-                                    <option ${workout.type === 'Cardio' ? 'selected' : ''}>Cardio</option>
-                                    <option ${workout.type === 'Other' ? 'selected' : ''}>Other</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-section">
-                        <h3>Exercises</h3>
-                        <div id="exercisesList"></div>
-                        <button onclick="addExerciseRow()" style="margin-top: 10px;">+ Add Exercise</button>
-                    </div>
-                    
-                    <div class="form-section">
-                        <div class="form-field">
-                            <label>Notes</label>
-                            <textarea id="workoutNotes" rows="2">${workout.notes || ''}</textarea>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button onclick="saveWorkout()" class="primary">Save Changes</button>
-                        <button onclick="hideTrainingModal()">Cancel</button>
-                    </div>
-                </div>
-            `;
-            modal.classList.add('show');
-            
-            // Add existing exercises
-            if (workout.exercises && workout.exercises.length > 0) {
-                workout.exercises.forEach(ex => {
-                    addExerciseRow();
-                    const id = exerciseCount - 1;
-                    document.getElementById(`exName-${id}`).value = ex.name;
-                    document.getElementById(`exSets-${id}`).value = ex.sets;
-                    document.getElementById(`exReps-${id}`).value = ex.reps;
-                    document.getElementById(`exWeight-${id}`).value = ex.weight;
-                });
-            } else {
-                addExerciseRow();
+
+        function duplicateLastWorkoutToToday() {
+            if (trainingLog.length === 0) {
+                showToast('No workouts to duplicate yet', true);
+                return;
             }
+            const sorted = trainingLog.slice().sort((a,b)=> b.date.localeCompare(a.date) || (b.startTime||'').localeCompare(a.startTime||''));
+            duplicateWorkout(sorted[0].id);
         }
-        
-        function deleteWorkout(date) {
-            if (!confirm(`Delete workout from ${date}?`)) return;
-            trainingLog = trainingLog.filter(w => w.date !== date);
+
+        function deleteWorkout(id) {
+            if (!confirm('Delete this workout session?')) return;
+            trainingLog = trainingLog.filter(w => w.id !== id);
             saveTraining();
             updateTrainingTab();
             showToast('Workout deleted');
         }
-        
+
         function hideTrainingModal() {
             document.getElementById('trainingModal').classList.remove('show');
-            exerciseCount = 0;
+            activeWorkoutId = null;
+            exerciseBlockCount = 0;
         }
+
+        // ===== OPTIONAL CLOUD SYNC (GitHub Gist) =====
+        function getSyncConfig() {
+            const raw = localStorage.getItem(SYNC_CONFIG_KEY);
+            if (!raw) return { enabled:false, gistId:'', token:'' };
+            try { return JSON.parse(raw) || { enabled:false, gistId:'', token:'' }; } catch { return { enabled:false, gistId:'', token:'' }; }
+        }
+
+        function setSyncConfig(cfg) {
+            localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(cfg));
+        }
+
+        function openSyncModal() {
+            const cfg = getSyncConfig();
+            const modal = document.getElementById('syncModal');
+            modal.innerHTML = `
+              <div class="modal">
+                <h2>☁️ Cross-Device Sync (GitHub Gist)</h2>
+                <div class="integrity-notice">
+                  <h4>How Sync Works</h4>
+                  <p>This is a static GitHub Pages app. LocalStorage does not automatically sync across devices.</p>
+                  <p>To sync, you can use a GitHub Gist as a small cloud store. You’ll need a GitHub token with <b>gist</b> scope.</p>
+                  <p style="margin-top:8px;"><b>Note:</b> The token is stored only in your browser (localStorage). Treat it like a password.</p>
+                </div>
+
+                <div class="form-section">
+                  <h3>Sync Settings</h3>
+                  <div class="form-grid">
+                    <div class="form-field">
+                      <label>Enable Sync</label>
+                      <input type="checkbox" id="syncEnabled" style="width:auto;" ${cfg.enabled ? 'checked' : ''}>
+                    </div>
+                    <div class="form-field">
+                      <label>Gist ID</label>
+                      <input type="text" id="syncGistId" placeholder="e.g., a1b2c3d4..." value="${escapeHTML(cfg.gistId || '')}">
+                      <div style="font-size:0.75em; color: var(--text-secondary); margin-top:3px;">Create a private gist (any file). We will update a JSON file inside it.</div>
+                    </div>
+                    <div class="form-field">
+                      <label>GitHub Token (gist scope)</label>
+                      <input type="password" id="syncToken" placeholder="ghp_..." value="${escapeHTML(cfg.token || '')}">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h3>Sync Actions</h3>
+                  <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                    <button class="primary" onclick="saveSyncSettings()">Save Settings</button>
+                    <button onclick="pushSync()">⬆️ Push to Gist</button>
+                    <button onclick="pullSync()">⬇️ Pull from Gist</button>
+                    <button onclick="closeSyncModal()">Close</button>
+                  </div>
+                  <div style="color: var(--text-secondary); font-size:0.85em; margin-top:10px;">
+                    Push uploads body entries, measurements, training log, and your exercise library.<br>
+                    Pull replaces your local data with what’s in the gist.
+                  </div>
+                </div>
+              </div>
+            `;
+            modal.classList.add('show');
+        }
+
+        function closeSyncModal() {
+            document.getElementById('syncModal').classList.remove('show');
+        }
+
+        function saveSyncSettings() {
+            const enabled = !!document.getElementById('syncEnabled').checked;
+            const gistId = (document.getElementById('syncGistId').value || '').trim();
+            const token = (document.getElementById('syncToken').value || '').trim();
+            setSyncConfig({ enabled, gistId, token });
+            showToast('Sync settings saved');
+        }
+
+        function buildSyncPayload() {
+            return {
+                version: 'v6',
+                exportDate: new Date().toISOString(),
+                body: bodyData || [],
+                measurements: measurements || [],
+                training: trainingLog || [],
+                exerciseLibrary: exerciseLibrary || []
+            };
+        }
+
+        async function pushSync() {
+            const cfg = getSyncConfig();
+            if (!cfg.enabled) { showToast('Enable sync first', true); return; }
+            if (!cfg.gistId || !cfg.token) { showToast('Enter gist ID + token', true); return; }
+
+            const payload = buildSyncPayload();
+            const content = JSON.stringify(payload, null, 2);
+
+            try {
+                const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `token ${cfg.token}`,
+                        'Accept': 'application/vnd.github+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        files: {
+                            'body-tracker-sync.json': { content }
+                        }
+                    })
+                });
+                if (!res.ok) {
+                    const t = await res.text();
+                    throw new Error(t || 'GitHub API error');
+                }
+                showToast('✅ Pushed to Gist');
+            } catch (err) {
+                console.error(err);
+                showToast('Sync push failed (see console)', true);
+            }
+        }
+
+        async function pullSync() {
+            const cfg = getSyncConfig();
+            if (!cfg.enabled) { showToast('Enable sync first', true); return; }
+            if (!cfg.gistId || !cfg.token) { showToast('Enter gist ID + token', true); return; }
+
+            try {
+                const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+                    headers: {
+                        'Authorization': `token ${cfg.token}`,
+                        'Accept': 'application/vnd.github+json'
+                    }
+                });
+                if (!res.ok) {
+                    const t = await res.text();
+                    throw new Error(t || 'GitHub API error');
+                }
+                const gist = await res.json();
+                const file = gist.files && gist.files['body-tracker-sync.json'];
+                if (!file || !file.content) throw new Error('No body-tracker-sync.json found in gist');
+
+                const payload = JSON.parse(file.content);
+                if (payload.body) bodyData = payload.body;
+                if (payload.measurements) measurements = payload.measurements;
+                if (payload.training) trainingLog = payload.training;
+                if (payload.exerciseLibrary) exerciseLibrary = payload.exerciseLibrary;
+
+                saveData();
+                saveMeasurements();
+                saveTraining();
+                saveExerciseLibrary();
+
+                loadData(); // recompute integrity
+                updateStats();
+                updateTable();
+                updateChart();
+                updateMeasurementsTab();
+                updateTrainingTab();
+                updateCorrelationsTab();
+
+                showToast('✅ Pulled from Gist');
+            } catch (err) {
+                console.error(err);
+                showToast('Sync pull failed (see console)', true);
+            }
+        }
+
+
         
+        // ===== TRAINING ADDONS (V6.1) =====
+        // Adds: Workout Templates + Live Workout Mode (elapsed timer + rest timer) without removing existing features.
+
+        const TEMPLATE_KEY = 'workoutTemplates_User1_v6';
+        let workoutTemplates = [];
+
+        function loadTemplates() {
+            const stored = localStorage.getItem(TEMPLATE_KEY);
+            if (stored) {
+                try { workoutTemplates = JSON.parse(stored) || []; } catch { workoutTemplates = []; }
+            } else workoutTemplates = [];
+            if (!Array.isArray(workoutTemplates)) workoutTemplates = [];
+        }
+
+        function saveTemplates() {
+            localStorage.setItem(TEMPLATE_KEY, JSON.stringify(workoutTemplates));
+        }
+
+        function templateFromWorkout(workout) {
+            return {
+                id: newId('tpl'),
+                name: workout.title || workout.type || 'Template',
+                type: workout.type || 'Workout',
+                exercises: JSON.parse(JSON.stringify(workout.exercises || []))
+            };
+        }
+
+        function saveWorkoutAsTemplate(workoutId) {
+            loadTemplates();
+            const w = trainingLog.find(x=>x.id===workoutId);
+            if (!w) { showToast('Workout not found', true); return; }
+            const tpl = templateFromWorkout(w);
+            tpl.name = prompt('Template name?', tpl.name) || tpl.name;
+            workoutTemplates.push(tpl);
+            saveTemplates();
+            showToast('Template saved!');
+        }
+
+        function saveCurrentModalAsTemplate() {
+            loadTemplates();
+            const w = collectWorkoutFromModal();
+            const tpl = templateFromWorkout(w);
+            tpl.name = prompt('Template name?', tpl.name) || tpl.name;
+            workoutTemplates.push(tpl);
+            saveTemplates();
+            showToast('Template saved!');
+        }
+
+        function openTemplateManager() {
+            loadTemplates();
+            const modal = document.getElementById('trainingModal');
+            const list = workoutTemplates.slice().sort((a,b)=>a.name.localeCompare(b.name));
+
+            const rows = list.map(t => `
+                <div style="background: var(--bg-primary); border: 1px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom: 10px;">
+                    <div style="display:flex; justify-content: space-between; gap: 10px; align-items: start; flex-wrap: wrap;">
+                        <div>
+                            <div style="font-weight: 800; color: var(--accent-purple);">${escapeHTML(t.name)}</div>
+                            <div style="color: var(--text-secondary); font-family:'Space Mono', monospace; font-size:0.85em;">
+                                ${escapeHTML(t.type || 'Workout')} • ${(t.exercises||[]).length} exercises
+                            </div>
+                        </div>
+                        <div style="display:flex; gap: 8px; flex-wrap: wrap;">
+                            <button onclick="applyTemplateToNewWorkout('${t.id}')" class="primary" style="padding: 6px 10px;">Use Today</button>
+                            <button onclick="renameTemplate('${t.id}')" style="padding: 6px 10px; background: var(--accent-cyan);">Rename</button>
+                            <button class="danger" onclick="deleteTemplate('${t.id}')" style="padding: 6px 10px;">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            modal.innerHTML = `
+                <div class="modal">
+                    <h2>📚 Workout Templates</h2>
+                    <div class="integrity-notice">
+                        <h4>Templates</h4>
+                        <p>Save any workout as a reusable template, then apply it to today.</p>
+                    </div>
+                    <div class="form-section">
+                        <h3>Create Template</h3>
+                        <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="primary" onclick="createBlankTemplate()">+ New Blank Template</button>
+                            <button onclick="convertLatestWorkoutToTemplate()" style="background: var(--accent-purple);">Save Latest Workout as Template</button>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <h3>Saved Templates (${list.length})</h3>
+                        ${rows || `<div style="color: var(--text-secondary);">No templates yet.</div>`}
+                    </div>
+                    <div style="display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                        <button onclick="hideTrainingModal()">Close</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.add('show');
+        }
+
+        function createBlankTemplate() {
+            const name = prompt('Template name?', 'New Template');
+            if (!name) return;
+            loadTemplates();
+            workoutTemplates.push({ id: newId('tpl'), name, type: 'Workout', exercises: [] });
+            saveTemplates();
+            showToast('Template created');
+            openTemplateManager();
+        }
+
+        function convertLatestWorkoutToTemplate() {
+            if (!trainingLog.length) { showToast('No workouts yet', true); return; }
+            const sorted = trainingLog.slice().sort((a,b)=> b.date.localeCompare(a.date) || (b.startTime||'').localeCompare(a.startTime||''));
+            const tpl = templateFromWorkout(sorted[0]);
+            tpl.name = prompt('Template name?', tpl.name) || tpl.name;
+            loadTemplates();
+            workoutTemplates.push(tpl);
+            saveTemplates();
+            showToast('Template saved');
+            openTemplateManager();
+        }
+
+        function renameTemplate(id) {
+            loadTemplates();
+            const tpl = workoutTemplates.find(t=>t.id===id);
+            if (!tpl) return;
+            const name = prompt('New template name:', tpl.name);
+            if (!name) return;
+            tpl.name = name;
+            saveTemplates();
+            openTemplateManager();
+        }
+
+        function deleteTemplate(id) {
+            if (!confirm('Delete this template?')) return;
+            loadTemplates();
+            workoutTemplates = workoutTemplates.filter(t=>t.id!==id);
+            saveTemplates();
+            openTemplateManager();
+        }
+
+        function applyTemplateToNewWorkout(id) {
+            loadTemplates();
+            const tpl = workoutTemplates.find(t=>t.id===id);
+            if (!tpl) return;
+            // use showAddWorkout if available (v6 has it)
+            showAddWorkout(getTodayISO());
+            // After modal opens, replace its exercises with template exercises
+            setTimeout(()=>{
+                const container = document.getElementById('exerciseBlocks') || document.getElementById('exercisesList');
+                // v6 modal uses exerciseBlocks; we can just close and reopen with prefill by calling showAddWorkout override if present.
+            }, 0);
+            // easiest: open an edit-like modal using the v6 showAddWorkout then programmatically add blocks:
+            setTimeout(()=>{
+                const blocks = document.getElementById('exerciseBlocks');
+                if (!blocks) return;
+                blocks.innerHTML = '';
+                exerciseBlockCount = 0;
+                (tpl.exercises||[]).forEach(ex => addExerciseBlock(ex));
+                document.getElementById('workoutTitle').value = tpl.name || '';
+                document.getElementById('workoutType').value = tpl.type || 'Workout';
+                showToast('Template applied');
+            }, 50);
+        }
+
+        // ----- Live Workout Mode (simple) -----
+        let liveMode = { running:false, startTs:null, tick:null, restRunning:false, restStartTs:null, restSeconds:90, restTick:null };
+
+        function formatTime(seconds) {
+            const s = Math.max(0, Math.floor(seconds));
+            const m = Math.floor(s / 60);
+            const r = s % 60;
+            return `${m}:${String(r).padStart(2,'0')}`;
+        }
+
+        function startLiveTimer() {
+            if (liveMode.running) return;
+            liveMode.running = true;
+            liveMode.startTs = Date.now();
+            liveMode.tick = setInterval(updateLiveBar, 500);
+            updateLiveBar();
+        }
+
+        function stopLiveTimer() {
+            liveMode.running = false;
+            liveMode.startTs = null;
+            if (liveMode.tick) clearInterval(liveMode.tick);
+            liveMode.tick = null;
+            updateLiveBar();
+        }
+
+        function startRestTimer(seconds=null) {
+            if (seconds !== null && isFinite(seconds)) liveMode.restSeconds = Math.max(5, Math.floor(seconds));
+            liveMode.restRunning = true;
+            liveMode.restStartTs = Date.now();
+            if (liveMode.restTick) clearInterval(liveMode.restTick);
+            liveMode.restTick = setInterval(updateLiveBar, 250);
+            updateLiveBar();
+        }
+
+        function stopRestTimer() {
+            liveMode.restRunning = false;
+            liveMode.restStartTs = null;
+            if (liveMode.restTick) clearInterval(liveMode.restTick);
+            liveMode.restTick = null;
+            updateLiveBar();
+        }
+
+        function ensureLiveBar() {
+            if (document.getElementById('liveBar')) return;
+            const modal = document.querySelector('#trainingModal .modal');
+            if (!modal) return;
+            const bar = document.createElement('div');
+            bar.id = 'liveBar';
+            bar.style.cssText = 'background: rgba(6, 182, 212, 0.08); border: 1px solid var(--border); padding: 12px; border-radius: 12px; margin-top: 10px;';
+            modal.insertBefore(bar, modal.children[1] || null);
+            updateLiveBar();
+        }
+
+        function updateLiveBar() {
+            const bar = document.getElementById('liveBar');
+            if (!bar) return;
+
+            const elapsed = liveMode.running && liveMode.startTs ? (Date.now() - liveMode.startTs)/1000 : 0;
+            const restElapsed = liveMode.restRunning && liveMode.restStartTs ? (Date.now() - liveMode.restStartTs)/1000 : 0;
+            const restRemaining = liveMode.restRunning ? Math.max(0, liveMode.restSeconds - restElapsed) : 0;
+
+            const restText = liveMode.restRunning ? `Rest: ${formatTime(restRemaining)} / ${formatTime(liveMode.restSeconds)}` : `Rest: —`;
+            const elapsedText = liveMode.running ? `Elapsed: ${formatTime(elapsed)}` : `Elapsed: —`;
+
+            const restPct = liveMode.restRunning ? (restRemaining / liveMode.restSeconds) * 100 : 0;
+            const pct = Math.max(0, Math.min(100, restPct));
+
+            bar.innerHTML = `
+              <div style="display:flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div style="display:flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                  <span class="integrity-badge integrity-blue" title="Live workout mode"><span class="integrity-dot dot-blue"></span><span>LIVE</span></span>
+                  <span style="font-family:'Space Mono', monospace; color: var(--text-primary);">${elapsedText}</span>
+                  <span style="font-family:'Space Mono', monospace; color: var(--text-primary);">${restText}</span>
+                </div>
+                <div style="display:flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                  <label style="color: var(--text-secondary); font-size:0.85em;">Rest(s)</label>
+                  <input type="number" id="restSecondsInput" value="${liveMode.restSeconds}" style="width:90px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 6px; border-radius: 6px;">
+                  <button onclick="startRestTimer(Number(document.getElementById('restSecondsInput').value))" style="background: var(--accent-warning);">⏱ Start Rest</button>
+                  <button onclick="stopRestTimer()">Stop Rest</button>
+                  <button onclick="${liveMode.running ? 'stopLiveTimer()' : 'startLiveTimer()'}" style="background: var(--accent-purple);">${liveMode.running ? 'Stop Timer' : 'Start Timer'}</button>
+                </div>
+              </div>
+              <div style="margin-top:8px; background: var(--bg-primary); border-radius: 8px; overflow:hidden; height: 10px; border: 1px solid var(--border);">
+                <div style="height: 100%; width: ${pct}%; background: var(--accent-warning); transition: width 0.2s linear;"></div>
+              </div>
+            `;
+
+            if (liveMode.restRunning && restRemaining <= 0.05) {
+                stopRestTimer();
+                try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch {}
+                showToast('Rest finished');
+            }
+        }
+
+        // Patch v6 workout modal after it opens: insert live bar + add template buttons
+        const __orig_showAddWorkout = typeof showAddWorkout === 'function' ? showAddWorkout : null;
+        if (__orig_showAddWorkout) {
+            window.showAddWorkout = function(...args) {
+                __orig_showAddWorkout.apply(this, args);
+                setTimeout(()=>{
+                    ensureLiveBar();
+                    const modal = document.querySelector('#trainingModal .modal');
+                    if (!modal) return;
+                    // Add template buttons if not present
+                    if (!document.getElementById('btnSaveTemplate')) {
+                        const actions = modal.querySelector('div[style*="margin-top: 20px"]');
+                        // Place controls near top instead
+                        const notice = modal.querySelector('.integrity-notice');
+                        const btnRow = document.createElement('div');
+                        btnRow.style.cssText = 'display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;';
+                        btnRow.innerHTML = `
+                            <button id="btnSaveTemplate" onclick="saveCurrentModalAsTemplate()" style="background: var(--accent-cyan);">Save as Template</button>
+                            <button onclick="openTemplateManager()" style="background: var(--accent-cyan);">📚 Templates</button>
+                        `;
+                        if (notice) notice.parentElement.insertBefore(btnRow, notice.nextSibling);
+                    }
+                }, 0);
+            }
+        }
+
+        const __orig_editWorkoutById = typeof editWorkoutById === 'function' ? editWorkoutById : null;
+        if (__orig_editWorkoutById) {
+            window.editWorkoutById = function(...args) {
+                __orig_editWorkoutById.apply(this, args);
+                setTimeout(()=>{
+                    ensureLiveBar();
+                }, 0);
+            }
+        }
+
+        // Patch addSetRow to include a Rest button (if the v6 function exists and hasn't been patched)
+        const __orig_addSetRow = typeof addSetRow === 'function' ? addSetRow : null;
+        if (__orig_addSetRow) {
+            window.addSetRow = function(exBlockId, isWarmup=false, prefill=null) {
+                __orig_addSetRow(exBlockId, isWarmup, prefill);
+                // Try to add Rest button into the last row
+                const tbody = document.getElementById(`setRows-${exBlockId}`);
+                if (!tbody) return;
+                const last = tbody.lastElementChild;
+                if (!last) return;
+                const actionsCell = last.querySelector('td:last-child');
+                if (!actionsCell) return;
+                if (!actionsCell.querySelector('.restBtn')) {
+                    const restBtn = document.createElement('button');
+                    restBtn.textContent = 'Rest';
+                    restBtn.className = 'restBtn';
+                    restBtn.style.cssText = 'background: var(--accent-warning); padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-primary); cursor:pointer;';
+                    restBtn.onclick = (e)=>{ e.stopPropagation(); startRestTimer(Number(document.getElementById('restSecondsInput')?.value || 90)); };
+                    actionsCell.insertBefore(restBtn, actionsCell.firstChild);
+                }
+            }
+        }
+
+
         // ===== CORRELATIONS TAB =====
         
         function updateCorrelationsTab() {
@@ -2852,6 +3769,7 @@ const GOALS = {
             
             loadData();
             loadMeasurements();
+            loadExerciseLibrary();
             loadTraining();
             
             updateStats();
