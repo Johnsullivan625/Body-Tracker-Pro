@@ -742,9 +742,6 @@
     <!-- TRAINING MODAL -->
     <div class="modal-overlay" id="trainingModal"></div>
 
-    <!-- SYNC MODAL -->
-    <div class="modal-overlay" id="syncModal"></div>
-
     <div class="toast" id="toast"></div>
 
     <script>
@@ -752,7 +749,7 @@
         const STORAGE_KEY = 'bodyTrackingData_User1';
         
         const MEASUREMENTS_KEY = 'bodyMeasurements_User1';
-        const TRAINING_KEY = 'trainingLog_User1';
+        const TRAINING_KEY_OLD = 'trainingLog_User1';
 const GOALS = {
             // Body composition goals
             target_weight: 215,
@@ -2456,34 +2453,23 @@ const GOALS = {
             document.getElementById('measurementsModal').classList.remove('show');
         }
         
-        
-        // ===== TRAINING TAB (V7) =====
-        // Set-by-set logging + warmups + supersets + plan card + multiple sessions/day + templates + live mode + optional Gist sync
+        // ===== TRAINING TAB (V6) =====
+        // Set-by-set tracking, warmups, supersets, plan-ahead card, multiple sessions/day,
+        // exercise library with autocomplete, templates, live timers, and optional cross-device sync (GitHub Gist).
 
-        const TRAINING_KEY = 'trainingLog_User1_v7';
-        const EXERCISE_LIB_KEY = 'exerciseLibrary_User1_v7';
-        const TEMPLATE_KEY = 'workoutTemplates_User1_v7';
-        const SYNC_CONFIG_KEY = 'syncConfig_User1_v7';
-
-        const EXERCISE_SEED = ["Bench Press", "Incline Bench Press", "Dumbbell Bench Press", "Overhead Press", "Dumbbell Shoulder Press", "Barbell Row", "Dumbbell Row", "Lat Pulldown", "Pull-Up", "Chin-Up", "Seated Cable Row", "Squat", "Front Squat", "Leg Press", "Romanian Deadlift", "Deadlift", "Hip Thrust", "Lunge", "Bulgarian Split Squat", "Leg Extension", "Leg Curl", "Calf Raise", "Bicep Curl", "Hammer Curl", "Tricep Pushdown", "Skull Crushers", "Dips", "Lateral Raise", "Rear Delt Fly", "Face Pull", "Plank", "Hanging Leg Raise", "Cable Crunch", "Treadmill", "Bike", "Row Erg", "Jump Rope"];
+        const TRAINING_KEY = 'trainingLog_User1_v6';
+        const EXERCISE_LIB_KEY = 'exerciseLibrary_User1_v6';
+        const TEMPLATE_KEY = 'workoutTemplates_User1_v6';
+        const SYNC_CONFIG_KEY = 'trainingSyncConfig_User1_v6';
 
         let trainingLog = [];
         let exerciseLibrary = [];
         let workoutTemplates = [];
-        let exerciseBlockCount = 0;
 
-        // Live mode state
-        let liveMode = {
-            running: false,
-            startTs: null,
-            tickHandle: null,
-            restRunning: false,
-            restStartTs: null,
-            restSeconds: 90,
-            restHandle: null
-        };
+        // Live timers (per-modal)
+        let liveMode = { running:false, startTs:null, tick:null, restRunning:false, restStartTs:null, restSeconds:90, restTick:null };
 
-        function newId(prefix='x') {
+        function _newId(prefix='id') {
             return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
         }
 
@@ -2491,7 +2477,18 @@ const GOALS = {
             return new Date().toISOString().split('T')[0];
         }
 
-        // ----- Exercise Library -----
+        // ---------- Exercise Library ----------
+        const DEFAULT_EXERCISES = [
+            "Bench Press","Incline Bench Press","Dumbbell Bench Press","Overhead Press","Dumbbell Shoulder Press",
+            "Barbell Row","Dumbbell Row","Lat Pulldown","Pull-Up","Chin-Up","Seated Cable Row",
+            "Squat","Front Squat","Leg Press","Romanian Deadlift","Deadlift","Hip Thrust","Lunge","Bulgarian Split Squat",
+            "Leg Extension","Leg Curl","Calf Raise",
+            "Bicep Curl","Hammer Curl","Tricep Pushdown","Skull Crushers","Dips",
+            "Lateral Raise","Rear Delt Fly","Face Pull",
+            "Plank","Hanging Leg Raise","Cable Crunch",
+            "Treadmill","Bike","Row Erg","Jump Rope"
+        ];
+
         function loadExerciseLibrary() {
             const stored = localStorage.getItem(EXERCISE_LIB_KEY);
             if (stored) {
@@ -2500,28 +2497,29 @@ const GOALS = {
                 exerciseLibrary = [];
             }
             if (!Array.isArray(exerciseLibrary)) exerciseLibrary = [];
-
+            // seed
             if (exerciseLibrary.length < 10) {
-                const set = new Set(exerciseLibrary.map(x => (x||'').trim().toLowerCase()).filter(Boolean));
-                EXERCISE_SEED.forEach(n => {
-                    if (!set.has(n.toLowerCase())) exerciseLibrary.push(n);
-                });
+                const set = new Set(exerciseLibrary.map(x => (x||'').toLowerCase().trim()).filter(Boolean));
+                DEFAULT_EXERCISES.forEach(n => { if (!set.has(n.toLowerCase())) exerciseLibrary.push(n); });
                 saveExerciseLibrary();
             }
         }
 
         function saveExerciseLibrary() {
-            localStorage.setItem(EXERCISE_LIB_KEY, JSON.stringify(exerciseLibrary.slice().sort((a,b)=>a.localeCompare(b))));
+            const unique = Array.from(new Set(exerciseLibrary.map(x => (x||'').trim()).filter(Boolean)));
+            unique.sort((a,b)=>a.localeCompare(b));
+            exerciseLibrary = unique;
+            localStorage.setItem(EXERCISE_LIB_KEY, JSON.stringify(exerciseLibrary));
         }
 
-        function upsertExerciseToLibrary(name) {
+        function upsertExercise(name) {
             const n = (name || '').toString().trim();
             if (!n) return;
-            const lower = n.toLowerCase();
-            const exists = exerciseLibrary.some(x => (x||'').toLowerCase() === lower);
+            const exists = exerciseLibrary.some(x => (x||'').toLowerCase() === n.toLowerCase());
             if (!exists) {
                 exerciseLibrary.push(n);
                 saveExerciseLibrary();
+                hydrateExerciseDatalist();
             }
         }
 
@@ -2538,7 +2536,7 @@ const GOALS = {
             document.body.appendChild(dl);
         }
 
-        // ----- Templates -----
+        // ---------- Templates ----------
         function loadTemplates() {
             const stored = localStorage.getItem(TEMPLATE_KEY);
             if (stored) {
@@ -2551,12 +2549,12 @@ const GOALS = {
             localStorage.setItem(TEMPLATE_KEY, JSON.stringify(workoutTemplates));
         }
 
-        function templateFromWorkout(workout) {
+        function templateFromWorkout(w) {
             return {
-                id: newId('tpl'),
-                name: workout.title || workout.type || 'Template',
-                type: workout.type || 'Workout',
-                exercises: JSON.parse(JSON.stringify(workout.exercises || []))
+                id: _newId('tpl'),
+                name: w.title || w.type || 'Template',
+                type: w.type || 'Workout',
+                exercises: JSON.parse(JSON.stringify(w.exercises || []))
             };
         }
 
@@ -2564,6 +2562,7 @@ const GOALS = {
             loadTemplates();
             const modal = document.getElementById('trainingModal');
             const list = workoutTemplates.slice().sort((a,b)=>a.name.localeCompare(b.name));
+
             const rows = list.map(t => `
                 <div style="background: var(--bg-primary); border: 1px solid var(--border); padding: 12px; border-radius: 10px; margin-bottom: 10px;">
                     <div style="display:flex; justify-content: space-between; gap: 10px; align-items: start; flex-wrap: wrap;">
@@ -2587,8 +2586,9 @@ const GOALS = {
                     <h2>📚 Workout Templates</h2>
                     <div class="integrity-notice">
                         <h4>Templates</h4>
-                        <p>Save a workout as a reusable template (Push/Pull/Legs etc.) then apply it to today.</p>
+                        <p>Save a workout as a reusable template, then apply it to today.</p>
                     </div>
+
                     <div class="form-section">
                         <h3>Create Template</h3>
                         <div style="display:flex; gap: 10px; flex-wrap: wrap;">
@@ -2596,10 +2596,12 @@ const GOALS = {
                             <button onclick="convertLatestWorkoutToTemplate()" style="background: var(--accent-purple);">Save Latest Workout as Template</button>
                         </div>
                     </div>
+
                     <div class="form-section">
                         <h3>Saved Templates (${list.length})</h3>
                         ${rows || `<div style="color: var(--text-secondary);">No templates yet.</div>`}
                     </div>
+
                     <div style="display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
                         <button onclick="hideTrainingModal()">Close</button>
                     </div>
@@ -2612,7 +2614,7 @@ const GOALS = {
             const name = prompt('Template name?', 'New Template');
             if (!name) return;
             loadTemplates();
-            workoutTemplates.push({ id: newId('tpl'), name, type: 'Workout', exercises: [] });
+            workoutTemplates.push({ id: _newId('tpl'), name, type: 'Workout', exercises: [] });
             saveTemplates();
             showToast('Template created');
             openTemplateManager();
@@ -2656,23 +2658,281 @@ const GOALS = {
             showAddWorkout(getTodayISO(), tpl);
         }
 
-        // ----- Training data -----
-        function loadTraining() {
-            const stored = localStorage.getItem(TRAINING_KEY);
-            if (stored) {
-                try { trainingLog = JSON.parse(stored) || []; } catch { trainingLog = []; }
-            } else {
-                trainingLog = [];
+        // ---------- Optional Cross-device Sync (GitHub Gist) ----------
+        // User provides a Gist ID + Personal Access Token (with gist scope).
+        function loadSyncConfig() {
+            const stored = localStorage.getItem(SYNC_CONFIG_KEY);
+            if (!stored) return { enabled:false, gistId:'', token:'' };
+            try {
+                const cfg = JSON.parse(stored);
+                return { enabled: !!cfg.enabled, gistId: cfg.gistId || '', token: cfg.token || '' };
+            } catch {
+                return { enabled:false, gistId:'', token:'' };
             }
-            if (!Array.isArray(trainingLog)) trainingLog = [];
+        }
+
+        function saveSyncConfig(cfg) {
+            localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(cfg));
+        }
+
+        async function gistFetch(url, cfg, method='GET', body=null) {
+            const headers = {
+                'Accept': 'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28'
+            };
+            if (cfg.token) headers['Authorization'] = `Bearer ${cfg.token}`;
+            if (body) headers['Content-Type'] = 'application/json';
+            const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null });
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(`GitHub API ${res.status}: ${txt.slice(0,200)}`);
+            }
+            return res.json();
+        }
+
+        async function pullTrainingFromGist() {
+            const cfg = loadSyncConfig();
+            if (!cfg.enabled || !cfg.gistId || !cfg.token) {
+                showToast('Sync not configured', true);
+                return;
+            }
+            const gist = await gistFetch(`https://api.github.com/gists/${cfg.gistId}`, cfg);
+            const file = gist.files && (gist.files['training.json'] || Object.values(gist.files)[0]);
+            if (!file || !file.content) throw new Error('No training.json found in gist');
+            const payload = JSON.parse(file.content);
+            if (!payload || !Array.isArray(payload.trainingLog)) throw new Error('Invalid gist content');
+            trainingLog = payload.trainingLog;
+            exerciseLibrary = Array.isArray(payload.exerciseLibrary) ? payload.exerciseLibrary : exerciseLibrary;
+            workoutTemplates = Array.isArray(payload.workoutTemplates) ? payload.workoutTemplates : workoutTemplates;
+            saveTraining();
+            saveExerciseLibrary();
+            saveTemplates();
+            updateTrainingTab();
+            showToast('Pulled training data from GitHub');
+        }
+
+        async function pushTrainingToGist() {
+            const cfg = loadSyncConfig();
+            if (!cfg.enabled || !cfg.gistId || !cfg.token) return;
+            const payload = {
+                version: 'training_v6',
+                updatedAt: new Date().toISOString(),
+                trainingLog,
+                exerciseLibrary,
+                workoutTemplates
+            };
+            await gistFetch(`https://api.github.com/gists/${cfg.gistId}`, cfg, 'PATCH', {
+                files: { 'training.json': { content: JSON.stringify(payload, null, 2) } }
+            });
+            showToast('Synced training data to GitHub');
+        }
+
+        function openSyncSettings() {
+            const cfg = loadSyncConfig();
+            const modal = document.getElementById('trainingModal');
+            modal.innerHTML = `
+                <div class="modal">
+                    <h2>☁️ Cross-Device Sync (GitHub Gist)</h2>
+                    <div class="integrity-notice">
+                        <h4>How it works</h4>
+                        <p>This is optional. If enabled, your training log will sync across devices.</p>
+                        <p>Create a private Gist with a file named <b>training.json</b>, then paste its Gist ID and a GitHub token with <b>gist</b> scope.</p>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label><input type="checkbox" id="syncEnabled" style="width:auto; margin-right:8px;" ${cfg.enabled ? 'checked':''}>Enable sync</label>
+                            </div>
+                            <div class="form-field">
+                                <label>Gist ID</label>
+                                <input type="text" id="syncGistId" value="${escapeHTML(cfg.gistId)}" placeholder="e.g., 0123456789abcdef...">
+                            </div>
+                            <div class="form-field">
+                                <label>GitHub Token</label>
+                                <input type="password" id="syncToken" value="${escapeHTML(cfg.token)}" placeholder="ghp_...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="primary" onclick="saveSyncSettings()">Save Settings</button>
+                        <button onclick="(async()=>{ try{ await pullTrainingFromGist(); }catch(e){ showToast('Pull failed: '+e.message, true);} })()">Pull Now</button>
+                        <button onclick="(async()=>{ try{ await pushTrainingToGist(); }catch(e){ showToast('Push failed: '+e.message, true);} })()">Push Now</button>
+                        <button onclick="hideTrainingModal()">Close</button>
+                    </div>
+                </div>
+            `;
+            modal.classList.add('show');
+        }
+
+        function saveSyncSettings() {
+            const cfg = {
+                enabled: !!document.getElementById('syncEnabled').checked,
+                gistId: (document.getElementById('syncGistId').value || '').trim(),
+                token: (document.getElementById('syncToken').value || '').trim()
+            };
+            saveSyncConfig(cfg);
+            showToast('Sync settings saved');
+        }
+
+        // ---------- Training Log Storage ----------
+        function parseMaybeJSON(s){ try{return JSON.parse(s);}catch(e){return null;} }
+
+        // ===== TRAINING SCHEMA VERSIONING =====
+        // Storage format (v2+):
+        // { schema_version: 2, exported_at: ISOString, workouts: [...] }
+        const TRAINING_SCHEMA_VERSION = 2;
+
+        function nowISO(){ return new Date().toISOString(); }
+
+        function ensureIdsAndNormalize(workouts){
+            if (!Array.isArray(workouts)) return [];
+            return workouts.map(w => {
+                const ww = Object.assign({}, w);
+
+                // Workout identity / timing
+                if (!ww.id) ww.id = newId('w');
+                if (!ww.date) ww.date = getTodayISO();
+                if (ww.startTime === undefined || ww.startTime === null) ww.startTime = '';
+                if (ww.type === undefined || ww.type === null) ww.type = 'Workout';
+                if (ww.title === undefined || ww.title === null) ww.title = '';
+                if (ww.notes === undefined || ww.notes === null) ww.notes = '';
+
+                // Exercises normalization
+                if (!Array.isArray(ww.exercises)) ww.exercises = [];
+                ww.exercises = ww.exercises.map(ex => {
+                    const ee = Object.assign({}, ex);
+                    if (!ee.id) ee.id = newId('ex');
+                    if (ee.name === undefined || ee.name === null) ee.name = '';
+                    if (ee.superset === undefined || ee.superset === null) ee.superset = '';
+                    if (ee.notes === undefined || ee.notes === null) ee.notes = '';
+
+                    // If legacy single-set schema exists, convert to sets[]
+                    if (!Array.isArray(ee.sets)) {
+                        const hasLegacy = (ee.sets === undefined) && (ee.reps !== undefined || ee.weight !== undefined || ee.sets_count !== undefined);
+                        ee.sets = [];
+                        if (hasLegacy) {
+                            const reps = isFinite(Number(ee.reps)) ? Number(ee.reps) : 0;
+                            const wt = isFinite(Number(ee.weight)) ? Number(ee.weight) : 0;
+                            const warm = !!ee.warmup;
+                            ee.sets.push({
+                                id: newId('set'),
+                                reps,
+                                weight: wt,
+                                warmup: warm,
+                                completed: true,
+                                rpe: null,
+                                notes: ''
+                            });
+                        }
+                        // clean up legacy fields
+                        delete ee.reps; delete ee.weight; delete ee.warmup; delete ee.sets_count;
+                    }
+
+                    // Normalize sets
+                    ee.sets = ee.sets.map(s => {
+                        const ss = Object.assign({}, s);
+                        if (!ss.id) ss.id = newId('set');
+                        ss.reps = isFinite(Number(ss.reps)) ? Number(ss.reps) : 0;
+                        ss.weight = isFinite(Number(ss.weight)) ? Number(ss.weight) : 0;
+                        ss.warmup = !!ss.warmup;
+                        ss.completed = (ss.completed === undefined) ? true : !!ss.completed;
+                        if (ss.rpe === undefined) ss.rpe = null;
+                        if (ss.notes === undefined) ss.notes = '';
+                        return ss;
+                    });
+
+                    return ee;
+                });
+
+                return ww;
+            });
+        }
+
+        function migrateTrainingPayload(raw){
+            // raw may be: array (legacy), object with workouts, object map, or versioned object.
+            if (raw === null || raw === undefined) return { schema_version: TRAINING_SCHEMA_VERSION, exported_at: nowISO(), workouts: [] };
+
+            // If already versioned
+            if (typeof raw === 'object' && !Array.isArray(raw) && (raw.schema_version || raw.version)) {
+                const v = Number(raw.schema_version || raw.version || 0);
+                const workouts = raw.workouts || raw.data || raw.sessions || [];
+                const normalized = ensureIdsAndNormalize(workouts);
+
+                // Future: add per-version migrations here
+                if (v >= TRAINING_SCHEMA_VERSION) {
+                    return { schema_version: TRAINING_SCHEMA_VERSION, exported_at: raw.exported_at || raw.exportedAt || nowISO(), workouts: normalized };
+                }
+                // v1 -> v2
+                return { schema_version: TRAINING_SCHEMA_VERSION, exported_at: nowISO(), workouts: normalized };
+            }
+
+            // Array legacy
+            if (Array.isArray(raw)) {
+                return { schema_version: TRAINING_SCHEMA_VERSION, exported_at: nowISO(), workouts: ensureIdsAndNormalize(raw) };
+            }
+
+            // Object map legacy: { "2025-12-01": {...} }
+            if (typeof raw === 'object') {
+                const workouts = Object.values(raw).filter(Boolean);
+                return { schema_version: TRAINING_SCHEMA_VERSION, exported_at: nowISO(), workouts: ensureIdsAndNormalize(workouts) };
+            }
+
+            return { schema_version: TRAINING_SCHEMA_VERSION, exported_at: nowISO(), workouts: [] };
+        }
+
+        function readTrainingFromStorage(){
+            const stored = localStorage.getItem(TRAINING_KEY);
+            if (!stored) return null;
+            return parseMaybeJSON(stored);
+        }
+
+        function writeTrainingToStorage(versioned){
+            localStorage.setItem(TRAINING_KEY, JSON.stringify(versioned));
+        }
+
+        function backupOldTrainingIfNeeded(storedRaw){
+            try{
+                const key = `${TRAINING_KEY}_backup_${new Date().toISOString().replace(/[:.]/g,'-')}`;
+                localStorage.setItem(key, JSON.stringify(storedRaw));
+            }catch(e){
+                // ignore storage quota
+            }
+        }
+
+        function loadTraining() {
+            const raw = readTrainingFromStorage();
+
+            if (!raw) {
+                trainingLog = [];
+                return;
+            }
+
+            // If legacy array/object, migrate and persist
+            const isVersioned = (typeof raw === 'object' && !Array.isArray(raw) && (raw.schema_version || raw.version));
+            if (!isVersioned) {
+                backupOldTrainingIfNeeded(raw);
+            }
+
+            const migrated = migrateTrainingPayload(raw);
+            trainingLog = migrated.workouts || [];
+            // Persist in the latest format to prevent future breakage
+            writeTrainingToStorage(migrated);
         }
 
         function saveTraining() {
-            localStorage.setItem(TRAINING_KEY, JSON.stringify(trainingLog));
+            const versioned = {
+                schema_version: TRAINING_SCHEMA_VERSION,
+                exported_at: nowISO(),
+                workouts: ensureIdsAndNormalize(trainingLog)
+            };
+            trainingLog = versioned.workouts;
+            writeTrainingToStorage(versioned);
         }
 
-        // ----- Volume helpers -----
-        function sumWorkingVolumeForExercise(ex) {
+        // ---------- Volume helpers ----------
+        function sumWorkingVolume(ex) {
             if (!ex || !Array.isArray(ex.sets)) return 0;
             return ex.sets.reduce((sum,s)=>{
                 const warm = !!s.warmup;
@@ -2684,27 +2944,18 @@ const GOALS = {
             },0);
         }
 
-        function sumWorkingSets(ex) {
-            if (!ex || !Array.isArray(ex.sets)) return 0;
-            return ex.sets.reduce((c,s)=>{
-                const warm = !!s.warmup;
-                const done = (s.completed === undefined) ? true : !!s.completed;
-                return c + ((!warm && done) ? 1 : 0);
-            },0);
-        }
-
         function workoutSummary(session) {
             const exercises = session.exercises || [];
-            const totalWorkingSets = exercises.reduce((sum, ex)=> sum + sumWorkingSets(ex), 0);
-            const totalVolume = exercises.reduce((sum, ex)=> sum + sumWorkingVolumeForExercise(ex), 0);
-            const supersetGroups = new Set(exercises.map(ex => (ex.superset || '').trim()).filter(Boolean));
-            return { totalWorkingSets, totalVolume, supersetGroups: [...supersetGroups] };
+            const workingSets = exercises.reduce((sum, ex)=> sum + (ex.sets||[]).filter(s=>!s.warmup && (s.completed??true)).length, 0);
+            const volume = exercises.reduce((sum, ex)=> sum + sumWorkingVolume(ex), 0);
+            const supersetGroups = new Set(exercises.map(ex => (ex.superset||'').trim()).filter(Boolean));
+            return { workingSets, volume, supersetCount: supersetGroups.size };
         }
 
-        // ----- Live Mode -----
-        function formatTime(seconds) {
+        // ---------- Live timers ----------
+        function _formatTime(seconds) {
             const s = Math.max(0, Math.floor(seconds));
-            const m = Math.floor(s / 60);
+            const m = Math.floor(s/60);
             const r = s % 60;
             return `${m}:${String(r).padStart(2,'0')}`;
         }
@@ -2713,69 +2964,70 @@ const GOALS = {
             if (liveMode.running) return;
             liveMode.running = true;
             liveMode.startTs = Date.now();
-            liveMode.tickHandle = setInterval(()=> updateLiveBar(), 500);
+            liveMode.tick = setInterval(updateLiveBar, 500);
             updateLiveBar();
         }
 
         function stopLiveTimer() {
             liveMode.running = false;
             liveMode.startTs = null;
-            if (liveMode.tickHandle) clearInterval(liveMode.tickHandle);
-            liveMode.tickHandle = null;
+            if (liveMode.tick) clearInterval(liveMode.tick);
+            liveMode.tick = null;
             updateLiveBar();
         }
 
         function startRestTimer(seconds=null) {
-            if (seconds !== null && isFinite(seconds)) liveMode.restSeconds = Math.max(5, Math.floor(seconds));
+            const input = seconds ?? Number(document.getElementById('restSecondsInput')?.value || 90);
+            if (isFinite(input)) liveMode.restSeconds = Math.max(5, Math.floor(input));
             liveMode.restRunning = true;
             liveMode.restStartTs = Date.now();
-            if (liveMode.restHandle) clearInterval(liveMode.restHandle);
-            liveMode.restHandle = setInterval(()=> updateLiveBar(), 250);
+            if (liveMode.restTick) clearInterval(liveMode.restTick);
+            liveMode.restTick = setInterval(updateLiveBar, 250);
             updateLiveBar();
         }
 
         function stopRestTimer() {
             liveMode.restRunning = false;
             liveMode.restStartTs = null;
-            if (liveMode.restHandle) clearInterval(liveMode.restHandle);
-            liveMode.restHandle = null;
+            if (liveMode.restTick) clearInterval(liveMode.restTick);
+            liveMode.restTick = null;
             updateLiveBar();
+        }
+
+        function resetLiveMode() {
+            stopRestTimer();
+            stopLiveTimer();
+            liveMode.restSeconds = 90;
         }
 
         function updateLiveBar() {
             const bar = document.getElementById('liveBar');
             if (!bar) return;
-
             const elapsed = liveMode.running && liveMode.startTs ? (Date.now() - liveMode.startTs)/1000 : 0;
             const restElapsed = liveMode.restRunning && liveMode.restStartTs ? (Date.now() - liveMode.restStartTs)/1000 : 0;
             const restRemaining = liveMode.restRunning ? Math.max(0, liveMode.restSeconds - restElapsed) : 0;
-
-            const restText = liveMode.restRunning ? `Rest: ${formatTime(restRemaining)} / ${formatTime(liveMode.restSeconds)}` : `Rest: —`;
-            const elapsedText = liveMode.running ? `Elapsed: ${formatTime(elapsed)}` : `Elapsed: —`;
-
             const restPct = liveMode.restRunning ? (restRemaining / liveMode.restSeconds) * 100 : 0;
-            const pct = Math.max(0, Math.min(100, restPct));
 
             bar.innerHTML = `
-              <div style="display:flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <div style="display:flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-                  <span class="integrity-badge integrity-blue" title="Live workout mode">
-                    <span class="integrity-dot dot-blue"></span><span>LIVE</span>
-                  </span>
-                  <span style="font-family:'Space Mono', monospace; color: var(--text-primary);">${elapsedText}</span>
-                  <span style="font-family:'Space Mono', monospace; color: var(--text-primary);">${restText}</span>
+                <div style="display:flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <div style="display:flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                        <span class="integrity-badge integrity-blue" title="Live workout mode">
+                            <span class="integrity-dot dot-blue"></span><span>LIVE</span>
+                        </span>
+                        <span style="font-family:'Space Mono', monospace;">Elapsed: ${liveMode.running ? _formatTime(elapsed) : '—'}</span>
+                        <span style="font-family:'Space Mono', monospace;">Rest: ${liveMode.restRunning ? _formatTime(restRemaining) : '—'}</span>
+                    </div>
+                    <div style="display:flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        <label style="color: var(--text-secondary); font-size:0.85em;">Rest(s)</label>
+                        <input type="number" id="restSecondsInput" value="${liveMode.restSeconds}" style="width:90px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 6px; border-radius: 6px;">
+                        <button onclick="startRestTimer()" style="background: var(--accent-warning);">⏱ Rest</button>
+                        <button onclick="stopRestTimer()">Stop</button>
+                        <button onclick="${liveMode.running ? 'stopLiveTimer()' : 'startLiveTimer()'}" style="background: var(--accent-purple);">${liveMode.running ? 'Stop Timer' : 'Start Timer'}</button>
+                    </div>
                 </div>
-                <div style="display:flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                  <label style="color: var(--text-secondary); font-size:0.85em;">Rest(s)</label>
-                  <input type="number" id="restSecondsInput" value="${liveMode.restSeconds}" style="width:90px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 6px; border-radius: 6px;">
-                  <button onclick="startRestTimer(Number(document.getElementById('restSecondsInput').value))" style="background: var(--accent-warning);">⏱ Start Rest</button>
-                  <button onclick="stopRestTimer()">Stop Rest</button>
-                  <button onclick="${liveMode.running ? 'stopLiveTimer()' : 'startLiveTimer()'}" style="background: var(--accent-purple);">${liveMode.running ? 'Stop Timer' : 'Start Timer'}</button>
+                <div style="margin-top:8px; background: var(--bg-primary); border-radius: 8px; overflow:hidden; height: 10px; border: 1px solid var(--border);">
+                    <div style="height:100%; width:${Math.max(0, Math.min(100, restPct))}%; background: var(--accent-warning); transition: width 0.2s linear;"></div>
                 </div>
-              </div>
-              <div style="margin-top:8px; background: var(--bg-primary); border-radius: 8px; overflow:hidden; height: 10px; border: 1px solid var(--border);">
-                <div style="height: 100%; width: ${pct}%; background: var(--accent-warning); transition: width 0.2s linear;"></div>
-              </div>
             `;
 
             if (liveMode.restRunning && restRemaining <= 0.05) {
@@ -2785,27 +3037,33 @@ const GOALS = {
             }
         }
 
-        // ----- Training Tab UI -----
+        // ---------- Training Tab UI ----------
         function updateTrainingTab() {
             const today = getTodayISO();
-            const sessionsToday = trainingLog.filter(w => w.date === today).sort((a,b)=> (a.startTime||'').localeCompare(b.startTime||''));
+            const sessionsToday = trainingLog
+                .filter(w => w.date === today)
+                .sort((a,b)=> (a.startTime||'').localeCompare(b.startTime||''));
 
             const planCard = `
                 <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                     <div style="display:flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
                         <div>
                             <h3 style="color: var(--accent-cyan); margin-bottom: 6px;">📌 Workout for Today (${today})</h3>
-                            <div style="color: var(--text-secondary); font-size: 0.9em;">Plan the work • Work the plan • Warmup sets excluded from volume</div>
+                            <div style="color: var(--text-secondary); font-size: 0.9em;">
+                                Plan the work • Work the plan • Warmup sets do not count toward volume
+                            </div>
                         </div>
                         <div style="display:flex; gap: 8px; flex-wrap: wrap;">
                             <button onclick="showAddWorkout('${today}')" class="primary">+ Plan Workout</button>
                             <button onclick="duplicateLastWorkoutToToday()" style="background: var(--accent-purple);">↩︎ Duplicate Last</button>
                             <button onclick="openTemplateManager()" style="background: var(--accent-cyan);">📚 Templates</button>
-                            <button onclick="openSyncModal()" style="background: var(--accent-warning);">☁️ Sync</button>
+                            <button onclick="openSyncSettings()" style="background: var(--accent-warning);">☁️ Sync</button>
                         </div>
                     </div>
                     ${sessionsToday.length === 0 ? `
-                        <div style="margin-top: 15px; color: var(--text-secondary);">No workouts planned/logged for today yet.</div>
+                        <div style="margin-top: 15px; color: var(--text-secondary);">
+                            No workouts planned/logged for today yet.
+                        </div>
                     ` : `
                         <div style="margin-top: 15px; display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
                             ${sessionsToday.map(s => renderWorkoutMiniCard(s)).join('')}
@@ -2818,22 +3076,28 @@ const GOALS = {
                 document.getElementById('trainingContent').innerHTML = planCard + `
                     <div style="background: var(--bg-tertiary); padding: 30px; border-radius: 10px; text-align: center;">
                         <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🏋️ No Workouts Logged Yet</h3>
-                        <p style="color: var(--text-secondary); margin-bottom: 20px;">Track sessions with individual sets, warmups, supersets, templates, and Live Mode.</p>
+                        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                            Track sessions with individual sets, warmups, supersets, templates, and Live Mode.
+                        </p>
                         <button onclick="showAddWorkout('${today}')" class="primary">+ Log First Workout</button>
                     </div>
                 `;
                 return;
             }
 
-            const sorted = trainingLog.slice().sort((a,b)=> b.date.localeCompare(a.date) || (b.startTime||'').localeCompare(a.startTime||''));
+            const sorted = trainingLog.slice().sort((a,b)=>
+                b.date.localeCompare(a.date) || (b.startTime||'').localeCompare(a.startTime||'')
+            );
 
-            let workoutCards = '';
-            sorted.forEach(workout => {
-                const { totalWorkingSets, totalVolume, supersetGroups } = workoutSummary(workout);
-                const exercises = workout.exercises || [];
+            let cards = '';
+            sorted.forEach(w => {
+                const sum = workoutSummary(w);
+                const label = w.startTime ? `${w.date} • ${w.startTime}` : w.date;
+
                 let exercisesHtml = '';
-
-                if (exercises.length > 0) {
+                const exercises = w.exercises || [];
+                if (exercises.length) {
+                    // group by superset label
                     const groups = {};
                     exercises.forEach(ex => {
                         const k = (ex.superset || '').trim();
@@ -2841,60 +3105,58 @@ const GOALS = {
                         groups[key] = groups[key] || [];
                         groups[key].push(ex);
                     });
-                    Object.keys(groups).sort().forEach(groupName => {
-                        exercisesHtml += `<div style="margin-top: 10px;">
-                            <div style="font-family:'Space Mono', monospace; color: var(--text-secondary); margin-bottom: 6px;">${groupName}</div>
-                            ${groups[groupName].map(ex => renderExerciseSummary(ex)).join('')}
-                        </div>`;
+                    Object.keys(groups).sort().forEach(group => {
+                        exercisesHtml += `
+                            <div style="margin-top: 10px;">
+                                <div style="font-family:'Space Mono', monospace; color: var(--text-secondary); margin-bottom: 6px;">${group}</div>
+                                ${groups[group].map(ex => renderExerciseSummary(ex)).join('')}
+                            </div>
+                        `;
                     });
                 } else {
                     exercisesHtml = '<p style="color: var(--text-secondary); font-style: italic;">No exercises logged</p>';
                 }
 
-                const label = workout.startTime ? `${workout.date} • ${workout.startTime}` : workout.date;
-
-                workoutCards += `
+                cards += `
                     <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
-                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; gap: 10px;">
+                        <div style="display:flex; justify-content: space-between; align-items: start; margin-bottom: 15px; gap: 10px;">
                             <div>
-                                <h3 style="color: var(--accent-purple); margin-bottom: 5px;">${escapeHTML(workout.title || workout.type || 'Workout')}</h3>
+                                <h3 style="color: var(--accent-purple); margin-bottom: 5px;">${escapeHTML(w.title || w.type || 'Workout')}</h3>
                                 <div style="font-size: 0.9em; color: var(--text-secondary); font-family:'Space Mono', monospace;">${label}</div>
                                 <div style="font-size: 0.85em; color: var(--text-secondary); margin-top: 6px; font-family:'Space Mono', monospace;">
-                                    Working Sets: ${totalWorkingSets} • Volume: ${Math.round(totalVolume).toLocaleString()} • Supersets: ${supersetGroups.length || 0}
+                                    Working Sets: ${sum.workingSets} • Volume: ${Math.round(sum.volume).toLocaleString()} • Supersets: ${sum.supersetCount}
                                 </div>
                             </div>
-                            <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                                <button onclick="editWorkoutById('${workout.id}')" style="padding: 5px 10px; font-size: 0.8em;">Edit</button>
-                                <button onclick="duplicateWorkout('${workout.id}')" style="padding: 5px 10px; font-size: 0.8em; background: var(--accent-purple);">Duplicate</button>
-                                <button onclick="saveWorkoutAsTemplate('${workout.id}')" style="padding: 5px 10px; font-size: 0.8em; background: var(--accent-cyan);">Save as Template</button>
-                                <button class="danger" onclick="deleteWorkout('${workout.id}')">×</button>
+                            <div style="display:flex; gap: 6px; flex-wrap: wrap;">
+                                <button onclick="editWorkoutById('${w.id}')" style="padding: 5px 10px; font-size: 0.8em;">Edit</button>
+                                <button onclick="duplicateWorkout('${w.id}')" style="padding: 5px 10px; font-size: 0.8em; background: var(--accent-purple);">Duplicate</button>
+                                <button onclick="saveWorkoutAsTemplateById('${w.id}')" style="padding: 5px 10px; font-size: 0.8em; background: var(--accent-cyan);">Save Template</button>
+                                <button class="danger" onclick="deleteWorkout('${w.id}')">×</button>
                             </div>
                         </div>
                         ${exercisesHtml}
-                        ${workout.notes ? `<div style="margin-top: 10px; padding: 10px; background: var(--bg-primary); border-radius: 6px; font-size: 0.9em; color: var(--text-secondary);">${escapeHTML(workout.notes)}</div>` : ''}
+                        ${w.notes ? `<div style="margin-top: 10px; padding: 10px; background: var(--bg-primary); border-radius: 6px; font-size: 0.9em; color: var(--text-secondary);">${escapeHTML(w.notes)}</div>` : ''}
                     </div>
                 `;
             });
 
-            document.getElementById('trainingContent').innerHTML = planCard + workoutCards;
+            document.getElementById('trainingContent').innerHTML = planCard + cards;
         }
 
-        function renderWorkoutMiniCard(workout) {
-            const { totalWorkingSets, totalVolume, supersetGroups } = workoutSummary(workout);
-            const when = workout.startTime ? `${workout.startTime}` : '—';
+        function renderWorkoutMiniCard(w) {
+            const sum = workoutSummary(w);
+            const when = w.startTime ? `${w.startTime}` : '—';
             return `
                 <div style="background: var(--bg-primary); padding: 14px; border-radius: 10px; border: 1px solid var(--border);">
                     <div style="display:flex; justify-content: space-between; gap: 10px; align-items: start;">
                         <div>
-                            <div style="font-weight:700; color: var(--accent-purple);">${escapeHTML(workout.title || workout.type || 'Workout')}</div>
+                            <div style="font-weight:700; color: var(--accent-purple);">${escapeHTML(w.title || w.type || 'Workout')}</div>
                             <div style="color: var(--text-secondary); font-family:'Space Mono', monospace; font-size:0.85em; margin-top:4px;">Start: ${when}</div>
                         </div>
-                        <div style="display:flex; gap:6px; flex-wrap: wrap;">
-                            <button onclick="editWorkoutById('${workout.id}')" style="padding: 6px 10px; font-size:0.8em;">Open</button>
-                        </div>
+                        <button onclick="editWorkoutById('${w.id}')" style="padding: 6px 10px; font-size:0.8em;">Open</button>
                     </div>
                     <div style="margin-top:10px; color: var(--text-secondary); font-family:'Space Mono', monospace; font-size:0.85em;">
-                        Sets: ${totalWorkingSets} • Vol: ${Math.round(totalVolume).toLocaleString()} • Supersets: ${supersetGroups.length || 0}
+                        Sets: ${sum.workingSets} • Vol: ${Math.round(sum.volume).toLocaleString()} • Supersets: ${sum.supersetCount}
                     </div>
                 </div>
             `;
@@ -2904,7 +3166,7 @@ const GOALS = {
             const sets = ex.sets || [];
             const warmups = sets.filter(s=>!!s.warmup).length;
             const work = sets.filter(s=>!s.warmup).length;
-            const vol = Math.round(sumWorkingVolumeForExercise(ex)).toLocaleString();
+            const vol = Math.round(sumWorkingVolume(ex)).toLocaleString();
             return `
                 <div style="background: var(--bg-secondary); padding: 10px; border-radius: 8px; margin: 6px 0; border: 1px solid var(--border);">
                     <div style="display:flex; justify-content: space-between; gap: 10px; align-items: start;">
@@ -2918,50 +3180,64 @@ const GOALS = {
             `;
         }
 
-        // ----- Workout Modal + set-by-set inputs -----
+        // ---------- Workout modal (plan ahead + track live) ----------
+        let exerciseBlockCount = 0;
+        let activeWorkoutId = null;
+
         function showAddWorkout(defaultDate, template=null) {
             loadExerciseLibrary();
             loadTemplates();
             hydrateExerciseDatalist();
+            resetLiveMode();
             exerciseBlockCount = 0;
+            activeWorkoutId = null;
 
             const date = defaultDate || getTodayISO();
             const baseExercises = template ? (template.exercises || []) : [];
 
-            const modal = document.getElementById('trainingModal');
-            modal.innerHTML = renderWorkoutModal({
-                id: newId('w'),
+            const workout = {
+                id: _newId('w'),
                 date,
                 startTime: '',
-                type: (template?.type || 'Workout'),
-                title: (template?.name || ''),
+                type: template?.type || 'Workout',
+                title: template?.name || '',
                 notes: '',
                 exercises: JSON.parse(JSON.stringify(baseExercises))
-            }, true);
+            };
+
+            const modal = document.getElementById('trainingModal');
+            modal.innerHTML = renderWorkoutModal(workout, true);
             modal.classList.add('show');
 
+            if (baseExercises.length) {
+                baseExercises.forEach(ex => addExerciseBlock(ex));
+            } else {
+                addExerciseBlock();
+            }
             updateLiveBar();
-
-            if (baseExercises.length) baseExercises.forEach(ex => addExerciseBlock(ex));
-            else addExerciseBlock();
         }
 
         function editWorkoutById(id) {
             const w = trainingLog.find(x => x.id === id);
             if (!w) return;
+
             loadExerciseLibrary();
             loadTemplates();
             hydrateExerciseDatalist();
+            resetLiveMode();
             exerciseBlockCount = 0;
+            activeWorkoutId = id;
 
             const modal = document.getElementById('trainingModal');
             modal.innerHTML = renderWorkoutModal(w, false);
             modal.classList.add('show');
 
+            if (Array.isArray(w.exercises) && w.exercises.length) {
+                w.exercises.forEach(ex => addExerciseBlock(ex));
+            } else {
+                addExerciseBlock();
+            }
             updateLiveBar();
-
-            if (Array.isArray(w.exercises) && w.exercises.length) w.exercises.forEach(ex => addExerciseBlock(ex));
-            else addExerciseBlock();
         }
 
         function renderWorkoutModal(workout, isNew) {
@@ -2973,11 +3249,6 @@ const GOALS = {
                     <h2>${title}</h2>
 
                     <div id="liveBar" style="background: rgba(6, 182, 212, 0.08); border: 1px solid var(--border); padding: 12px; border-radius: 12px; margin-top: 10px;"></div>
-
-                    <div class="integrity-notice" style="margin-top: 10px;">
-                        <h4>🏋️ Live Workout Mode</h4>
-                        <p>Start the timer and hit <b>Rest</b> after each set. Warmups don’t count toward volume.</p>
-                    </div>
 
                     <div class="form-section">
                         <h3>Workout Details</h3>
@@ -3004,15 +3275,16 @@ const GOALS = {
                             </div>
                         </div>
                         <div style="display:flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-                            <button onclick="${liveMode.running ? 'stopLiveTimer()' : 'startLiveTimer()'}" style="background: var(--accent-purple);">
-                                ${liveMode.running ? 'Stop Live Timer' : 'Start Live Timer'}
-                            </button>
-                            <button onclick="startRestTimer(Number(document.getElementById('restSecondsInput')?.value || 90))" style="background: var(--accent-warning);">⏱ Start Rest</button>
-                            <button onclick="stopRestTimer()">Stop Rest</button>
                             <button onclick="saveCurrentModalAsTemplate()" style="background: var(--accent-cyan);">Save as Template</button>
                             <button onclick="openTemplateManager()" style="background: var(--accent-cyan);">📚 Templates</button>
-                            <button onclick="openSyncModal()" style="background: var(--accent-warning);">☁️ Sync</button>
+                            <button onclick="openSyncSettings()" style="background: var(--accent-warning);">☁️ Sync</button>
+                            <button onclick="${liveMode.running ? 'stopLiveTimer()' : 'startLiveTimer()'}" style="background: var(--accent-purple);">${liveMode.running ? 'Stop Live Timer' : 'Start Live Timer'}</button>
                         </div>
+                    </div>
+
+                    <div class="integrity-notice">
+                        <h4>Warmups + Supersets + Live Rest</h4>
+                        <p>Mark warmup sets so they don’t count toward volume. Add a superset label (A/B/C) to group exercises.</p>
                     </div>
 
                     <div class="form-section">
@@ -3031,8 +3303,8 @@ const GOALS = {
                         </div>
                     </div>
 
-                    <div style="display:flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
-                        <button onclick="saveWorkoutV7()" class="primary">${saveLabel}</button>
+                    <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                        <button onclick="saveWorkout()" class="primary">${saveLabel}</button>
                         <button onclick="hideTrainingModal()">Cancel</button>
                     </div>
 
@@ -3042,387 +3314,240 @@ const GOALS = {
         }
 
         function addSupersetPair() {
-            const used = new Set();
-            for (let i=0; i<exerciseBlockCount; i++) {
-                const el = document.getElementById(`exSuperset-${i}`);
-                if (el && el.value.trim()) used.add(el.value.trim().toUpperCase());
-            }
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-            const next = letters.find(l => !used.has(l)) || 'A';
-            addExerciseBlock({ id: newId('ex'), name:'', superset: next, notes:'', sets:[] });
-            addExerciseBlock({ id: newId('ex'), name:'', superset: next, notes:'', sets:[] });
+            const label = prompt('Superset label (e.g., A)?', 'A');
+            if (!label) return;
+            addExerciseBlock({ superset: label, name:'', sets: [] });
+            addExerciseBlock({ superset: label, name:'', sets: [] });
         }
 
         function addExerciseBlock(prefill=null) {
             const container = document.getElementById('exerciseBlocks');
             if (!container) return;
-            const id = exerciseBlockCount++;
-            const ex = prefill || { id: newId('ex'), name:'', superset:'', notes:'', sets:[] };
+
+            const exId = _newId('ex');
+            exerciseBlockCount++;
+
+            const ex = prefill || { name: '', superset: '', sets: [] };
 
             const block = document.createElement('div');
-            block.id = `exerciseBlock-${id}`;
-            block.style.cssText = 'background: var(--bg-primary); padding: 15px; border-radius: 10px; margin-bottom: 12px; border: 1px solid var(--border);';
+            block.id = `exBlock-${exId}`;
+            block.style.cssText = 'background: var(--bg-primary); padding: 15px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 12px;';
 
             block.innerHTML = `
-                <div style="display:flex; justify-content: space-between; gap: 10px; align-items: start; margin-bottom: 10px;">
-                    <div style="flex:1;">
-                        <div style="display:flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                            <div style="font-weight: 700; color: var(--accent-cyan);">Exercise</div>
-                            <input type="text" list="exerciseOptions" id="exName-${id}" placeholder="Start typing (e.g., Bench Press)" value="${escapeHTML(ex.name||'')}" style="flex: 1; min-width: 220px;">
-                            <div style="display:flex; gap: 8px; align-items: center;">
-                                <label style="font-size:0.85em; color: var(--text-secondary);">Superset</label>
-                                <input type="text" id="exSuperset-${id}" placeholder="A" value="${escapeHTML(ex.superset||'')}" style="width: 70px;">
+                <div style="display:flex; justify-content: space-between; gap: 10px; align-items: start; flex-wrap: wrap;">
+                    <div style="flex: 1;">
+                        <div style="display:flex; gap: 10px; flex-wrap: wrap;">
+                            <div style="flex: 2; min-width: 200px;">
+                                <label style="color: var(--text-secondary); font-size: 0.85em; font-weight: 500;">Exercise</label>
+                                <input list="exerciseOptions" type="text" id="exName-${exId}" value="${escapeHTML(ex.name || '')}" placeholder="Start typing..." style="width:100%; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px; border-radius: 6px;">
+                            </div>
+                            <div style="width: 140px;">
+                                <label style="color: var(--text-secondary); font-size: 0.85em; font-weight: 500;">Superset</label>
+                                <input type="text" id="exSuperset-${exId}" value="${escapeHTML(ex.superset || '')}" placeholder="A" style="width:100%; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); padding: 8px; border-radius: 6px;">
                             </div>
                         </div>
-                        <div style="margin-top: 8px;">
-                            <textarea id="exNotes-${id}" rows="1" placeholder="Exercise notes (optional)" style="width: 100%;">${escapeHTML(ex.notes||'')}</textarea>
-                        </div>
                     </div>
-                    <div style="display:flex; gap: 6px; flex-wrap: wrap;">
-                        <button onclick="addSetRow(${id}, false)" style="padding: 6px 10px; font-size:0.85em;">+ Set</button>
-                        <button onclick="addSetRow(${id}, true)" style="padding: 6px 10px; font-size:0.85em; background: var(--accent-warning);">+ Warmup</button>
-                        <button class="danger" onclick="removeExerciseBlock(${id})" style="padding: 4px 10px;">×</button>
+                    <div style="display:flex; gap: 8px; flex-wrap: wrap;">
+                        <button onclick="addSetRow('${exId}', true)" style="background: var(--accent-warning); padding: 6px 10px;">+ Warmup</button>
+                        <button onclick="addSetRow('${exId}', false)" class="primary" style="padding: 6px 10px;">+ Set</button>
+                        <button class="danger" onclick="removeExerciseBlock('${exId}')" style="padding: 6px 10px;">×</button>
                     </div>
                 </div>
 
-                <div style="overflow-x:auto;">
-                    <table style="width:100%; font-size: 0.85em;">
+                <div style="margin-top: 12px; overflow-x:auto;">
+                    <table style="width:100%; border-collapse: collapse; font-size: 0.8em;">
                         <thead>
                             <tr>
-                                <th style="min-width:40px;">#</th>
-                                <th style="min-width:80px;">Warm</th>
-                                <th style="min-width:80px;">Reps</th>
-                                <th style="min-width:120px;">Weight</th>
-                                <th style="min-width:70px;">Done</th>
-                                <th style="min-width:180px;">Actions</th>
+                                <th style="position: sticky; top: 0; background: var(--bg-tertiary);">#</th>
+                                <th style="position: sticky; top: 0; background: var(--bg-tertiary);">Warm</th>
+                                <th style="position: sticky; top: 0; background: var(--bg-tertiary);">Reps</th>
+                                <th style="position: sticky; top: 0; background: var(--bg-tertiary);">Weight</th>
+                                <th style="position: sticky; top: 0; background: var(--bg-tertiary);">Done</th>
+                                <th style="position: sticky; top: 0; background: var(--bg-tertiary);">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="setRows-${id}"></tbody>
+                        <tbody id="setRows-${exId}"></tbody>
                     </table>
                 </div>
-
-                <input type="hidden" id="exId-${id}" value="${escapeHTML(ex.id || newId('ex'))}">
             `;
 
             container.appendChild(block);
 
+            // Prefill sets
             if (Array.isArray(ex.sets) && ex.sets.length) {
-                ex.sets.forEach(s => addSetRow(id, !!s.warmup, s));
+                ex.sets.forEach(s => addSetRow(exId, !!s.warmup, s));
             } else {
-                addSetRow(id, false); addSetRow(id, false); addSetRow(id, false);
+                // default 1 warmup + 2 working sets if templated / planned
+                if (prefill) {
+                    addSetRow(exId, true);
+                    addSetRow(exId, false);
+                    addSetRow(exId, false);
+                }
             }
-
-            setTimeout(()=>{
-                const nameEl = document.getElementById(`exName-${id}`);
-                if (nameEl) nameEl.addEventListener('change', ()=>{ upsertExerciseToLibrary(nameEl.value); hydrateExerciseDatalist(); });
-            }, 0);
         }
 
-        function removeExerciseBlock(id) {
-            const block = document.getElementById(`exerciseBlock-${id}`);
-            if (block) block.remove();
+        function removeExerciseBlock(exId) {
+            const el = document.getElementById(`exBlock-${exId}`);
+            if (el) el.remove();
         }
 
-        function addSetRow(exBlockId, isWarmup=false, prefill=null) {
-            const tbody = document.getElementById(`setRows-${exBlockId}`);
+        function addSetRow(exId, isWarmup=false, prefill=null) {
+            const tbody = document.getElementById(`setRows-${exId}`);
             if (!tbody) return;
             const idx = tbody.children.length + 1;
-            const s = prefill || { reps:'', weight:'', warmup:isWarmup, completed:true };
+            const s = prefill || { reps: '', weight: '', warmup: isWarmup, completed: true };
+
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td style="font-family:'Space Mono', monospace;">${idx}</td>
-                <td><input type="checkbox" id="setWarm-${exBlockId}-${idx}" ${(!!s.warmup)?'checked':''}></td>
-                <td><input type="number" step="1" id="setReps-${exBlockId}-${idx}" value="${(s.reps ?? '')}" style="width:100%;"></td>
-                <td><input type="number" step="0.5" id="setWt-${exBlockId}-${idx}" value="${(s.weight ?? '')}" style="width:100%;"></td>
-                <td><input type="checkbox" id="setDone-${exBlockId}-${idx}" ${(s.completed===undefined || s.completed)?'checked':''}></td>
-                <td style="display:flex; gap: 6px; flex-wrap: wrap;">
-                    <button onclick="startRestTimer(Number(document.getElementById('restSecondsInput')?.value || 90))" style="background: var(--accent-warning); padding: 4px 8px;">Rest</button>
-                    <button onclick="removeSetRow(this)" class="danger" style="padding: 4px 8px;">×</button>
+                <td><input type="checkbox" id="setWarm-${exId}-${idx}" ${(s.warmup)?'checked':''}></td>
+                <td><input type="number" step="1" id="setReps-${exId}-${idx}" value="${escapeHTML(s.reps ?? '')}" style="width:100%;"></td>
+                <td><input type="number" step="0.5" id="setWt-${exId}-${idx}" value="${escapeHTML(s.weight ?? '')}" style="width:100%;"></td>
+                <td><input type="checkbox" id="setDone-${exId}-${idx}" ${(s.completed ?? true)?'checked':''}></td>
+                <td style="display:flex; gap:6px; flex-wrap: wrap;">
+                    <button onclick="startRestTimer()" style="background: var(--accent-warning); padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-primary);">Rest</button>
+                    <button onclick="removeSetRow(this)" class="danger" style="padding: 3px 8px;">×</button>
                 </td>
             `;
             tbody.appendChild(row);
+
+            // If user marks a set "done", auto-start rest
+            const done = row.querySelector(`#setDone-${exId}-${idx}`);
+            if (done) {
+                done.addEventListener('change', () => {
+                    if (done.checked) startRestTimer();
+                });
+            }
         }
 
         function removeSetRow(btn) {
             const tr = btn.closest('tr');
-            if (!tr) return;
-            const tbody = tr.parentElement;
-            tr.remove();
-            Array.from(tbody.children).forEach((r,i)=>{
-                const td = r.querySelector('td');
-                if (td) td.textContent = String(i+1);
-            });
+            if (tr) tr.remove();
         }
 
         function collectWorkoutFromModal() {
-            const id = document.getElementById('workoutId').value || newId('w');
-            const date = document.getElementById('workoutDate').value;
-            const startTime = document.getElementById('workoutStartTime').value || '';
-            const title = document.getElementById('workoutTitle').value || '';
-            const type = document.getElementById('workoutType').value || 'Workout';
-            const notes = document.getElementById('workoutNotes').value || '';
+            const workout = {
+                id: document.getElementById('workoutId').value || _newId('w'),
+                date: document.getElementById('workoutDate').value || getTodayISO(),
+                startTime: (document.getElementById('workoutStartTime').value || '').trim(),
+                title: (document.getElementById('workoutTitle').value || '').trim(),
+                type: document.getElementById('workoutType').value || 'Workout',
+                notes: (document.getElementById('workoutNotes').value || '').trim(),
+                exercises: []
+            };
 
-            const exercises = [];
-            for (let exBlockId=0; exBlockId<exerciseBlockCount; exBlockId++) {
-                const block = document.getElementById(`exerciseBlock-${exBlockId}`);
-                if (!block) continue;
-
-                const exId = document.getElementById(`exId-${exBlockId}`)?.value || newId('ex');
-                const name = (document.getElementById(`exName-${exBlockId}`)?.value || '').trim();
-                const superset = (document.getElementById(`exSuperset-${exBlockId}`)?.value || '').trim().toUpperCase();
-                const exNotes = document.getElementById(`exNotes-${exBlockId}`)?.value || '';
-
-                const tbody = document.getElementById(`setRows-${exBlockId}`);
-                const setCount = tbody ? tbody.children.length : 0;
+            const blocks = document.querySelectorAll('#exerciseBlocks > div[id^="exBlock-"]');
+            blocks.forEach(block => {
+                const exId = block.id.replace('exBlock-','');
+                const name = (document.getElementById(`exName-${exId}`).value || '').trim();
+                const superset = (document.getElementById(`exSuperset-${exId}`).value || '').trim();
+                if (name) upsertExercise(name);
 
                 const sets = [];
-                for (let i=1; i<=setCount; i++) {
-                    const repsRaw = document.getElementById(`setReps-${exBlockId}-${i}`)?.value;
-                    const wtRaw = document.getElementById(`setWt-${exBlockId}-${i}`)?.value;
-                    const warmup = !!document.getElementById(`setWarm-${exBlockId}-${i}`)?.checked;
-                    const completed = !!document.getElementById(`setDone-${exBlockId}-${i}`)?.checked;
-
-                    const reps = (repsRaw === '' || repsRaw === undefined) ? null : Number(repsRaw);
-                    const weight = (wtRaw === '' || wtRaw === undefined) ? null : Number(wtRaw);
-                    if (reps === null && weight === null && !warmup) continue;
-                    sets.push({ reps, weight, warmup, completed });
+                const tbody = document.getElementById(`setRows-${exId}`);
+                if (tbody) {
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    rows.forEach((tr, i) => {
+                        const idx = i + 1;
+                        sets.push({
+                            warmup: !!document.getElementById(`setWarm-${exId}-${idx}`)?.checked,
+                            reps: Number(document.getElementById(`setReps-${exId}-${idx}`)?.value || 0) || 0,
+                            weight: Number(document.getElementById(`setWt-${exId}-${idx}`)?.value || 0) || 0,
+                            completed: !!document.getElementById(`setDone-${exId}-${idx}`)?.checked
+                        });
+                    });
                 }
 
-                if (!name && sets.length === 0) continue;
-                if (name) upsertExerciseToLibrary(name);
+                workout.exercises.push({
+                    id: exId,
+                    name,
+                    superset,
+                    sets
+                });
+            });
 
-                exercises.push({ id: exId, name: name || 'Exercise', superset, notes: exNotes, sets });
-            }
-
-            return { id, date, startTime, title, type, notes, exercises };
-        }
-
-        function saveWorkoutV7() {
-            const date = document.getElementById('workoutDate').value;
-            if (!date) { showToast('Please enter a workout date', true); return; }
-
-            const workout = collectWorkoutFromModal();
-            const idx = trainingLog.findIndex(w => w.id === workout.id);
-            if (idx >= 0) trainingLog[idx] = workout;
-            else trainingLog.push(workout);
-
-            trainingLog.sort((a,b)=> a.date.localeCompare(b.date) || (a.startTime||'').localeCompare(b.startTime||''));
-            saveTraining();
-            hideTrainingModal();
-            updateTrainingTab();
-            showToast('Workout saved!');
+            return workout;
         }
 
         function saveCurrentModalAsTemplate() {
-            loadTemplates();
             const w = collectWorkoutFromModal();
             const tpl = templateFromWorkout(w);
             tpl.name = prompt('Template name?', tpl.name) || tpl.name;
+            loadTemplates();
             workoutTemplates.push(tpl);
             saveTemplates();
             showToast('Template saved!');
         }
 
+        function saveWorkoutAsTemplateById(id) {
+            const w = trainingLog.find(x=>x.id===id);
+            if (!w) { showToast('Workout not found', true); return; }
+            const tpl = templateFromWorkout(w);
+            tpl.name = prompt('Template name?', tpl.name) || tpl.name;
+            loadTemplates();
+            workoutTemplates.push(tpl);
+            saveTemplates();
+            showToast('Template saved!');
+        }
+
+        async function saveWorkout() {
+            const w = collectWorkoutFromModal();
+            if (!w.date) { showToast('Date required', true); return; }
+            if (!w.title && !w.type) w.type = 'Workout';
+
+            trainingLog = trainingLog.filter(x => x.id !== w.id);
+            trainingLog.push({ ...w, updatedAt: new Date().toISOString() });
+            trainingLog.sort((a,b)=> a.date.localeCompare(b.date) || (a.startTime||'').localeCompare(b.startTime||''));
+
+            saveTraining();
+            updateTrainingTab();
+            hideTrainingModal();
+            showToast('Workout saved');
+
+            try { await pushTrainingToGist(); } catch(e) { /* ignore */ }
+        }
+
         function duplicateWorkout(id) {
-            const w = trainingLog.find(x => x.id === id);
+            const w = trainingLog.find(x=>x.id===id);
             if (!w) return;
             const copy = JSON.parse(JSON.stringify(w));
-            copy.id = newId('w');
+            copy.id = _newId('w');
+            copy.startTime = '';
+            copy.title = (copy.title ? `${copy.title} (Copy)` : 'Workout (Copy)');
+            trainingLog.push(copy);
+            saveTraining();
+            updateTrainingTab();
+            showToast('Workout duplicated');
+        }
+
+        function duplicateLastWorkoutToToday() {
+            if (!trainingLog.length) { showToast('No workouts to duplicate yet', true); return; }
+            const sorted = trainingLog.slice().sort((a,b)=> b.date.localeCompare(a.date) || (b.startTime||'').localeCompare(a.startTime||''));
+            const last = sorted[0];
+            const copy = JSON.parse(JSON.stringify(last));
+            copy.id = _newId('w');
             copy.date = getTodayISO();
             copy.startTime = '';
-            copy.title = (copy.title ? (copy.title + ' (Copy)') : 'Workout (Copy)');
+            copy.title = (copy.title ? `${copy.title}` : copy.type) + ' (Planned)';
             trainingLog.push(copy);
             trainingLog.sort((a,b)=> a.date.localeCompare(b.date) || (a.startTime||'').localeCompare(b.startTime||''));
             saveTraining();
             updateTrainingTab();
-            showToast('Duplicated to today');
-        }
-
-        function duplicateLastWorkoutToToday() {
-            if (trainingLog.length === 0) { showToast('No workouts to duplicate yet', true); return; }
-            const sorted = trainingLog.slice().sort((a,b)=> b.date.localeCompare(a.date) || (b.startTime||'').localeCompare(a.startTime||''));
-            duplicateWorkout(sorted[0].id);
+            showToast('Duplicated last workout to today');
         }
 
         function deleteWorkout(id) {
-            if (!confirm('Delete this workout session?')) return;
+            if (!confirm('Delete this workout?')) return;
             trainingLog = trainingLog.filter(w => w.id !== id);
             saveTraining();
             updateTrainingTab();
             showToast('Workout deleted');
+            pushTrainingToGist().catch(()=>{});
         }
 
         function hideTrainingModal() {
             document.getElementById('trainingModal').classList.remove('show');
-            exerciseBlockCount = 0;
-            stopRestTimer();
-            stopLiveTimer();
-        }
-
-        // ===== OPTIONAL CLOUD SYNC (GitHub Gist) =====
-        function getSyncConfig() {
-            const raw = localStorage.getItem(SYNC_CONFIG_KEY);
-            if (!raw) return { enabled:false, gistId:'', token:'' };
-            try { return JSON.parse(raw) || { enabled:false, gistId:'', token:'' }; } catch { return { enabled:false, gistId:'', token:'' }; }
-        }
-
-        function setSyncConfig(cfg) {
-            localStorage.setItem(SYNC_CONFIG_KEY, JSON.stringify(cfg));
-        }
-
-        function openSyncModal() {
-            const cfg = getSyncConfig();
-            const modal = document.getElementById('syncModal');
-            if (!modal) { showToast('Sync modal not found', true); return; }
-            modal.innerHTML = `
-              <div class="modal">
-                <h2>☁️ Cross-Device Sync (GitHub Gist)</h2>
-                <div class="integrity-notice">
-                  <h4>How Sync Works</h4>
-                  <p>This is a static GitHub Pages app. LocalStorage does not automatically sync across devices.</p>
-                  <p>Use a GitHub Gist as a small cloud store. You need a GitHub token with <b>gist</b> scope.</p>
-                  <p style="margin-top:8px;"><b>Note:</b> The token is stored only in your browser (localStorage). Treat it like a password.</p>
-                </div>
-
-                <div class="form-section">
-                  <h3>Sync Settings</h3>
-                  <div class="form-grid">
-                    <div class="form-field">
-                      <label>Enable Sync</label>
-                      <input type="checkbox" id="syncEnabled" style="width:auto;" ${cfg.enabled ? 'checked' : ''}>
-                    </div>
-                    <div class="form-field">
-                      <label>Gist ID</label>
-                      <input type="text" id="syncGistId" placeholder="e.g., a1b2c3d4..." value="${escapeHTML(cfg.gistId || '')}">
-                      <div style="font-size:0.75em; color: var(--text-secondary); margin-top:3px;">Create a private gist (any file). We update body-tracker-sync.json inside it.</div>
-                    </div>
-                    <div class="form-field">
-                      <label>GitHub Token (gist scope)</label>
-                      <input type="password" id="syncToken" placeholder="ghp_..." value="${escapeHTML(cfg.token || '')}">
-                    </div>
-                  </div>
-                </div>
-
-                <div class="form-section">
-                  <h3>Sync Actions</h3>
-                  <div style="display:flex; gap:10px; flex-wrap: wrap;">
-                    <button class="primary" onclick="saveSyncSettings()">Save Settings</button>
-                    <button onclick="pushSync()">⬆️ Push to Gist</button>
-                    <button onclick="pullSync()">⬇️ Pull from Gist</button>
-                    <button onclick="closeSyncModal()">Close</button>
-                  </div>
-                  <div style="color: var(--text-secondary); font-size:0.85em; margin-top:10px;">
-                    Push uploads body entries, measurements, training log, templates, and exercise library.<br>
-                    Pull replaces your local data with what’s in the gist.
-                  </div>
-                </div>
-              </div>
-            `;
-            modal.classList.add('show');
-        }
-
-        function closeSyncModal() {
-            const modal = document.getElementById('syncModal');
-            if (modal) modal.classList.remove('show');
-        }
-
-        function saveSyncSettings() {
-            const enabled = !!document.getElementById('syncEnabled').checked;
-            const gistId = (document.getElementById('syncGistId').value || '').trim();
-            const token = (document.getElementById('syncToken').value || '').trim();
-            setSyncConfig({ enabled, gistId, token });
-            showToast('Sync settings saved');
-        }
-
-        function buildSyncPayload() {
-            return {
-                version: 'v7',
-                exportDate: new Date().toISOString(),
-                body: bodyData || [],
-                measurements: measurements || [],
-                training: trainingLog || [],
-                templates: workoutTemplates || [],
-                exerciseLibrary: exerciseLibrary || []
-            };
-        }
-
-        async function pushSync() {
-            const cfg = getSyncConfig();
-            if (!cfg.enabled) { showToast('Enable sync first', true); return; }
-            if (!cfg.gistId || !cfg.token) { showToast('Enter gist ID + token', true); return; }
-
-            const payload = buildSyncPayload();
-            const content = JSON.stringify(payload, null, 2);
-
-            try {
-                const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `token ${cfg.token}`,
-                        'Accept': 'application/vnd.github+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        files: { 'body-tracker-sync.json': { content } }
-                    })
-                });
-                if (!res.ok) {
-                    const t = await res.text();
-                    throw new Error(t || 'GitHub API error');
-                }
-                showToast('✅ Pushed to Gist');
-            } catch (err) {
-                console.error(err);
-                showToast('Sync push failed (see console)', true);
-            }
-        }
-
-        async function pullSync() {
-            const cfg = getSyncConfig();
-            if (!cfg.enabled) { showToast('Enable sync first', true); return; }
-            if (!cfg.gistId || !cfg.token) { showToast('Enter gist ID + token', true); return; }
-
-            try {
-                const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
-                    headers: {
-                        'Authorization': `token ${cfg.token}`,
-                        'Accept': 'application/vnd.github+json'
-                    }
-                });
-                if (!res.ok) {
-                    const t = await res.text();
-                    throw new Error(t || 'GitHub API error');
-                }
-                const gist = await res.json();
-                const file = gist.files && gist.files['body-tracker-sync.json'];
-                if (!file || !file.content) throw new Error('No body-tracker-sync.json found in gist');
-
-                const payload = JSON.parse(file.content);
-                if (payload.body) bodyData = payload.body;
-                if (payload.measurements) measurements = payload.measurements;
-                if (payload.training) trainingLog = payload.training;
-                if (payload.templates) workoutTemplates = payload.templates;
-                if (payload.exerciseLibrary) exerciseLibrary = payload.exerciseLibrary;
-
-                saveData();
-                saveMeasurements();
-                saveTraining();
-                saveTemplates();
-                saveExerciseLibrary();
-
-                loadData();
-                updateStats();
-                updateTable();
-                updateChart();
-                updateMeasurementsTab();
-                updateTrainingTab();
-                updateCorrelationsTab();
-
-                showToast('✅ Pulled from Gist');
-            } catch (err) {
-                console.error(err);
-                showToast('Sync pull failed (see console)', true);
-            }
+            resetLiveMode();
         }
 
 
@@ -3668,6 +3793,7 @@ const GOALS = {
             loadExerciseLibrary();
             loadTemplates();
             loadTraining();
+            
             updateStats();
             updateTable();
             updateChart();
