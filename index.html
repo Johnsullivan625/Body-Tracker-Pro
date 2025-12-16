@@ -2473,6 +2473,11 @@ const GOALS = {
             return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
         }
 
+        function newId(prefix='id') {
+            // alias for schema migration helpers
+            return _newId(prefix);
+        }
+
         function getTodayISO() {
             return new Date().toISOString().split('T')[0];
         }
@@ -2680,7 +2685,7 @@ const GOALS = {
                 'Accept': 'application/vnd.github+json',
                 'X-GitHub-Api-Version': '2022-11-28'
             };
-            if (cfg.token) headers['Authorization'] = `Bearer ${cfg.token}`;
+            if (cfg.token) headers['Authorization'] = (cfg.token.startsWith('ghp_') ? `token ${cfg.token}` : `Bearer ${cfg.token}`);
             if (body) headers['Content-Type'] = 'application/json';
             const res = await fetch(url, { method, headers, body: body ? JSON.stringify(body) : null });
             if (!res.ok) {
@@ -2699,14 +2704,37 @@ const GOALS = {
             const gist = await gistFetch(`https://api.github.com/gists/${cfg.gistId}`, cfg);
             const file = gist.files && (gist.files['training.json'] || Object.values(gist.files)[0]);
             if (!file || !file.content) throw new Error('No training.json found in gist');
-            const payload = JSON.parse(file.content);
-            if (!payload || !Array.isArray(payload.trainingLog)) throw new Error('Invalid gist content');
-            trainingLog = payload.trainingLog;
-            exerciseLibrary = Array.isArray(payload.exerciseLibrary) ? payload.exerciseLibrary : exerciseLibrary;
-            workoutTemplates = Array.isArray(payload.workoutTemplates) ? payload.workoutTemplates : workoutTemplates;
-            saveTraining();
-            saveExerciseLibrary();
-            saveTemplates();
+            const remote = JSON.parse(file.content);
+
+            // Accept multiple formats (legacy + versioned)
+            let payload = null;
+            if (remote && Array.isArray(remote)) {
+                // legacy: raw array of workouts
+                payload = { schema_version: TRAINING_SCHEMA_VERSION, exported_at: nowISO(), workouts: remote };
+            } else if (remote && Array.isArray(remote.trainingLog)) {
+                // legacy: { trainingLog: [...] }
+                payload = { schema_version: TRAINING_SCHEMA_VERSION, exported_at: remote.updatedAt || nowISO(), workouts: remote.trainingLog };
+            } else if (remote && Array.isArray(remote.workouts)) {
+                // versioned or semi-versioned
+                payload = { schema_version: Number(remote.schema_version) || TRAINING_SCHEMA_VERSION, exported_at: remote.exported_at || remote.updatedAt || nowISO(), workouts: remote.workouts };
+            } else {
+                throw new Error('Unrecognized training payload format');
+            }
+
+            // Persist raw payload then load via migrator
+            localStorage.setItem(TRAINING_KEY, JSON.stringify(payload));
+
+            // Also pull libraries/templates if present
+            if (remote && Array.isArray(remote.exerciseLibrary)) {
+                exerciseLibrary = remote.exerciseLibrary;
+                saveExerciseLibrary();
+            }
+            if (remote && Array.isArray(remote.workoutTemplates)) {
+                workoutTemplates = remote.workoutTemplates;
+                saveTemplates();
+            }
+
+            loadTraining(); // runs migrations + normalization
             updateTrainingTab();
             showToast('Pulled training data from GitHub');
         }
@@ -2714,13 +2742,16 @@ const GOALS = {
         async function pushTrainingToGist() {
             const cfg = loadSyncConfig();
             if (!cfg.enabled || !cfg.gistId || !cfg.token) return;
+
+            // Export current workouts in versioned format (plus libraries/templates)
             const payload = {
-                version: 'training_v6',
-                updatedAt: new Date().toISOString(),
-                trainingLog,
-                exerciseLibrary,
-                workoutTemplates
+                schema_version: TRAINING_SCHEMA_VERSION,
+                exported_at: nowISO(),
+                workouts: trainingLog,
+                exerciseLibrary: exerciseLibrary,
+                workoutTemplates: workoutTemplates
             };
+
             await gistFetch(`https://api.github.com/gists/${cfg.gistId}`, cfg, 'PATCH', {
                 files: { 'training.json': { content: JSON.stringify(payload, null, 2) } }
             });
