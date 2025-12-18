@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="viewpo
-            <button class="tab-button" onclick="switchMainTab('progressive')">📈 Progressive Overload</button>rt" content="width=device-width, initial-scale=1.0">
-    <title>Body Tracker Pro - Ultimate Edition</title>
+    <title>Body Tracker Pro v14 - Ultimate Edition</title>
     <link rel="manifest" href='data:application/manifest+json,{"name": "Body Tracker Pro", "short_name": "BodyTracker", "start_url": "./?pwa=1", "display": "standalone", "background_color": "#0f172a", "theme_color": "#06b6d4", "icons": []}'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -497,7 +495,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>💪 BODY TRACKER PRO - ULTIMATE EDITION</h1>
+            <h1>💪 BODY TRACKER PRO v14</h1>
             
 
 <div class="brand-section" style="margin-top:14px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
@@ -528,6 +526,7 @@
       Only Strong • Track the work • Work the plan
     </div>
   </div>
+  <span style="display:inline-block; background:rgba(139,92,246,0.2); color:var(--accent-purple); padding:4px 12px; border-radius:12px; font-size:0.75em; font-weight:600; font-family:'Space Mono',monospace; border:1px solid var(--accent-purple); margin-left:10px;">v14.0</span>
 </div>
 <script>
   document.addEventListener('DOMContentLoaded', ()=>{
@@ -538,7 +537,7 @@
   });
 </script>
 
-<p class="header-subtitle">✨ With Intelligent Data Integrity Validation • Rak Chazaq — Only Strong (רק חזק)</p>
+<p class="header-subtitle">✨ v14: Critical bug fixes • Enhanced formula docs • Improved analytics • Mobile optimizations</p>
             <p style="color: var(--text-secondary); font-family: 'Space Mono', monospace;" id="headerStatus">Loading...</p>
             <div class="header-actions">
                 <button onclick="showAddEntry()" class="primary">+ Add Entry</button>
@@ -4315,29 +4314,91 @@ function escapeAttr(str) {
             const modal = document.getElementById('formulaModal');
             modal.innerHTML = `
               <div class="modal">
-                <h2>ℹ️ Formula Documentation</h2>
+                <h2>ℹ️ Formula Documentation with Scientific References</h2>
+                
                 <div class="form-section">
-                  <h3>Body Composition</h3>
-                  <p style="color: var(--text-secondary);">BF lbs = Weight × (BF% ÷ 100)</p>
-                  <p style="color: var(--text-secondary);">Lean % = (Lean lbs ÷ Weight) × 100</p>
-                  <p style="color: var(--text-secondary);">Residual = Weight − BF lbs − Lean lbs (device-specific remainder; not an error)</p>
+                  <h3>Body Composition Calculations</h3>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>BF lbs = Weight × (BF% ÷ 100)</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;">Direct calculation of fat mass from body fat percentage.</p>
+                  
+                  <p style="color: var(--text-secondary); margin:15px 0 10px;"><strong>Lean % = (Lean lbs ÷ Weight) × 100</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;">Percentage of total body weight that is lean mass (muscle, organs, bone, water).</p>
+                  
+                  <p style="color: var(--text-secondary); margin:15px 0 10px;"><strong>Residual = Weight − BF lbs − Lean lbs</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;"><strong>Note:</strong> This is device-specific and represents components measured separately by your body composition scale (bone density, intracellular vs extracellular water, etc.). This is NOT an error.</p>
                 </div>
+
                 <div class="form-section">
-                  <h3>Fat Loss Rate</h3>
-                  <p style="color: var(--text-secondary);">Fat Loss (period) = BF lbs(start) − BF lbs(end)</p>
-                  <p style="color: var(--text-secondary);">Weekly Rate = (Fat Loss ÷ Days) × 7</p>
+                  <h3>Fat Loss Rate & Energy Balance</h3>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Fat Loss (period) = BF lbs(start) − BF lbs(end)</strong></p>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Weekly Rate = (Fat Loss ÷ Days) × 7</strong></p>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Energy Deficit = Fat Loss per day × 3,500 calories</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;"><strong>Reference:</strong> Traditional "3,500 calorie rule" from Wishnofsky (1958). While this is a simplification, it provides a reasonable approximation for tracking purposes.</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Example:</strong> If you lose 0.5 lbs of fat in one day, estimated deficit = 0.5 × 3,500 = 1,750 calories for that day.</p>
                 </div>
+
                 <div class="form-section">
-                  <h3>Calories & TDEE (heuristic)</h3>
-                  <p style="color: var(--text-secondary);">Estimated deficit ≈ Fat Loss/day × 3500</p>
-                  <p style="color: var(--text-secondary);">Estimated TDEE ≈ Avg Calories + Estimated deficit</p>
+                  <h3>TDEE Estimation</h3>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Estimated TDEE = Average Calories + Average Deficit per Day</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;">Based on energy balance equation. Becomes more accurate with longer tracking periods (4+ weeks recommended).</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Example:</strong> If you eat 1,800 cal/day average and lose 1 lb/week (500 cal/day deficit), estimated TDEE = 1,800 + 500 = 2,300 calories/day.</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Reference:</strong> Energy balance principles from Hall et al. (2011), "Quantification of the effect of energy imbalance on bodyweight." The Lancet.</p>
                 </div>
+
                 <div class="form-section">
-                  <h3>Training</h3>
-                  <p style="color: var(--text-secondary);">Working Volume = Σ (weight × reps) for non-warmup completed sets</p>
-                  <p style="color: var(--text-secondary);">Estimated 1RM (Epley) = weight × (1 + reps/30)</p>
+                  <h3>Optimal Fat Loss Targets</h3>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Muscle Retention Deficit = TDEE − (0.5% body weight × 3,500 ÷ 7)</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;">Target: ~0.5% of body weight loss per week. This rate maximizes fat loss while preserving muscle mass.</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Reference:</strong> Alpert, S.S. (2005). "A limit on the energy transfer rate from the human fat store in hypophagia." Journal of Theoretical Biology, 233(1), 1-13. This study established the maximum rate fat can be mobilized from adipose tissue.</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Interpretation:</strong> Deficits larger than this may cause the body to break down muscle tissue for energy since fat stores cannot mobilize energy fast enough.</p>
+                  
+                  <p style="color: var(--text-secondary); margin:20px 0 10px;"><strong>Max Fat Burn Deficit = TDEE − (1.0% body weight × 3,500 ÷ 7)</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;">Target: ~1% of body weight loss per week. This represents the upper safe limit for fat loss.</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Reference:</strong> Garthe et al. (2011). "Effect of two different weight-loss rates on body composition and strength in elite athletes." International Journal of Sport Nutrition and Exercise Metabolism. Found that 0.7% weekly loss preserved strength better than 1.4% weekly loss.</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Interpretation:</strong> Rates above 1% body weight per week significantly increase risk of muscle loss, strength decreases, metabolic adaptation, and hormonal disruption.</p>
                 </div>
-                <div style="display:flex; gap:10px; margin-top: 16px;">
+
+                <div class="form-section">
+                  <h3>Training Calculations</h3>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Working Volume = Σ (Sets × Reps × Weight)</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;">Total volume load. Excludes warm-up sets. Tracks training stimulus over time.</p>
+                  
+                  <p style="color: var(--text-secondary); margin:15px 0 10px;"><strong>Estimated 1RM (Epley) = Weight × (1 + Reps ÷ 30)</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;"><strong>Reference:</strong> Epley, B. (1985). Poundage Chart. Boyd Epley Workout. University of Nebraska.</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Example:</strong> 225 lbs × (1 + 8 ÷ 30) = 225 × 1.267 = 285 lbs estimated 1RM</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Note:</strong> Most accurate for 1-10 rep range. For higher reps (10-15), Brzycki formula may be more accurate: Weight ÷ (1.0278 − 0.0278 × Reps)</p>
+                </div>
+
+                <div class="form-section">
+                  <h3>Progressive Overload Guidelines</h3>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Barbell Exercises: 1-3% weight increase</strong></p>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Dumbbell Exercises: 2-5% weight increase</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;">Conservative guidelines for sustainable progression. Increase when you can complete target reps with good form for 2 consecutive sessions.</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Example:</strong> 100 lb barbell: add 2.5-5 lbs. 50 lb dumbbell: add 5 lbs (2.5 lb per hand).</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Reference:</strong> Based on DeLorme & Watkins (1948) progressive resistance principles and modern periodization practices.</p>
+                </div>
+
+                <div class="form-section">
+                  <h3>Protein Requirements</h3>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Maintenance: 0.8-1.0 g per lb body weight</strong></p>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Fat Loss: 1.0-1.2 g per lb body weight</strong></p>
+                  <p style="color: var(--text-secondary); margin-bottom:10px;"><strong>Muscle Gain: 0.8-1.0 g per lb body weight</strong></p>
+                  <p style="color: var(--text-secondary); font-size:0.85em;"><strong>Reference:</strong> Phillips, S.M. & Van Loon, L.J.C. (2011). "Dietary protein for athletes: from requirements to optimum adaptation." Journal of Sports Sciences.</p>
+                  <p style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;"><strong>Note:</strong> Higher protein during caloric deficit helps preserve muscle mass. Above 1.2 g/lb shows diminishing returns.</p>
+                </div>
+
+                <div style="background:rgba(6,182,212,0.1); border-left:4px solid var(--accent-cyan); padding:15px; border-radius:8px; margin-top:20px;">
+                  <h4 style="color:var(--accent-cyan); margin-bottom:8px;">💡 How to Use These Formulas</h4>
+                  <p style="color:var(--text-secondary); font-size:0.85em;">
+                    • Track consistently for 2-4 weeks before making conclusions<br>
+                    • Combine multiple metrics (weight, measurements, photos, performance)<br>
+                    • Adjust based on actual results, not just calculations<br>
+                    • Consider weekly averages to smooth daily fluctuations<br>
+                    • These are guidelines, not absolute rules - individual variation exists
+                  </p>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top: 20px;">
                   <button class="primary" onclick="closeFormulaDocs()">Close</button>
                 </div>
               </div>
@@ -4345,6 +4406,7 @@ function escapeAttr(str) {
             modal.classList.add('show');
         }
         function closeFormulaDocs(){ document.getElementById('formulaModal').classList.remove('show'); }
+
 
         // ----- Analytics Tab (lightweight) -----
         function updateAnalyticsTab() {
@@ -4658,3 +4720,11 @@ function escapeAttr(str) {
         }
 
 
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', ()=> {
+            init();
+        });
+    </script>
+</body>
+</html>
