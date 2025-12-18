@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="viewpo
             <button class="tab-button" onclick="switchMainTab('progressive')">📈 Progressive Overload</button>rt" content="width=device-width, initial-scale=1.0">
     <title>Body Tracker Pro - Ultimate Edition</title>
+    <link rel="manifest" href='data:application/manifest+json,{"name": "Body Tracker Pro", "short_name": "BodyTracker", "start_url": "./?pwa=1", "display": "standalone", "background_color": "#0f172a", "theme_color": "#06b6d4", "icons": []}'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -483,19 +485,69 @@
             table { font-size: 0.7em; }
             th, td { padding: 6px 3px; }
         }
+    
+        @media print {
+            body { background: white !important; color: black !important; }
+            .header-actions, .tab-button, button, .toast, .modal-overlay { display: none !important; }
+            .card { page-break-inside: avoid; border: 1px solid #ddd !important; }
+            th { position: static !important; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>💪 BODY TRACKER PRO - ULTIMATE EDITION</h1>
-            <p class="header-subtitle">✨ With Intelligent Data Integrity Validation • Rak Chazaq — Only Strong (רק חזק)</p>
+            
+
+<div class="brand-section" style="margin-top:14px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+  <div class="brand-logo" style="width:56px; height:56px; border-radius:14px; background: rgba(139,92,246,0.15); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; box-shadow: 0 0 0 rgba(6,182,212,0); transition: all 0.25s ease;">
+    <svg width="40" height="40" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Rak Chazaq logo">
+      <!-- Mountain / strength mark -->
+      <path d="M10 50L26 26L34 36L42 28L54 50" stroke="url(#g1)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+      <!-- Barbell -->
+      <path d="M18 20v10M46 20v10M22 25h20" stroke="url(#g2)" stroke-width="4" stroke-linecap="round"/>
+      <!-- Hebrew -->
+      <text x="32" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="url(#g1)">רק חזק</text>
+      <defs>
+        <linearGradient id="g1" x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#06b6d4"/><stop offset="1" stop-color="#8b5cf6"/>
+        </linearGradient>
+        <linearGradient id="g2" x1="18" y1="18" x2="46" y2="34" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#10b981"/><stop offset="1" stop-color="#06b6d4"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+  <div style="min-width:220px;">
+    <div style="font-family:'Space Mono', monospace; letter-spacing:0.06em; font-weight:800; font-size:0.95em;">
+      <span style="background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">RAK CHAZAQ</span>
+      <span style="color: var(--text-secondary); font-weight:600; margin-left:8px;">(רק חזק)</span>
+    </div>
+    <div style="color: var(--text-secondary); font-size:0.9em; margin-top:2px;">
+      Only Strong • Track the work • Work the plan
+    </div>
+  </div>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const logo = document.querySelector('.brand-logo');
+    if(!logo) return;
+    logo.addEventListener('mouseenter', ()=>{ logo.style.boxShadow='0 0 22px rgba(6,182,212,0.35)'; logo.style.transform='translateY(-1px)';});
+    logo.addEventListener('mouseleave', ()=>{ logo.style.boxShadow='0 0 0 rgba(6,182,212,0)'; logo.style.transform='translateY(0)';});
+  });
+</script>
+
+<p class="header-subtitle">✨ With Intelligent Data Integrity Validation • Rak Chazaq — Only Strong (רק חזק)</p>
             <p style="color: var(--text-secondary); font-family: 'Space Mono', monospace;" id="headerStatus">Loading...</p>
             <div class="header-actions">
                 <button onclick="showAddEntry()" class="primary">+ Add Entry</button>
                 <button onclick="exportCSV()">📥 Export CSV</button>
                 <button onclick="exportBackup()">💾 Backup JSON</button>
+                <button onclick="openBulkEdit()" style="background: var(--accent-purple);">🧾 Bulk Edit</button>
                 <button onclick="reloadData()" style="background: var(--accent-purple);">🔄 Reload Data</button>
+                <button onclick="openSettings()" style="background: var(--accent-purple);">⚙️ Settings</button>
+                <button onclick="openFormulaDocs()" style="background: var(--accent-cyan);">ℹ️ Formulas</button>
                 <button onclick="debugData()" style="background: var(--accent-warning);">🔧 Debug Data</button>
             </div>
         </div>
@@ -507,6 +559,7 @@
             <button class="tab-button" onclick="switchMainTab('measurements', this)">📏 Body Measurements</button>
             <button class="tab-button" onclick="switchMainTab('training', this)">🏋️ Training Log</button>
             <button class="tab-button" onclick="switchMainTab('correlations', this)">🔍 Correlations</button>
+            <button class="tab-button" onclick="switchMainTab('analytics')">🧠 Analytics</button>
             <button class="tab-button" onclick="switchMainTab('data', this)">📋 All Data</button>
         </div>
 
@@ -602,6 +655,15 @@
     </div>
 </div>
 
+
+        <!-- ANALYTICS TAB -->
+        <div id="analytics-tab" class="main-tab-content">
+            <div class="card">
+                <h2>🧠 Advanced Analytics</h2>
+                <div id="analyticsContent"></div>
+            </div>
+        </div>
+
 <!-- DATA TAB -->
         <div id="data-tab" class="main-tab-content">
             <div class="card">
@@ -627,6 +689,7 @@
                                 <th>RHR</th>
                                 <th>Sleep</th>
                                 <th>Sleep Hrs</th>
+                                <th>Q</th>
                                 <th>Refeed</th>
                                 <th>Actions</th>
                             </tr>
@@ -758,7 +821,22 @@
     <!-- TRAINING MODAL -->
     <div class="modal-overlay" id="trainingModal"></div>
 
+    <!-- SETTINGS MODAL -->
+    <div class="modal-overlay" id="settingsModal"></div>
+
+    <!-- FORMULA DOCS MODAL -->
+    <div class="modal-overlay" id="formulaModal"></div>
+
     <div class="toast" id="toast"></div>
+
+    <div id="quickAddBar" style="position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 1500; display:none;">
+        <div style="background: rgba(30,41,59,0.92); backdrop-filter: blur(8px); border: 1px solid var(--border); border-radius: 14px; padding: 10px; display:flex; gap:10px; justify-content: space-between; align-items:center;">
+            <button class="primary" onclick="showAddEntry()" style="flex:1; min-height:44px;">+ Body Entry</button>
+            <button onclick="switchMainTab('training'); showAddWorkout();" style="flex:1; min-height:44px;">+ Workout</button>
+            <button onclick="switchMainTab('data')" style="min-width:54px; min-height:44px;">📋</button>
+        </div>
+    </div>
+
 
     <script>
         // ===== GLOBAL CONFIGURATION =====
@@ -797,7 +875,7 @@ const GOALS = {
         let editingRow = null;
 
         // ===== INITIAL DATA (48 days: Oct 27 - Dec 13, 2025) =====
-        const INITIAL_DATA = [{"date":"2025-10-27","weight":208.1,"bf_percent":20.5,"lean_lbs":156.3,"calories":1405.0,"protein":116.0,"fat":83.0,"carbs":40.0,"steps":7046.0,"rhr":48.0,"sleep_score":87.0,"sleep_duration_hrs":9.42,"water_percent":58.4,"refeed":false,"notes":""},{"date":"2025-10-28","weight":208.9,"bf_percent":20.5,"lean_lbs":154.5,"calories":1565.0,"protein":139.0,"fat":92.0,"carbs":30.0,"steps":null,"rhr":null,"sleep_score":77.0,"sleep_duration_hrs":6.62,"water_percent":58.3,"refeed":false,"notes":""},{"date":"2025-10-29","weight":203.4,"bf_percent":20.3,"lean_lbs":154.6,"calories":1577.0,"protein":151.0,"fat":79.0,"carbs":50.0,"steps":null,"rhr":null,"sleep_score":63.0,"sleep_duration_hrs":9.18,"water_percent":59.8,"refeed":false,"notes":""},{"date":"2025-10-30","weight":202.6,"bf_percent":20.0,"lean_lbs":154.5,"calories":1555.0,"protein":142.0,"fat":95.0,"carbs":23.0,"steps":6480.0,"rhr":55.0,"sleep_score":null,"sleep_duration_hrs":null,"water_percent":59.8,"refeed":false,"notes":""},{"date":"2025-10-31","weight":205.0,"bf_percent":19.7,"lean_lbs":154.2,"calories":1290.0,"protein":147.0,"fat":59.0,"carbs":35.0,"steps":9519.0,"rhr":54.0,"sleep_score":86.0,"sleep_duration_hrs":10.38,"water_percent":58.8,"refeed":false,"notes":""},{"date":"2025-11-01","weight":204.4,"bf_percent":19.7,"lean_lbs":154.2,"calories":1735.0,"protein":146.0,"fat":41.0,"carbs":31.0,"steps":5231.0,"rhr":52.0,"sleep_score":66.0,"sleep_duration_hrs":7.0,"water_percent":59.3,"refeed":false,"notes":""},{"date":"2025-11-02","weight":203.8,"bf_percent":19.5,"lean_lbs":154.3,"calories":1436.0,"protein":134.0,"fat":76.0,"carbs":29.0,"steps":2859.0,"rhr":51.0,"sleep_score":91.0,"sleep_duration_hrs":8.1,"water_percent":59.7,"refeed":false,"notes":""},{"date":"2025-11-03","weight":204.0,"bf_percent":19.3,"lean_lbs":154.4,"calories":1981.0,"protein":207.0,"fat":76.0,"carbs":35.0,"steps":9321.0,"rhr":55.0,"sleep_score":67.0,"sleep_duration_hrs":7.53,"water_percent":59.8,"refeed":false,"notes":""},{"date":"2025-11-04","weight":203.9,"bf_percent":19.2,"lean_lbs":154.4,"calories":1660.0,"protein":131.0,"fat":48.0,"carbs":50.0,"steps":7202.0,"rhr":54.0,"sleep_score":73.0,"sleep_duration_hrs":6.65,"water_percent":59.5,"refeed":false,"notes":""},{"date":"2025-11-05","weight":200.8,"bf_percent":19.5,"lean_lbs":153.8,"calories":1525.0,"protein":161.0,"fat":85.0,"carbs":20.0,"steps":5753.0,"rhr":52.0,"sleep_score":87.0,"sleep_duration_hrs":9.1,"water_percent":59.1,"refeed":false,"notes":""},{"date":"2025-11-06","weight":200.6,"bf_percent":19.6,"lean_lbs":153.3,"calories":1492.0,"protein":141.0,"fat":82.0,"carbs":39.0,"steps":10762.0,"rhr":50.0,"sleep_score":76.0,"sleep_duration_hrs":9.03,"water_percent":58.8,"refeed":false,"notes":""},{"date":"2025-11-07","weight":200.2,"bf_percent":19.4,"lean_lbs":153.2,"calories":1724.0,"protein":179.0,"fat":71.0,"carbs":83.0,"steps":11448.0,"rhr":52.0,"sleep_score":65.0,"sleep_duration_hrs":6.48,"water_percent":60.0,"refeed":false,"notes":""},{"date":"2025-11-08","weight":201.1,"bf_percent":19.1,"lean_lbs":153.3,"calories":2465.0,"protein":180.0,"fat":82.0,"carbs":197.0,"steps":4149.0,"rhr":49.0,"sleep_score":73.0,"sleep_duration_hrs":8.67,"water_percent":60.2,"refeed":true,"notes":""},{"date":"2025-11-09","weight":202.8,"bf_percent":18.6,"lean_lbs":153.8,"calories":1710.0,"protein":203.0,"fat":57.0,"carbs":81.0,"steps":4673.0,"rhr":48.0,"sleep_score":85.0,"sleep_duration_hrs":7.17,"water_percent":61.0,"refeed":false,"notes":""},{"date":"2025-11-10","weight":201.8,"bf_percent":18.4,"lean_lbs":154.2,"calories":1908.0,"protein":203.0,"fat":68.0,"carbs":100.0,"steps":7444.0,"rhr":51.0,"sleep_score":78.0,"sleep_duration_hrs":9.0,"water_percent":61.1,"refeed":false,"notes":""},{"date":"2025-11-11","weight":200.3,"bf_percent":18.3,"lean_lbs":154.4,"calories":1199.0,"protein":150.0,"fat":26.0,"carbs":65.0,"steps":2327.0,"rhr":45.0,"sleep_score":56.0,"sleep_duration_hrs":4.88,"water_percent":61.1,"refeed":false,"notes":""},{"date":"2025-11-12","weight":199.1,"bf_percent":18.3,"lean_lbs":154.2,"calories":1210.0,"protein":101.0,"fat":72.0,"carbs":28.0,"steps":3724.0,"rhr":46.0,"sleep_score":76.0,"sleep_duration_hrs":9.7,"water_percent":60.2,"refeed":false,"notes":""},{"date":"2025-11-13","weight":199.5,"bf_percent":18.3,"lean_lbs":153.7,"calories":1756.0,"protein":133.0,"fat":112.0,"carbs":39.0,"steps":10266.0,"rhr":48.0,"sleep_score":83.0,"sleep_duration_hrs":8.78,"water_percent":59.6,"refeed":false,"notes":""},{"date":"2025-11-14","weight":197.5,"bf_percent":18.4,"lean_lbs":153.5,"calories":2583.0,"protein":202.0,"fat":51.0,"carbs":270.0,"steps":6214.0,"rhr":47.0,"sleep_score":81.0,"sleep_duration_hrs":8.53,"water_percent":60.5,"refeed":true,"notes":""},{"date":"2025-11-15","weight":199.1,"bf_percent":18.0,"lean_lbs":153.6,"calories":1960.0,"protein":219.0,"fat":84.0,"carbs":75.0,"steps":4173.0,"rhr":55.0,"sleep_score":62.0,"sleep_duration_hrs":6.62,"water_percent":61.0,"refeed":false,"notes":""},{"date":"2025-11-16","weight":199.6,"bf_percent":17.8,"lean_lbs":153.8,"calories":1502.0,"protein":156.0,"fat":30.0,"carbs":128.0,"steps":4655.0,"rhr":54.0,"sleep_score":60.0,"sleep_duration_hrs":7.1,"water_percent":61.2,"refeed":false,"notes":""},{"date":"2025-11-17","weight":198.3,"bf_percent":17.7,"lean_lbs":153.8,"calories":2165.0,"protein":207.0,"fat":127.0,"carbs":32.0,"steps":12478.0,"rhr":52.0,"sleep_score":67.0,"sleep_duration_hrs":8.88,"water_percent":61.0,"refeed":true,"notes":""},{"date":"2025-11-18","weight":199.8,"bf_percent":17.8,"lean_lbs":153.4,"calories":1718.0,"protein":163.0,"fat":103.0,"carbs":26.0,"steps":4852.0,"rhr":50.0,"sleep_score":71.0,"sleep_duration_hrs":7.05,"water_percent":59.1,"refeed":false,"notes":""},{"date":"2025-11-19","weight":199.8,"bf_percent":17.5,"lean_lbs":153.9,"calories":1715.0,"protein":169.0,"fat":60.0,"carbs":61.0,"steps":10165.0,"rhr":57.0,"sleep_score":null,"sleep_duration_hrs":null,"water_percent":61.9,"refeed":false,"notes":""},{"date":"2025-11-20","weight":197.9,"bf_percent":17.2,"lean_lbs":154.4,"calories":2008.0,"protein":195.0,"fat":105.0,"carbs":50.0,"steps":4982.0,"rhr":54.0,"sleep_score":63.0,"sleep_duration_hrs":8.33,"water_percent":62.8,"refeed":true,"notes":""},{"date":"2025-11-21","weight":197.2,"bf_percent":16.9,"lean_lbs":154.7,"calories":1275.0,"protein":207.0,"fat":48.0,"carbs":17.0,"steps":6988.0,"rhr":54.0,"sleep_score":85.0,"sleep_duration_hrs":9.3,"water_percent":62.4,"refeed":false,"notes":""},{"date":"2025-11-22","weight":198.4,"bf_percent":16.4,"lean_lbs":155.3,"calories":1835.0,"protein":229.0,"fat":48.0,"carbs":114.0,"steps":4021.0,"rhr":48.0,"sleep_score":null,"sleep_duration_hrs":null,"water_percent":62.4,"refeed":false,"notes":""},{"date":"2025-11-23","weight":200.2,"bf_percent":16.0,"lean_lbs":155.9,"calories":1501.0,"protein":132.0,"fat":37.0,"carbs":146.0,"steps":5803.0,"rhr":51.0,"sleep_score":72.0,"sleep_duration_hrs":7.35,"water_percent":62.8,"refeed":false,"notes":""},{"date":"2025-11-24","weight":196.7,"bf_percent":16.6,"lean_lbs":154.9,"calories":1654.0,"protein":158.0,"fat":98.0,"carbs":21.0,"steps":7179.0,"rhr":49.0,"sleep_score":88.0,"sleep_duration_hrs":10.03,"water_percent":59.3,"refeed":false,"notes":""},{"date":"2025-11-25","weight":199.7,"bf_percent":16.5,"lean_lbs":154.7,"calories":1431.0,"protein":110.0,"fat":23.0,"carbs":188.0,"steps":9946.0,"rhr":50.0,"sleep_score":76.0,"sleep_duration_hrs":7.98,"water_percent":60.6,"refeed":false,"notes":""},{"date":"2025-11-26","weight":200.2,"bf_percent":16.5,"lean_lbs":154.8,"calories":1325.0,"protein":195.0,"fat":47.0,"carbs":25.0,"steps":10712.0,"rhr":48.0,"sleep_score":67.0,"sleep_duration_hrs":7.82,"water_percent":60.9,"refeed":false,"notes":""},{"date":"2025-11-27","weight":196.0,"bf_percent":16.9,"lean_lbs":154.3,"calories":null,"protein":null,"fat":null,"carbs":null,"steps":7392.0,"rhr":49.0,"sleep_score":null,"sleep_duration_hrs":10.3,"water_percent":60.7,"refeed":true,"notes":"Thanksgiving"},{"date":"2025-11-28","weight":200.1,"bf_percent":16.4,"lean_lbs":154.7,"calories":967.0,"protein":133.0,"fat":40.0,"carbs":13.0,"steps":7310.0,"rhr":53.0,"sleep_score":78.0,"sleep_duration_hrs":10.3,"water_percent":61.8,"refeed":false,"notes":""},{"date":"2025-11-29","weight":196.2,"bf_percent":16.7,"lean_lbs":154.6,"calories":1907.0,"protein":247.0,"fat":75.0,"carbs":84.0,"steps":4914.0,"rhr":50.0,"sleep_score":85.0,"sleep_duration_hrs":7.55,"water_percent":61.6,"refeed":false,"notes":""},{"date":"2025-11-30","weight":196.3,"bf_percent":16.7,"lean_lbs":154.2,"calories":1410.0,"protein":206.0,"fat":46.0,"carbs":47.0,"steps":3947.0,"rhr":49.0,"sleep_score":89.0,"sleep_duration_hrs":7.63,"water_percent":60.8,"refeed":false,"notes":""},{"date":"2025-12-01","weight":192.6,"bf_percent":16.7,"lean_lbs":154.0,"calories":1105.0,"protein":182.0,"fat":27.0,"carbs":46.0,"steps":5540.0,"rhr":49.0,"sleep_score":84.0,"sleep_duration_hrs":12.1,"water_percent":62.5,"refeed":false,"notes":""},{"date":"2025-12-02","weight":194.1,"bf_percent":16.4,"lean_lbs":153.9,"calories":1442.0,"protein":201.0,"fat":36.0,"carbs":94.0,"steps":10665.0,"rhr":49.0,"sleep_score":73.0,"sleep_duration_hrs":7.2,"water_percent":62.1,"refeed":false,"notes":"Starting today (Dec 2), all carb entries are Total Carbs (not Net Carbs)."},{"date":"2025-12-03","weight":192.5,"bf_percent":16.1,"lean_lbs":154.1,"calories":1522.0,"protein":195.0,"fat":66.0,"carbs":45.0,"steps":6742.0,"rhr":51.0,"sleep_score":81.0,"sleep_duration_hrs":8.72,"water_percent":63.5,"refeed":false,"notes":""},{"date":"2025-12-04","weight":192.9,"bf_percent":16.1,"lean_lbs":152.8,"calories":1817.0,"protein":219.0,"fat":61.0,"carbs":118.0,"steps":3050.0,"rhr":49.0,"sleep_score":85.0,"sleep_duration_hrs":7.5,"water_percent":61.0,"refeed":false,"notes":""},{"date":"2025-12-05","weight":195.2,"bf_percent":15.6,"lean_lbs":154.1,"calories":1525.0,"protein":136.0,"fat":81.0,"carbs":159.0,"steps":8607.0,"rhr":48.0,"sleep_score":90.0,"sleep_duration_hrs":7.99,"water_percent":63.6,"refeed":false,"notes":"Traveled back from Tampa. Ate dinner at friend's house. Had sour dough bread and a cream of chicken dish. Difficult to accurately track nutrition."},{"date":"2025-12-06","weight":194.4,"bf_percent":15.7,"lean_lbs":153.7,"calories":1837.0,"protein":168.0,"fat":81.0,"carbs":122.0,"steps":2662.0,"rhr":49.0,"sleep_score":85.0,"sleep_duration_hrs":8.27,"water_percent":61.2,"refeed":false,"notes":"Ate at a friends but had 2 helpings of instant mashed potatoes and had cheese when I came home. Picked a little and probably had a half of a potato skin w/cheese."},{"date":"2025-12-07","weight":195.3,"bf_percent":15.5,"lean_lbs":153.9,"calories":1776.0,"protein":198.0,"fat":61.0,"carbs":118.0,"steps":5230.0,"rhr":53.0,"sleep_score":null,"sleep_duration_hrs":8.25,"water_percent":62.4,"refeed":false,"notes":"Diet was atrocious. Had crackers and dip around lunch time. Cleaned diet up in the afternoon and went to the gym and put in 1500 ropes to lessen the negative impact."},{"date":"2025-12-08","weight":193.2,"bf_percent":16.2,"lean_lbs":152.8,"calories":1768.0,"protein":198.0,"fat":67.0,"carbs":114.0,"steps":7734.0,"rhr":47.0,"sleep_score":86.0,"sleep_duration_hrs":8.1,"water_percent":59.2,"refeed":false,"notes":""},{"date":"2025-12-09","weight":193.2,"bf_percent":16.2,"lean_lbs":152.5,"calories":1330.0,"protein":185.0,"fat":36.0,"carbs":47.0,"steps":6809.0,"rhr":47.0,"sleep_score":78.0,"sleep_duration_hrs":6.62,"water_percent":61.3,"refeed":false,"notes":""},{"date":"2025-12-10","weight":196.7,"bf_percent":16.1,"lean_lbs":152.3,"calories":1465.0,"protein":213.0,"fat":47.0,"carbs":48.0,"steps":9408.0,"rhr":47.0,"sleep_score":72.0,"sleep_duration_hrs":7.37,"water_percent":60.5,"refeed":false,"notes":""},{"date":"2025-12-11","weight":192.5,"bf_percent":16.2,"lean_lbs":152.4,"calories":1604.0,"protein":194.0,"fat":66.0,"carbs":55.0,"steps":2821.0,"rhr":47.0,"sleep_score":90.0,"sleep_duration_hrs":9.48,"water_percent":62.5,"refeed":false,"notes":""},{"date":"2025-12-12","weight":193.2,"bf_percent":16.2,"lean_lbs":152.1,"calories":1571.0,"protein":193.0,"fat":66.0,"carbs":59.0,"steps":4484.0,"rhr":52.0,"sleep_score":83.0,"sleep_duration_hrs":7.72,"water_percent":62.4,"refeed":false,"notes":""},{"date":"2025-12-13","weight":193.8,"bf_percent":16.0,"lean_lbs":152.2,"calories":3097.0,"protein":224.0,"fat":138.0,"carbs":238.0,"steps":3626.0,"rhr":44.0,"sleep_score":82.0,"sleep_duration_hrs":6.43,"water_percent":61.9,"refeed":true,"notes":""},{"date":"2025-12-14","weight":197.3,"bf_percent":15.5,"lean_lbs":152.9,"calories":1630.0,"protein":205.0,"fat":21.0,"carbs":178.0,"steps":5949.0,"rhr":47.0,"sleep_score":59.0,"sleep_duration_hrs":6.78,"water_percent":62.9,"refeed":false,"notes":""},{"date":"2025-12-15","weight":194.1,"bf_percent":15.6,"lean_lbs":153.1,"calories":1533.0,"protein":211.0,"fat":56.0,"carbs":52.0,"steps":11492.0,"rhr":48.0,"sleep_score":84.0,"sleep_duration_hrs":7.92,"water_percent":62.4,"refeed":false,"notes":""},{"date":"2025-12-16","weight":191.0,"bf_percent":15.8,"lean_lbs":152.8,"calories":1920.0,"protein":214.0,"fat":92.0,"carbs":60.0,"steps":6875.0,"rhr":49.0,"sleep_score":83.0,"sleep_duration_hrs":7.42,"water_percent":62.1,"refeed":false,"notes":""},{"date":"2025-12-17","weight":191.4,"bf_percent":15.7,"lean_lbs":152.6,"calories":1650.0,"protein":247.0,"fat":40.0,"carbs":105.0,"steps":7391.0,"rhr":45.0,"sleep_score":87.0,"sleep_duration_hrs":9.95,"water_percent":62.2,"refeed":false,"notes":""},{"date":"2025-12-18","weight":190.9,"bf_percent":15.6,"lean_lbs":152.4,"calories":null,"protein":null,"fat":null,"carbs":null,"steps":null,"rhr":50.0,"sleep_score":75.0,"sleep_duration_hrs":6.7,"water_percent":62.4,"refeed":false,"notes":""}];
+        const INITIAL_DATA = [{"date":"2025-10-27","weight":208.1,"bf_percent":20.5,"lean_lbs":156.3,"calories":1405.0,"protein":116.0,"fat":83.0,"carbs":40.0,"steps":7046.0,"rhr":48.0,"sleep_score":87.0,"sleep_duration_hrs":9.42,"water_percent":58.4,"refeed":false,"notes":"","bf_lbs":42.7,"lean_percent":75.1,"residual":9.14,"integrity_status":"yellow"},{"date":"2025-10-28","weight":208.9,"bf_percent":20.5,"lean_lbs":154.5,"calories":1565.0,"protein":139.0,"fat":92.0,"carbs":30.0,"steps":null,"rhr":null,"sleep_score":77.0,"sleep_duration_hrs":6.62,"water_percent":58.3,"refeed":false,"notes":"","bf_lbs":42.8,"lean_percent":74.0,"residual":11.58,"integrity_status":"yellow"},{"date":"2025-10-29","weight":203.4,"bf_percent":20.3,"lean_lbs":154.6,"calories":1577.0,"protein":151.0,"fat":79.0,"carbs":50.0,"steps":null,"rhr":null,"sleep_score":63.0,"sleep_duration_hrs":9.18,"water_percent":59.8,"refeed":false,"notes":"","bf_lbs":41.3,"lean_percent":76.0,"residual":7.51,"integrity_status":"red"},{"date":"2025-10-30","weight":202.6,"bf_percent":20.0,"lean_lbs":154.5,"calories":1555.0,"protein":142.0,"fat":95.0,"carbs":23.0,"steps":6480.0,"rhr":55.0,"sleep_score":null,"sleep_duration_hrs":null,"water_percent":59.8,"refeed":false,"notes":"","bf_lbs":40.5,"lean_percent":76.3,"residual":7.58,"integrity_status":"red"},{"date":"2025-10-31","weight":205.0,"bf_percent":19.7,"lean_lbs":154.2,"calories":1290.0,"protein":147.0,"fat":59.0,"carbs":35.0,"steps":9519.0,"rhr":54.0,"sleep_score":86.0,"sleep_duration_hrs":10.38,"water_percent":58.8,"refeed":false,"notes":"","bf_lbs":40.4,"lean_percent":75.2,"residual":10.42,"integrity_status":"green"},{"date":"2025-11-01","weight":204.4,"bf_percent":19.7,"lean_lbs":154.2,"calories":1735.0,"protein":146.0,"fat":41.0,"carbs":31.0,"steps":5231.0,"rhr":52.0,"sleep_score":66.0,"sleep_duration_hrs":7.0,"water_percent":59.3,"refeed":false,"notes":"","bf_lbs":40.3,"lean_percent":75.4,"residual":9.93,"integrity_status":"green"},{"date":"2025-11-02","weight":203.8,"bf_percent":19.5,"lean_lbs":154.3,"calories":1436.0,"protein":134.0,"fat":76.0,"carbs":29.0,"steps":2859.0,"rhr":51.0,"sleep_score":91.0,"sleep_duration_hrs":8.1,"water_percent":59.7,"refeed":false,"notes":"","bf_lbs":39.7,"lean_percent":75.7,"residual":9.76,"integrity_status":"green"},{"date":"2025-11-03","weight":204.0,"bf_percent":19.3,"lean_lbs":154.4,"calories":1981.0,"protein":207.0,"fat":76.0,"carbs":35.0,"steps":9321.0,"rhr":55.0,"sleep_score":67.0,"sleep_duration_hrs":7.53,"water_percent":59.8,"refeed":false,"notes":"","bf_lbs":39.4,"lean_percent":75.7,"residual":10.23,"integrity_status":"green"},{"date":"2025-11-04","weight":203.9,"bf_percent":19.2,"lean_lbs":154.4,"calories":1660.0,"protein":131.0,"fat":48.0,"carbs":50.0,"steps":7202.0,"rhr":54.0,"sleep_score":73.0,"sleep_duration_hrs":6.65,"water_percent":59.5,"refeed":false,"notes":"","bf_lbs":39.1,"lean_percent":75.7,"residual":10.35,"integrity_status":"green"},{"date":"2025-11-05","weight":200.8,"bf_percent":19.5,"lean_lbs":153.8,"calories":1525.0,"protein":161.0,"fat":85.0,"carbs":20.0,"steps":5753.0,"rhr":52.0,"sleep_score":87.0,"sleep_duration_hrs":9.1,"water_percent":59.1,"refeed":false,"notes":"","bf_lbs":39.2,"lean_percent":76.6,"residual":7.84,"integrity_status":"red"},{"date":"2025-11-06","weight":200.6,"bf_percent":19.6,"lean_lbs":153.3,"calories":1492.0,"protein":141.0,"fat":82.0,"carbs":39.0,"steps":10762.0,"rhr":50.0,"sleep_score":76.0,"sleep_duration_hrs":9.03,"water_percent":58.8,"refeed":false,"notes":"","bf_lbs":39.3,"lean_percent":76.4,"residual":7.98,"integrity_status":"red"},{"date":"2025-11-07","weight":200.2,"bf_percent":19.4,"lean_lbs":153.2,"calories":1724.0,"protein":179.0,"fat":71.0,"carbs":83.0,"steps":11448.0,"rhr":52.0,"sleep_score":65.0,"sleep_duration_hrs":6.48,"water_percent":60.0,"refeed":false,"notes":"","bf_lbs":38.8,"lean_percent":76.5,"residual":8.16,"integrity_status":"red"},{"date":"2025-11-08","weight":201.1,"bf_percent":19.1,"lean_lbs":153.3,"calories":2465.0,"protein":180.0,"fat":82.0,"carbs":197.0,"steps":4149.0,"rhr":49.0,"sleep_score":73.0,"sleep_duration_hrs":8.67,"water_percent":60.2,"refeed":true,"notes":"","bf_lbs":38.4,"lean_percent":76.2,"residual":9.39,"integrity_status":"green"},{"date":"2025-11-09","weight":202.8,"bf_percent":18.6,"lean_lbs":153.8,"calories":1710.0,"protein":203.0,"fat":57.0,"carbs":81.0,"steps":4673.0,"rhr":48.0,"sleep_score":85.0,"sleep_duration_hrs":7.17,"water_percent":61.0,"refeed":false,"notes":"","bf_lbs":37.7,"lean_percent":75.8,"residual":11.28,"integrity_status":"yellow"},{"date":"2025-11-10","weight":201.8,"bf_percent":18.4,"lean_lbs":154.2,"calories":1908.0,"protein":203.0,"fat":68.0,"carbs":100.0,"steps":7444.0,"rhr":51.0,"sleep_score":78.0,"sleep_duration_hrs":9.0,"water_percent":61.1,"refeed":false,"notes":"","bf_lbs":37.1,"lean_percent":76.4,"residual":10.47,"integrity_status":"green"},{"date":"2025-11-11","weight":200.3,"bf_percent":18.3,"lean_lbs":154.4,"calories":1199.0,"protein":150.0,"fat":26.0,"carbs":65.0,"steps":2327.0,"rhr":45.0,"sleep_score":56.0,"sleep_duration_hrs":4.88,"water_percent":61.1,"refeed":false,"notes":"","bf_lbs":36.6,"lean_percent":77.1,"residual":9.25,"integrity_status":"green"},{"date":"2025-11-12","weight":199.1,"bf_percent":18.3,"lean_lbs":154.2,"calories":1210.0,"protein":101.0,"fat":72.0,"carbs":28.0,"steps":3724.0,"rhr":46.0,"sleep_score":76.0,"sleep_duration_hrs":9.7,"water_percent":60.2,"refeed":false,"notes":"","bf_lbs":36.4,"lean_percent":77.5,"residual":8.46,"integrity_status":"yellow"},{"date":"2025-11-13","weight":199.5,"bf_percent":18.3,"lean_lbs":153.7,"calories":1756.0,"protein":133.0,"fat":112.0,"carbs":39.0,"steps":10266.0,"rhr":48.0,"sleep_score":83.0,"sleep_duration_hrs":8.78,"water_percent":59.6,"refeed":false,"notes":"","bf_lbs":36.5,"lean_percent":77.0,"residual":9.29,"integrity_status":"green"},{"date":"2025-11-14","weight":197.5,"bf_percent":18.4,"lean_lbs":153.5,"calories":2583.0,"protein":202.0,"fat":51.0,"carbs":270.0,"steps":6214.0,"rhr":47.0,"sleep_score":81.0,"sleep_duration_hrs":8.53,"water_percent":60.5,"refeed":true,"notes":"","bf_lbs":36.3,"lean_percent":77.7,"residual":7.66,"integrity_status":"red"},{"date":"2025-11-15","weight":199.1,"bf_percent":18.0,"lean_lbs":153.6,"calories":1960.0,"protein":219.0,"fat":84.0,"carbs":75.0,"steps":4173.0,"rhr":55.0,"sleep_score":62.0,"sleep_duration_hrs":6.62,"water_percent":61.0,"refeed":false,"notes":"","bf_lbs":35.8,"lean_percent":77.2,"residual":9.66,"integrity_status":"green"},{"date":"2025-11-16","weight":199.6,"bf_percent":17.8,"lean_lbs":153.8,"calories":1502.0,"protein":156.0,"fat":30.0,"carbs":128.0,"steps":4655.0,"rhr":54.0,"sleep_score":60.0,"sleep_duration_hrs":7.1,"water_percent":61.2,"refeed":false,"notes":"","bf_lbs":35.5,"lean_percent":77.0,"residual":10.27,"integrity_status":"green"},{"date":"2025-11-17","weight":198.3,"bf_percent":17.7,"lean_lbs":153.8,"calories":2165.0,"protein":207.0,"fat":127.0,"carbs":32.0,"steps":12478.0,"rhr":52.0,"sleep_score":67.0,"sleep_duration_hrs":8.88,"water_percent":61.0,"refeed":true,"notes":"","bf_lbs":35.1,"lean_percent":77.6,"residual":9.4,"integrity_status":"green"},{"date":"2025-11-18","weight":199.8,"bf_percent":17.8,"lean_lbs":153.4,"calories":1718.0,"protein":163.0,"fat":103.0,"carbs":26.0,"steps":4852.0,"rhr":50.0,"sleep_score":71.0,"sleep_duration_hrs":7.05,"water_percent":59.1,"refeed":false,"notes":"","bf_lbs":35.6,"lean_percent":76.8,"residual":10.84,"integrity_status":"green"},{"date":"2025-11-19","weight":199.8,"bf_percent":17.5,"lean_lbs":153.9,"calories":1715.0,"protein":169.0,"fat":60.0,"carbs":61.0,"steps":10165.0,"rhr":57.0,"sleep_score":null,"sleep_duration_hrs":null,"water_percent":61.9,"refeed":false,"notes":"","bf_lbs":35.0,"lean_percent":77.0,"residual":10.94,"integrity_status":"green"},{"date":"2025-11-20","weight":197.9,"bf_percent":17.2,"lean_lbs":154.4,"calories":2008.0,"protein":195.0,"fat":105.0,"carbs":50.0,"steps":4982.0,"rhr":54.0,"sleep_score":63.0,"sleep_duration_hrs":8.33,"water_percent":62.8,"refeed":true,"notes":"","bf_lbs":34.0,"lean_percent":78.0,"residual":9.46,"integrity_status":"green"},{"date":"2025-11-21","weight":197.2,"bf_percent":16.9,"lean_lbs":154.7,"calories":1275.0,"protein":207.0,"fat":48.0,"carbs":17.0,"steps":6988.0,"rhr":54.0,"sleep_score":85.0,"sleep_duration_hrs":9.3,"water_percent":62.4,"refeed":false,"notes":"","bf_lbs":33.3,"lean_percent":78.5,"residual":9.17,"integrity_status":"yellow"},{"date":"2025-11-22","weight":198.4,"bf_percent":16.4,"lean_lbs":155.3,"calories":1835.0,"protein":229.0,"fat":48.0,"carbs":114.0,"steps":4021.0,"rhr":48.0,"sleep_score":null,"sleep_duration_hrs":null,"water_percent":62.4,"refeed":false,"notes":"","bf_lbs":32.5,"lean_percent":78.3,"residual":10.56,"integrity_status":"green"},{"date":"2025-11-23","weight":200.2,"bf_percent":16.0,"lean_lbs":155.9,"calories":1501.0,"protein":132.0,"fat":37.0,"carbs":146.0,"steps":5803.0,"rhr":51.0,"sleep_score":72.0,"sleep_duration_hrs":7.35,"water_percent":62.8,"refeed":false,"notes":"","bf_lbs":32.0,"lean_percent":77.9,"residual":12.27,"integrity_status":"red"},{"date":"2025-11-24","weight":196.7,"bf_percent":16.6,"lean_lbs":154.9,"calories":1654.0,"protein":158.0,"fat":98.0,"carbs":21.0,"steps":7179.0,"rhr":49.0,"sleep_score":88.0,"sleep_duration_hrs":10.03,"water_percent":59.3,"refeed":false,"notes":"","bf_lbs":32.6,"lean_percent":78.8,"residual":9.15,"integrity_status":"yellow"},{"date":"2025-11-25","weight":199.7,"bf_percent":16.5,"lean_lbs":154.7,"calories":1431.0,"protein":110.0,"fat":23.0,"carbs":188.0,"steps":9946.0,"rhr":50.0,"sleep_score":76.0,"sleep_duration_hrs":7.98,"water_percent":60.6,"refeed":false,"notes":"","bf_lbs":33.0,"lean_percent":77.5,"residual":12.05,"integrity_status":"yellow"},{"date":"2025-11-26","weight":200.2,"bf_percent":16.5,"lean_lbs":154.8,"calories":1325.0,"protein":195.0,"fat":47.0,"carbs":25.0,"steps":10712.0,"rhr":48.0,"sleep_score":67.0,"sleep_duration_hrs":7.82,"water_percent":60.9,"refeed":false,"notes":"","bf_lbs":33.0,"lean_percent":77.3,"residual":12.37,"integrity_status":"red"},{"date":"2025-11-27","weight":196.0,"bf_percent":16.9,"lean_lbs":154.3,"calories":null,"protein":null,"fat":null,"carbs":null,"steps":7392.0,"rhr":49.0,"sleep_score":null,"sleep_duration_hrs":10.3,"water_percent":60.7,"refeed":true,"notes":"Thanksgiving","bf_lbs":33.1,"lean_percent":78.7,"residual":8.58,"integrity_status":"yellow"},{"date":"2025-11-28","weight":200.1,"bf_percent":16.4,"lean_lbs":154.7,"calories":967.0,"protein":133.0,"fat":40.0,"carbs":13.0,"steps":7310.0,"rhr":53.0,"sleep_score":78.0,"sleep_duration_hrs":10.3,"water_percent":61.8,"refeed":false,"notes":"","bf_lbs":32.8,"lean_percent":77.3,"residual":12.58,"integrity_status":"red"},{"date":"2025-11-29","weight":196.2,"bf_percent":16.7,"lean_lbs":154.6,"calories":1907.0,"protein":247.0,"fat":75.0,"carbs":84.0,"steps":4914.0,"rhr":50.0,"sleep_score":85.0,"sleep_duration_hrs":7.55,"water_percent":61.6,"refeed":false,"notes":"","bf_lbs":32.8,"lean_percent":78.8,"residual":8.83,"integrity_status":"yellow"},{"date":"2025-11-30","weight":196.3,"bf_percent":16.7,"lean_lbs":154.2,"calories":1410.0,"protein":206.0,"fat":46.0,"carbs":47.0,"steps":3947.0,"rhr":49.0,"sleep_score":89.0,"sleep_duration_hrs":7.63,"water_percent":60.8,"refeed":false,"notes":"","bf_lbs":32.8,"lean_percent":78.5,"residual":9.32,"integrity_status":"green"},{"date":"2025-12-01","weight":192.6,"bf_percent":16.7,"lean_lbs":154.0,"calories":1105.0,"protein":182.0,"fat":27.0,"carbs":46.0,"steps":5540.0,"rhr":49.0,"sleep_score":84.0,"sleep_duration_hrs":12.1,"water_percent":62.5,"refeed":false,"notes":"","bf_lbs":32.2,"lean_percent":80.0,"residual":6.44,"integrity_status":"red"},{"date":"2025-12-02","weight":194.1,"bf_percent":16.4,"lean_lbs":153.9,"calories":1442.0,"protein":201.0,"fat":36.0,"carbs":94.0,"steps":10665.0,"rhr":49.0,"sleep_score":73.0,"sleep_duration_hrs":7.2,"water_percent":62.1,"refeed":false,"notes":"Starting today (Dec 2), all carb entries are Total Carbs (not Net Carbs).","bf_lbs":31.8,"lean_percent":79.3,"residual":8.37,"integrity_status":"yellow"},{"date":"2025-12-03","weight":192.5,"bf_percent":16.1,"lean_lbs":154.1,"calories":1522.0,"protein":195.0,"fat":66.0,"carbs":45.0,"steps":6742.0,"rhr":51.0,"sleep_score":81.0,"sleep_duration_hrs":8.72,"water_percent":63.5,"refeed":false,"notes":"","bf_lbs":31.0,"lean_percent":80.0,"residual":7.41,"integrity_status":"red"},{"date":"2025-12-04","weight":192.9,"bf_percent":16.1,"lean_lbs":152.8,"calories":1817.0,"protein":219.0,"fat":61.0,"carbs":118.0,"steps":3050.0,"rhr":49.0,"sleep_score":85.0,"sleep_duration_hrs":7.5,"water_percent":61.0,"refeed":false,"notes":"","bf_lbs":31.1,"lean_percent":79.2,"residual":9.04,"integrity_status":"yellow"},{"date":"2025-12-05","weight":195.2,"bf_percent":15.6,"lean_lbs":154.1,"calories":1525.0,"protein":136.0,"fat":81.0,"carbs":159.0,"steps":8607.0,"rhr":48.0,"sleep_score":90.0,"sleep_duration_hrs":7.99,"water_percent":63.6,"refeed":false,"notes":"Traveled back from Tampa. Ate dinner at friend's house. Had sour dough bread and a cream of chicken dish. Difficult to accurately track nutrition.","bf_lbs":30.4,"lean_percent":78.9,"residual":10.65,"integrity_status":"green"},{"date":"2025-12-06","weight":194.4,"bf_percent":15.7,"lean_lbs":153.7,"calories":1837.0,"protein":168.0,"fat":81.0,"carbs":122.0,"steps":2662.0,"rhr":49.0,"sleep_score":85.0,"sleep_duration_hrs":8.27,"water_percent":61.2,"refeed":false,"notes":"Ate at a friends but had 2 helpings of instant mashed potatoes and had cheese when I came home. Picked a little and probably had a half of a potato skin w/cheese.","bf_lbs":30.5,"lean_percent":79.1,"residual":10.18,"integrity_status":"green"},{"date":"2025-12-07","weight":195.3,"bf_percent":15.5,"lean_lbs":153.9,"calories":1776.0,"protein":198.0,"fat":61.0,"carbs":118.0,"steps":5230.0,"rhr":53.0,"sleep_score":null,"sleep_duration_hrs":8.25,"water_percent":62.4,"refeed":false,"notes":"Diet was atrocious. Had crackers and dip around lunch time. Cleaned diet up in the afternoon and went to the gym and put in 1500 ropes to lessen the negative impact.","bf_lbs":30.3,"lean_percent":78.8,"residual":11.13,"integrity_status":"green"},{"date":"2025-12-08","weight":193.2,"bf_percent":16.2,"lean_lbs":152.8,"calories":1768.0,"protein":198.0,"fat":67.0,"carbs":114.0,"steps":7734.0,"rhr":47.0,"sleep_score":86.0,"sleep_duration_hrs":8.1,"water_percent":59.2,"refeed":false,"notes":"","bf_lbs":31.3,"lean_percent":79.1,"residual":9.1,"integrity_status":"yellow"},{"date":"2025-12-09","weight":193.2,"bf_percent":16.2,"lean_lbs":152.5,"calories":1330.0,"protein":185.0,"fat":36.0,"carbs":47.0,"steps":6809.0,"rhr":47.0,"sleep_score":78.0,"sleep_duration_hrs":6.62,"water_percent":61.3,"refeed":false,"notes":"","bf_lbs":31.3,"lean_percent":78.9,"residual":9.4,"integrity_status":"green"},{"date":"2025-12-10","weight":196.7,"bf_percent":16.1,"lean_lbs":152.3,"calories":1465.0,"protein":213.0,"fat":47.0,"carbs":48.0,"steps":9408.0,"rhr":47.0,"sleep_score":72.0,"sleep_duration_hrs":7.37,"water_percent":60.5,"refeed":false,"notes":"","bf_lbs":31.7,"lean_percent":77.4,"residual":12.73,"integrity_status":"red"},{"date":"2025-12-11","weight":192.5,"bf_percent":16.2,"lean_lbs":152.4,"calories":1604.0,"protein":194.0,"fat":66.0,"carbs":55.0,"steps":2821.0,"rhr":47.0,"sleep_score":90.0,"sleep_duration_hrs":9.48,"water_percent":62.5,"refeed":false,"notes":"","bf_lbs":31.2,"lean_percent":79.2,"residual":8.91,"integrity_status":"yellow"},{"date":"2025-12-12","weight":193.2,"bf_percent":16.2,"lean_lbs":152.1,"calories":1571.0,"protein":193.0,"fat":66.0,"carbs":59.0,"steps":4484.0,"rhr":52.0,"sleep_score":83.0,"sleep_duration_hrs":7.72,"water_percent":62.4,"refeed":false,"notes":"","bf_lbs":31.3,"lean_percent":78.7,"residual":9.8,"integrity_status":"green"},{"date":"2025-12-13","weight":193.8,"bf_percent":16.0,"lean_lbs":152.2,"calories":3097.0,"protein":224.0,"fat":138.0,"carbs":238.0,"steps":3626.0,"rhr":44.0,"sleep_score":82.0,"sleep_duration_hrs":6.43,"water_percent":61.9,"refeed":true,"notes":"","bf_lbs":31.0,"lean_percent":78.5,"residual":10.59,"integrity_status":"green"},{"date":"2025-12-14","weight":197.3,"bf_percent":15.5,"lean_lbs":152.9,"calories":1630.0,"protein":205.0,"fat":21.0,"carbs":178.0,"steps":5949.0,"rhr":47.0,"sleep_score":59.0,"sleep_duration_hrs":6.78,"water_percent":62.9,"refeed":false,"notes":"","bf_lbs":30.6,"lean_percent":77.5,"residual":13.82,"integrity_status":"red"},{"date":"2025-12-15","weight":194.1,"bf_percent":15.6,"lean_lbs":153.1,"calories":1533.0,"protein":211.0,"fat":56.0,"carbs":52.0,"steps":11492.0,"rhr":48.0,"sleep_score":84.0,"sleep_duration_hrs":7.92,"water_percent":62.4,"refeed":false,"notes":"","bf_lbs":30.3,"lean_percent":78.9,"residual":10.72,"integrity_status":"green"},{"date":"2025-12-16","weight":191.0,"bf_percent":15.8,"lean_lbs":152.8,"calories":1920.0,"protein":214.0,"fat":92.0,"carbs":60.0,"steps":6875.0,"rhr":49.0,"sleep_score":83.0,"sleep_duration_hrs":7.42,"water_percent":62.1,"refeed":false,"notes":"","bf_lbs":30.2,"lean_percent":80.0,"residual":8.02,"integrity_status":"red"},{"date":"2025-12-17","weight":191.4,"bf_percent":15.7,"lean_lbs":152.6,"calories":1650.0,"protein":247.0,"fat":40.0,"carbs":105.0,"steps":7391.0,"rhr":45.0,"sleep_score":87.0,"sleep_duration_hrs":9.95,"water_percent":62.2,"refeed":false,"notes":"","bf_lbs":30.1,"lean_percent":79.7,"residual":8.75,"integrity_status":"yellow"},{"date":"2025-12-18","weight":190.9,"bf_percent":15.6,"lean_lbs":152.4,"calories":null,"protein":null,"fat":null,"carbs":null,"steps":null,"rhr":50.0,"sleep_score":75.0,"sleep_duration_hrs":6.7,"water_percent":62.4,"refeed":false,"notes":"","bf_lbs":29.8,"lean_percent":79.8,"residual":8.72,"integrity_status":"yellow"}];
 
         // ===== INTEGRITY VALIDATION FUNCTIONS =====
         
@@ -1114,6 +1192,7 @@ const GOALS = {
                     <td>${entry.rhr || ''}</td>
                     <td>${entry.sleep_score || ''}</td>
                     <td>${entry.sleep_duration_hrs?.toFixed(1) || ''}</td>
+                    <td>${computeQualityScore(entry)}%</td>
                     <td>${entry.refeed ? '🔥' : ''}</td>
                     <td>
                         <div class="edit-actions">
@@ -1311,6 +1390,10 @@ const GOALS = {
             updateStats();
             updateTable();
             updateChart();
+            // Mobile helpers
+            if (window.innerWidth <= 768) { const qb=document.getElementById('quickAddBar'); if(qb) qb.style.display='block'; }
+            if (typeof enableSwipeNav==='function') enableSwipeNav();
+            if (typeof updateProgressiveTabV13==='function') updateProgressiveTabV13();
             hideModal();
             
             showToast(`Entry saved for ${date}\nIntegrity: ${integrity.message}`);
@@ -1755,7 +1838,17 @@ const GOALS = {
         }
 
 
-        // ===== EXPORT FUNCTIONS =====
+        
+        function computeQualityScore(entry) {
+            // 100% = all optional fields present; penalize missing nutrition/activity/recovery metrics
+            if (!entry) return 0;
+            const fields = ['calories','protein','fat','carbs','steps','rhr','sleep_score','sleep_duration_hrs','water_percent'];
+            let present = 0;
+            fields.forEach(f=>{ if (isFinite(entry[f])) present++; });
+            return Math.round((present / fields.length) * 100);
+        }
+
+// ===== EXPORT FUNCTIONS =====
         
         function exportCSV() {
             if (bodyData.length === 0) {
@@ -1863,6 +1956,7 @@ const GOALS = {
             if (tabName === 'measurements') updateMeasurementsTab();
             if (tabName === 'training') updateTrainingTab();
             if (tabName === 'correlations') updateCorrelationsTab();
+            if (tabName === 'analytics') updateAnalyticsTab();
         }
         
         // ===== NUTRITION TAB FUNCTIONS =====
@@ -3963,12 +4057,404 @@ function escapeAttr(str) {
             showToast('Debug info logged to console\n(Press F12 to view)');
         }
         
-        // ===== INITIALIZATION =====
+        
+        // ===== SETTINGS + FORMULA DOCS + ANALYTICS (V13) =====
+        const SETTINGS_KEY = 'btpSettings';
+        const PR_KEY = 'btpPersonalRecords_v1';
+
+        const DEFAULT_SETTINGS = {
+            nutrition: { target_calories: 1800, target_protein: 195, target_fat: 60, target_carbs: 80 },
+            body: { target_bf_lbs: 20.0, target_bf_percent: 10.0, target_weight: 215.0 },
+            workout: { default_rest_seconds: 90, warmup_excluded: true, show_est_1rm: true },
+            display: { units: 'lbs', date_format: 'YYYY-MM-DD', compact_tables: false, show_water_overlay: true },
+            sync: { auto_pull_seconds: 60, auto_push: false }
+        };
+
+        let appSettings = null;
+        let personalRecords = null;
+
+        function loadSettings() {
+            const stored = localStorage.getItem(SETTINGS_KEY);
+            if (stored) {
+                try { appSettings = JSON.parse(stored); } catch { appSettings = null; }
+            }
+            if (!appSettings) appSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+            // merge defaults
+            appSettings = deepMerge(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), appSettings);
+            saveSettings(false);
+        }
+
+        function saveSettings(showToastMsg=true) {
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+            // Apply to GOALS object if those fields exist
+            GOALS.target_weight = appSettings.body.target_weight;
+            GOALS.target_bf_percent = appSettings.body.target_bf_percent;
+            GOALS.target_bf_lbs = appSettings.body.target_bf_lbs;
+            GOALS.target_calories = appSettings.nutrition.target_calories;
+            GOALS.target_protein = appSettings.nutrition.target_protein;
+            GOALS.target_fat = appSettings.nutrition.target_fat;
+            GOALS.target_carbs = appSettings.nutrition.target_carbs;
+            if (showToastMsg) showToast('Settings saved');
+        }
+
+        function deepMerge(target, source) {
+            if (typeof target !== 'object' || target === null) return source;
+            if (typeof source !== 'object' || source === null) return target;
+            for (const k of Object.keys(source)) {
+                if (source[k] && typeof source[k] === 'object' && !Array.isArray(source[k])) {
+                    target[k] = deepMerge(target[k] || {}, source[k]);
+                } else {
+                    target[k] = source[k];
+                }
+            }
+            return target;
+        }
+
+        function openSettings() {
+            loadSettings();
+            const modal = document.getElementById('settingsModal');
+            modal.innerHTML = `
+              <div class="modal">
+                <h2>⚙️ Settings & Preferences</h2>
+                <div class="integrity-notice">
+                  <h4>Persistent Settings</h4>
+                  <p>These preferences are stored locally (btpSettings) and apply immediately.</p>
+                </div>
+
+                <div class="form-section">
+                  <h3>Nutrition Targets</h3>
+                  <div class="form-grid">
+                    <div class="form-field"><label>Target Calories</label><input type="number" id="setCals" value="${appSettings.nutrition.target_calories}"></div>
+                    <div class="form-field"><label>Target Protein (g)</label><input type="number" id="setPro" value="${appSettings.nutrition.target_protein}"></div>
+                    <div class="form-field"><label>Target Fat (g)</label><input type="number" id="setFat" value="${appSettings.nutrition.target_fat}"></div>
+                    <div class="form-field"><label>Target Carbs (g)</label><input type="number" id="setCarb" value="${appSettings.nutrition.target_carbs}"></div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h3>Body Composition Goals</h3>
+                  <div class="form-grid">
+                    <div class="form-field"><label>Target BF lbs</label><input type="number" step="0.1" id="setBfLbs" value="${appSettings.body.target_bf_lbs}"></div>
+                    <div class="form-field"><label>Target BF %</label><input type="number" step="0.1" id="setBfPct" value="${appSettings.body.target_bf_percent}"></div>
+                    <div class="form-field"><label>Target Weight</label><input type="number" step="0.1" id="setWgt" value="${appSettings.body.target_weight}"></div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h3>Workout Preferences</h3>
+                  <div class="form-grid">
+                    <div class="form-field"><label>Default Rest (sec)</label><input type="number" id="setRest" value="${appSettings.workout.default_rest_seconds}"></div>
+                    <div class="form-field"><label><input type="checkbox" id="setShow1rm" ${appSettings.workout.show_est_1rm?'checked':''} style="width:auto; margin-right:8px;">Show estimated 1RM</label></div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h3>Display Preferences</h3>
+                  <div class="form-grid">
+                    <div class="form-field"><label><input type="checkbox" id="setWater" ${appSettings.display.show_water_overlay?'checked':''} style="width:auto; margin-right:8px;">Show Water % overlay tab</label></div>
+                    <div class="form-field"><label><input type="checkbox" id="setCompact" ${appSettings.display.compact_tables?'checked':''} style="width:auto; margin-right:8px;">Compact tables</label></div>
+                  </div>
+                </div>
+
+                <div class="form-section">
+                  <h3>Data Management</h3>
+                  <div style="display:flex; gap:10px; flex-wrap: wrap;">
+                    <button onclick="exportBackup()" style="background: var(--accent-cyan);">💾 Backup JSON</button>
+                    <button onclick="exportCSV()">📥 Export CSV</button>
+                    <button class="danger" onclick="resetTrainingOnly()">Reset Training Only</button>
+                    <button class="danger" onclick="resetAllAppData()">Reset ALL Data</button>
+                  </div>
+                  <div style="font-size:0.85em; color: var(--text-secondary); margin-top: 8px;">
+                    Reset actions affect only this device unless you use Sync.
+                  </div>
+                </div>
+
+                <div style="display:flex; gap: 10px; flex-wrap:wrap; margin-top: 18px;">
+                  <button class="primary" onclick="applySettings()">Save & Apply</button>
+                  <button onclick="closeSettings()">Close</button>
+                </div>
+              </div>
+            `;
+            modal.classList.add('show');
+          }
+
+        function applySettings() {
+            appSettings.nutrition.target_calories = Number(document.getElementById('setCals').value) || DEFAULT_SETTINGS.nutrition.target_calories;
+            appSettings.nutrition.target_protein = Number(document.getElementById('setPro').value) || DEFAULT_SETTINGS.nutrition.target_protein;
+            appSettings.nutrition.target_fat = Number(document.getElementById('setFat').value) || DEFAULT_SETTINGS.nutrition.target_fat;
+            appSettings.nutrition.target_carbs = Number(document.getElementById('setCarb').value) || DEFAULT_SETTINGS.nutrition.target_carbs;
+            appSettings.body.target_bf_lbs = Number(document.getElementById('setBfLbs').value) || DEFAULT_SETTINGS.body.target_bf_lbs;
+            appSettings.body.target_bf_percent = Number(document.getElementById('setBfPct').value) || DEFAULT_SETTINGS.body.target_bf_percent;
+            appSettings.body.target_weight = Number(document.getElementById('setWgt').value) || DEFAULT_SETTINGS.body.target_weight;
+            appSettings.workout.default_rest_seconds = Number(document.getElementById('setRest').value) || DEFAULT_SETTINGS.workout.default_rest_seconds;
+            appSettings.workout.show_est_1rm = !!document.getElementById('setShow1rm').checked;
+            appSettings.display.show_water_overlay = !!document.getElementById('setWater').checked;
+            appSettings.display.compact_tables = !!document.getElementById('setCompact').checked;
+            saveSettings(true);
+            updateStats(); updateTable(); updateChart();
+            closeSettings();
+        }
+
+        function closeSettings() { document.getElementById('settingsModal').classList.remove('show'); }
+
+        function resetTrainingOnly() {
+            if (!confirm('Reset training only on this device?')) return;
+            try { localStorage.removeItem(TRAINING_KEY); } catch {}
+            try { localStorage.removeItem('workoutTemplates_User1_v6'); } catch {}
+            try { localStorage.removeItem('exerciseLibrary_User1_v7'); } catch {}
+            trainingLog = [];
+            updateTrainingTab();
+            showToast('Training reset');
+        }
+
+        function resetAllAppData() {
+            if (!confirm('Reset ALL tracker data on this device?')) return;
+            localStorage.clear();
+            location.reload();
+        }
+
+        
+        // ===== BULK EDIT / IMPORT (V13) =====
+        function openBulkEdit() {
+            const modal = document.getElementById('settingsModal');
+            if (!modal) { showToast('Settings modal not available', true); return; }
+            const sorted = bodyData.slice().sort((a,b)=>a.date.localeCompare(b.date));
+            const header = ['date','weight','bf_percent','lean_lbs','water_percent','calories','protein','fat','carbs','steps','rhr','sleep_score','sleep_duration_hrs','refeed','notes'];
+            const lines = [header.join(',')].concat(sorted.map(e=>header.map(k=>{
+                const v = e[k];
+                if (k==='notes') return `"${String(v||'').replace(/"/g,'""')}"`;
+                if (k==='refeed') return e.refeed ? 'Yes' : 'No';
+                return (v==null || v===undefined) ? '' : v;
+            }).join(',')));
+            modal.innerHTML = `
+              <div class="modal">
+                <h2>🧾 Bulk Edit Body Data</h2>
+                <div class="integrity-notice">
+                  <h4>Paste / Edit CSV</h4>
+                  <p>Edit the CSV below and click Apply. Your data will be re-parsed and validated.</p>
+                </div>
+                <div class="form-section">
+                  <textarea id="bulkCsv" rows="14" style="width:100%; background: var(--bg-primary); color: var(--text-primary); border:1px solid var(--border); border-radius:10px; padding:12px; font-family:'Space Mono', monospace; font-size:0.8em;">${lines.join('\n')}</textarea>
+                  <div style="color: var(--text-secondary); font-size:0.85em; margin-top:8px;">
+                    Tip: Leave blanks for unknown values. Dates must be YYYY-MM-DD.
+                  </div>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                  <button class="primary" onclick="applyBulkCsv()">Apply CSV</button>
+                  <button onclick="closeSettings()">Close</button>
+                </div>
+              </div>
+            `;
+            modal.classList.add('show');
+        }
+
+        function parseCsvLine(line) {
+            // basic CSV parser handling quotes
+            const out=[]; let cur=''; let inQ=false;
+            for (let i=0;i<line.length;i++){
+                const ch=line[i];
+                if (ch === '"') {
+                    if (inQ && line[i+1]==='"') { cur+='"'; i++; }
+                    else inQ=!inQ;
+                } else if (ch===',' && !inQ) { out.push(cur); cur=''; }
+                else cur+=ch;
+            }
+            out.push(cur);
+            return out;
+        }
+
+        function applyBulkCsv() {
+            const ta = document.getElementById('bulkCsv');
+            if (!ta) return;
+            const text = ta.value.trim();
+            const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
+            if (lines.length < 2) { showToast('CSV needs header + rows', true); return; }
+            const header = parseCsvLine(lines[0]).map(h=>h.trim());
+            const required = ['date','weight','bf_percent','lean_lbs'];
+            for (const r of required){ if (!header.includes(r)) { showToast(`Missing required column: ${r}`, true); return; } }
+            const rows = [];
+            for (let i=1;i<lines.length;i++){
+                const cols = parseCsvLine(lines[i]);
+                const row = {};
+                header.forEach((h, idx)=> row[h] = (cols[idx]!==undefined ? cols[idx] : ''));
+                const e = {
+                    date: row.date.trim(),
+                    weight: row.weight===''? null : Number(row.weight),
+                    bf_percent: row.bf_percent===''? null : Number(row.bf_percent),
+                    lean_lbs: row.lean_lbs===''? null : Number(row.lean_lbs),
+                    water_percent: row.water_percent===''? null : Number(row.water_percent),
+                    calories: row.calories===''? null : Number(row.calories),
+                    protein: row.protein===''? null : Number(row.protein),
+                    fat: row.fat===''? null : Number(row.fat),
+                    carbs: row.carbs===''? null : Number(row.carbs),
+                    steps: row.steps===''? null : Number(row.steps),
+                    rhr: row.rhr===''? null : Number(row.rhr),
+                    sleep_score: row.sleep_score===''? null : Number(row.sleep_score),
+                    sleep_duration_hrs: row.sleep_duration_hrs===''? null : Number(row.sleep_duration_hrs),
+                    refeed: String(row.refeed||'').trim().toLowerCase() in ['yes','true','1','y','🔥'],
+                    notes: (row.notes||'').replace(/^"|"$/g,'')
+                };
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date)) continue;
+                const derived = computeDerivedFields(e.weight, e.bf_percent, e.lean_lbs);
+                if (derived) { e.bf_lbs = derived.bf_lbs; e.lean_percent = derived.lean_percent; e.residual = derived.residual; }
+                const integrity = computeIntegrityStatus(e.weight, e.bf_percent, e.lean_lbs);
+                e.integrity_status = integrity.status;
+                e.integrity_message = integrity.message;
+                rows.push(e);
+            }
+            if (!rows.length) { showToast('No valid rows parsed', true); return; }
+            bodyData = rows.sort((a,b)=>a.date.localeCompare(b.date));
+            saveData();
+            updateStats(); updateTable(); updateChart();
+            showToast(`Bulk update applied (${rows.length} rows)`);
+            closeSettings();
+        }
+
+// ----- Formula Documentation -----
+        function openFormulaDocs() {
+            const modal = document.getElementById('formulaModal');
+            modal.innerHTML = `
+              <div class="modal">
+                <h2>ℹ️ Formula Documentation</h2>
+                <div class="form-section">
+                  <h3>Body Composition</h3>
+                  <p style="color: var(--text-secondary);">BF lbs = Weight × (BF% ÷ 100)</p>
+                  <p style="color: var(--text-secondary);">Lean % = (Lean lbs ÷ Weight) × 100</p>
+                  <p style="color: var(--text-secondary);">Residual = Weight − BF lbs − Lean lbs (device-specific remainder; not an error)</p>
+                </div>
+                <div class="form-section">
+                  <h3>Fat Loss Rate</h3>
+                  <p style="color: var(--text-secondary);">Fat Loss (period) = BF lbs(start) − BF lbs(end)</p>
+                  <p style="color: var(--text-secondary);">Weekly Rate = (Fat Loss ÷ Days) × 7</p>
+                </div>
+                <div class="form-section">
+                  <h3>Calories & TDEE (heuristic)</h3>
+                  <p style="color: var(--text-secondary);">Estimated deficit ≈ Fat Loss/day × 3500</p>
+                  <p style="color: var(--text-secondary);">Estimated TDEE ≈ Avg Calories + Estimated deficit</p>
+                </div>
+                <div class="form-section">
+                  <h3>Training</h3>
+                  <p style="color: var(--text-secondary);">Working Volume = Σ (weight × reps) for non-warmup completed sets</p>
+                  <p style="color: var(--text-secondary);">Estimated 1RM (Epley) = weight × (1 + reps/30)</p>
+                </div>
+                <div style="display:flex; gap:10px; margin-top: 16px;">
+                  <button class="primary" onclick="closeFormulaDocs()">Close</button>
+                </div>
+              </div>
+            `;
+            modal.classList.add('show');
+        }
+        function closeFormulaDocs(){ document.getElementById('formulaModal').classList.remove('show'); }
+
+        // ----- Analytics Tab (lightweight) -----
+        function updateAnalyticsTab() {
+            const sorted = bodyData.slice().sort((a,b)=>a.date.localeCompare(b.date));
+            if (sorted.length < 10) {
+                document.getElementById('analyticsContent').innerHTML = '<p style="color: var(--text-secondary);">Need more data to compute analytics.</p>';
+                return;
+            }
+            const pairs = [];
+            for (let i=1;i<sorted.length;i++){
+                const prev = sorted[i-1];
+                const cur = sorted[i];
+                if (prev && cur) {
+                    const fatPrev = (prev.bf_lbs != null) ? prev.bf_lbs : (prev.weight*prev.bf_percent/100);
+                    const fatCur = (cur.bf_lbs != null) ? cur.bf_lbs : (cur.weight*cur.bf_percent/100);
+                    const fatDelta = fatCur - fatPrev; // negative = fat loss
+                    pairs.push({
+                        calories: prev.calories, protein: prev.protein, fat: prev.fat, carbs: prev.carbs,
+                        steps: prev.steps, sleep: prev.sleep_duration_hrs, rhr: prev.rhr,
+                        nextFatDelta: fatDelta
+                    });
+                }
+            }
+            function corr(xk, yk) {
+                const xs=[], ys=[];
+                pairs.forEach(p=>{
+                    const x=p[xk], y=p[yk];
+                    if (isFinite(x) && isFinite(y)) { xs.push(x); ys.push(y); }
+                });
+                if (xs.length < 8) return null;
+                const mx=xs.reduce((a,b)=>a+b,0)/xs.length;
+                const my=ys.reduce((a,b)=>a+b,0)/ys.length;
+                let num=0, dx=0, dy=0;
+                for (let i=0;i<xs.length;i++){
+                    const vx=xs[i]-mx, vy=ys[i]-my;
+                    num += vx*vy; dx += vx*vx; dy += vy*vy;
+                }
+                const den = Math.sqrt(dx*dy);
+                return den ? (num/den) : null;
+            }
+            const metrics = ['calories','protein','fat','carbs','steps','sleep','rhr'];
+            const rows = metrics.map(m=>{
+                const c = corr(m,'nextFatDelta');
+                const val = (c==null) ? '—' : c.toFixed(2);
+                const color = (c==null) ? 'var(--text-secondary)' : (c< -0.2 ? 'var(--accent-success)' : (c>0.2 ? 'var(--accent-danger)' : 'var(--accent-warning)'));
+                return `<tr><td>${m}</td><td style="font-family:'Space Mono', monospace; color:${color};">${val}</td></tr>`;
+            }).join('');
+
+            document.getElementById('analyticsContent').innerHTML = `
+              <div style="color: var(--text-secondary); margin-bottom: 12px;">
+                Correlation of <b>previous-day inputs</b> vs <b>next-day fat change</b> (negative = more fat loss). This is directional and noisy, but useful.
+              </div>
+              <div class="table-container" style="max-height: 320px;">
+                <table>
+                  <thead><tr><th>Metric (Prev Day)</th><th>Corr → Next-day Fat Δ</th></tr></thead>
+                  <tbody>${rows}</tbody>
+                </table>
+              </div>
+            `;
+        }
+
+        // Personal records store (for overload tab enhancements)
+        function loadPRs() {
+            const stored = localStorage.getItem(PR_KEY);
+            if (stored) { try { personalRecords = JSON.parse(stored); } catch { personalRecords = null; } }
+            if (!personalRecords) personalRecords = { version: 1, prs: {} };
+        }
+        function savePRs() { localStorage.setItem(PR_KEY, JSON.stringify(personalRecords)); }
+
+
+
+
+        // ===== MOBILE SWIPE NAV (V13) =====
+        function enableSwipeNav() {
+            let startX = null, startY = null, startT = null;
+            const threshold = 60;
+            document.addEventListener('touchstart', (e)=>{
+                if (!e.touches || e.touches.length!==1) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                startT = Date.now();
+            }, {passive:true});
+            document.addEventListener('touchend', (e)=>{
+                if (startX===null) return;
+                const dx = (e.changedTouches[0].clientX - startX);
+                const dy = (e.changedTouches[0].clientY - startY);
+                const dt = Date.now() - startT;
+                startX=null; startY=null; startT=null;
+                if (dt>700) return;
+                if (Math.abs(dx) < threshold || Math.abs(dx) < Math.abs(dy)) return;
+                const order = ['dashboard','nutrition','measurements','training','progressive','correlations','analytics','data'];
+                const active = document.querySelector('.main-tab-content.active')?.id?.replace('-tab','') || 'dashboard';
+                const idx = Math.max(0, order.indexOf(active));
+                const nextIdx = dx < 0 ? Math.min(order.length-1, idx+1) : Math.max(0, idx-1);
+                const tabName = order[nextIdx];
+                // Find corresponding button and click
+                const btn = Array.from(document.querySelectorAll('.tab-button')).find(b=>b.getAttribute('onclick')?.includes(`'${tabName}'`));
+                if (btn) btn.click();
+            }, {passive:true});
+        }
+
+
+// ===== INITIALIZATION =====
         
         document.addEventListener('DOMContentLoaded', () => {
             console.log('🚀 Body Tracker Pro - Complete Ultimate Edition');
             console.log('✨ With All Features: Nutrition, Measurements, Training, Correlations, Integrity Validation');
             
+            loadSettings();
+            loadPRs();
             loadData();
             loadMeasurements();
             loadExerciseLibrary();
@@ -4015,3 +4501,160 @@ function escapeAttr(str) {
     </script>
 </body>
 </html>
+        // ===== PROGRESSIVE OVERLOAD ENHANCED (V13) =====
+        function epley1RM(w, reps){ if(!isFinite(w)||!isFinite(reps)||reps<=0) return null; return w*(1+(reps/30)); }
+
+        function collectTrainingSets() {
+            // Supports both legacy and set-based formats
+            const all = [];
+            (trainingLog||[]).forEach(w=>{
+                const workoutId = w.id || w.date || 'workout';
+                const date = w.date || '';
+                const sess = w.session || w.session_name || w.name || w.type || 'Workout';
+                const exercises = w.exercises || [];
+                exercises.forEach(ex=>{
+                    const exName = ex.name || ex.exercise || 'Exercise';
+                    const exId = ex.id || exName;
+                    const superset = !!ex.superset;
+                    const sets = ex.sets_detail || ex.sets || [];
+                    if (Array.isArray(sets) && sets.length && typeof sets[0] === 'object') {
+                        sets.forEach((s, idx)=>{
+                            const isWarmup = !!s.warmup;
+                            const completed = (s.completed===undefined)? true : !!s.completed;
+                            const weight = Number(s.weight||0);
+                            const reps = Number(s.reps||0);
+                            all.push({date, workoutId, sess, exId, exName, superset, setIndex: idx+1, isWarmup, completed, weight, reps});
+                        });
+                    } else {
+                        // legacy single-line
+                        const weight = Number(ex.weight||0);
+                        const reps = Number(ex.reps||0);
+                        const setsN = Number(ex.sets||0);
+                        for (let i=0;i<Math.max(1,setsN||1);i++){
+                            all.push({date, workoutId, sess, exId, exName, superset, setIndex:i+1, isWarmup:false, completed:true, weight, reps});
+                        }
+                    }
+                });
+            });
+            return all.filter(s=>s.exName && isFinite(s.weight) && isFinite(s.reps));
+        }
+
+        function computeExerciseStats(sets) {
+            const stats = {};
+            sets.forEach(s=>{
+                if (!stats[s.exName]) stats[s.exName] = {sets:[], volume:0, workVolume:0, best1rm:0, bestSet:null, prReps:0, prWeight:0};
+                stats[s.exName].sets.push(s);
+                const v = s.weight * s.reps;
+                stats[s.exName].volume += v;
+                if (!s.isWarmup && s.completed) stats[s.exName].workVolume += v;
+                const est = epley1RM(s.weight, s.reps);
+                if (est && est > stats[s.exName].best1rm) { stats[s.exName].best1rm = est; stats[s.exName].bestSet = s; }
+                if (s.reps > stats[s.exName].prReps) stats[s.exName].prReps = s.reps;
+                if (s.weight > stats[s.exName].prWeight) stats[s.exName].prWeight = s.weight;
+            });
+            return stats;
+        }
+
+        function updatePersonalRecordsFromTraining() {
+            loadPRs();
+            const sets = collectTrainingSets().filter(s=>s.completed && !s.isWarmup);
+            const stats = computeExerciseStats(sets);
+            Object.keys(stats).forEach(name=>{
+                const s = stats[name];
+                const cur = personalRecords.prs[name] || {};
+                const newPR = {
+                    best1rm: Math.max(cur.best1rm||0, s.best1rm||0),
+                    prWeight: Math.max(cur.prWeight||0, s.prWeight||0),
+                    prReps: Math.max(cur.prReps||0, s.prReps||0),
+                    updated_at: new Date().toISOString()
+                };
+                personalRecords.prs[name] = newPR;
+            });
+            savePRs();
+        }
+
+        function deloadHeuristic() {
+            // Basic heuristic: elevated RHR + falling volume over last 7 entries
+            const sortedBody = bodyData.slice().sort((a,b)=>a.date.localeCompare(b.date));
+            const recent = sortedBody.slice(-7).filter(d=>isFinite(d.rhr));
+            const rhrAvg = recent.length ? recent.reduce((s,d)=>s+d.rhr,0)/recent.length : null;
+            const base = sortedBody.slice(-21,-7).filter(d=>isFinite(d.rhr));
+            const baseAvg = base.length ? base.reduce((s,d)=>s+d.rhr,0)/base.length : null;
+            const rhrUp = (rhrAvg!=null && baseAvg!=null) ? (rhrAvg - baseAvg) : null;
+            const sets = collectTrainingSets().filter(s=>s.completed && !s.isWarmup);
+            // weekly volume last 2 weeks
+            const byDate = {};
+            sets.forEach(s=>{
+                byDate[s.date] = (byDate[s.date]||0) + (s.weight*s.reps);
+            });
+            const dates = Object.keys(byDate).sort();
+            const last7 = dates.slice(-7).reduce((sum, d)=>sum+byDate[d],0);
+            const prev7 = dates.slice(-14,-7).reduce((sum, d)=>sum+byDate[d],0);
+            const volDown = (prev7>0) ? ((last7 - prev7)/prev7) : null;
+            const suggest = (rhrUp!=null && rhrUp>=4) || (volDown!=null && volDown<-0.15);
+            return {rhrAvg, baseAvg, rhrUp, last7, prev7, volDown, suggest};
+        }
+
+        function updateProgressiveTabV13() {
+            const el = document.getElementById('progressiveContent');
+            if (!el) return;
+            if (!trainingLog || trainingLog.length === 0) {
+                el.innerHTML = `<div style="background: var(--bg-tertiary); padding: 30px; border-radius: 10px; text-align:center;">
+                    <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🏋️ No Training Data Yet</h3>
+                    <p style="color: var(--text-secondary);">Log workouts to see PRs, volume trends, and deload guidance.</p>
+                </div>`;
+                return;
+            }
+
+            updatePersonalRecordsFromTraining();
+            const sets = collectTrainingSets().filter(s=>s.completed);
+            const exStats = computeExerciseStats(sets);
+            const names = Object.keys(exStats).sort((a,b)=> (exStats[b].workVolume||0) - (exStats[a].workVolume||0)).slice(0, 20);
+
+            // Build table
+            const rows = names.map(n=>{
+                const s = exStats[n];
+                const pr = (personalRecords && personalRecords.prs && personalRecords.prs[n]) ? personalRecords.prs[n] : {};
+                const best = s.bestSet;
+                const bestStr = best ? `${best.weight}×${best.reps} (Set ${best.setIndex})` : '—';
+                const best1 = s.best1rm ? s.best1rm.toFixed(1) : '—';
+                const sug = (best && isFinite(best.weight)) ? Math.round(best.weight + 5) : '—';
+                return `<tr>
+                    <td>${n}${s.sets.some(x=>x.superset)?' <span style="color:var(--accent-warning)">(SS)</span>':''}</td>
+                    <td style="font-family:'Space Mono', monospace;">${Math.round(s.workVolume).toLocaleString()}</td>
+                    <td style="font-family:'Space Mono', monospace;">${bestStr}</td>
+                    <td style="font-family:'Space Mono', monospace;">${best1}</td>
+                    <td style="font-family:'Space Mono', monospace;">${(pr.best1rm||0).toFixed(1)}</td>
+                    <td style="font-family:'Space Mono', monospace;">Try +5: ${sug}</td>
+                </tr>`;
+            }).join('');
+
+            const d = deloadHeuristic();
+            const deloadCard = `
+              <div style="background: rgba(245, 158, 11, 0.12); border-left:4px solid var(--accent-warning); padding: 18px; border-radius: 10px; margin-bottom: 16px;">
+                <h3 style="color: var(--accent-warning); margin-bottom: 8px;">🧯 Deload / Recovery Check</h3>
+                <div style="color: var(--text-secondary); font-size: 0.9em; line-height: 1.7;">
+                  RHR (last 7 avg): <b>${d.rhrAvg!=null ? d.rhrAvg.toFixed(1) : '—'}</b> • Prior baseline: <b>${d.baseAvg!=null ? d.baseAvg.toFixed(1) : '—'}</b> • Δ: <b>${d.rhrUp!=null ? d.rhrUp.toFixed(1) : '—'}</b><br/>
+                  Training volume (last 7 logged days): <b>${Math.round(d.last7||0).toLocaleString()}</b> • Prior 7: <b>${Math.round(d.prev7||0).toLocaleString()}</b> • Change: <b>${d.volDown!=null ? (d.volDown*100).toFixed(0)+'%' : '—'}</b><br/>
+                  ${d.suggest ? `<span style="color: var(--accent-warning); font-weight:700;">Suggestion:</span> Consider a 3–7 day deload (reduce volume 30–50%, keep intensity moderate) + prioritize sleep.` :
+                                `✅ No strong deload flags detected.`}
+                </div>
+              </div>`;
+
+            el.innerHTML = `
+              ${deloadCard}
+              <div style="color: var(--text-secondary); margin-bottom: 10px;">
+                Top exercises by working volume. Warmup sets are excluded from "working volume". (SS)=superset.
+              </div>
+              <div class="table-container" style="max-height: 520px;">
+                <table>
+                  <thead><tr>
+                    <th>Exercise</th><th>Work Volume</th><th>Best Set</th><th>Best Est 1RM</th><th>All-time PR 1RM</th><th>Next Step</th>
+                  </tr></thead>
+                  <tbody>${rows || '<tr><td colspan="6" style="color:var(--text-secondary);">No completed sets found.</td></tr>'}</tbody>
+                </table>
+              </div>
+            `;
+        }
+
+
