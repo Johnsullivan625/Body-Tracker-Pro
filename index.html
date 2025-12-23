@@ -2831,7 +2831,55 @@ function migrateTrainingPayload(raw) {
     return migrated;
 }
 
-function loadTraining() {
+
+        function discoverTrainingFromLocalStorage() {
+            // Heuristic scan for any key that contains workouts/training sessions.
+            // This keeps UI/features intact while maximizing compatibility across older versions.
+            try {
+                const candidates = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if (!k) continue;
+                    const lk = k.toLowerCase();
+                    if (!(lk.includes('training') || lk.includes('workout') || lk.includes('session') || lk.includes('lift'))) continue;
+
+                    const rawStr = localStorage.getItem(k);
+                    if (!rawStr || rawStr.length < 2) continue;
+                    const parsed = safeJsonParse(rawStr);
+                    if (!parsed) continue;
+
+                    // Accept array of workouts
+                    if (Array.isArray(parsed) && parsed.length) {
+                        const looksLike = parsed.some(w => (w && (w.exercises || w.blocks || w.sets || w.session || w.type) && (w.date || w.workoutDate || w.day)));
+                        if (looksLike) candidates.push({ key: k, value: parsed });
+                    }
+                    // Accept object wrappers
+                    if (parsed && typeof parsed === 'object') {
+                        const arr =
+                            (Array.isArray(parsed.workouts) && parsed.workouts) ||
+                            (Array.isArray(parsed.trainingLog) && parsed.trainingLog) ||
+                            (Array.isArray(parsed.sessions) && parsed.sessions) ||
+                            (Array.isArray(parsed.training_sessions) && parsed.training_sessions) ||
+                            null;
+                        if (arr && arr.length) candidates.push({ key: k, value: parsed });
+                    }
+                }
+
+                // Prefer biggest set (most workouts)
+                if (!candidates.length) return null;
+                candidates.sort((a,b)=>{
+                    const al = Array.isArray(a.value) ? a.value.length : ((a.value.workouts||a.value.trainingLog||a.value.sessions||a.value.training_sessions)||[]).length;
+                    const bl = Array.isArray(b.value) ? b.value.length : ((b.value.workouts||b.value.trainingLog||b.value.sessions||b.value.training_sessions)||[]).length;
+                    return bl - al;
+                });
+                return candidates[0].value;
+            } catch (e) {
+                console.warn('Training discovery scan failed:', e);
+                return null;
+            }
+        }
+
+        function loadTraining() {
     // Prefer current key; fall back to legacy keys if needed
     let raw = safeJsonParse(localStorage.getItem(TRAINING_KEY));
 
@@ -2841,10 +2889,17 @@ function loadTraining() {
            || safeJsonParse(localStorage.getItem('trainingLog'))
            || safeJsonParse(localStorage.getItem('trainingLog_User1'))
            || safeJsonParse(localStorage.getItem('training_sessions'))
+           || safeJsonParse(localStorage.getItem('rakChazaq_training_v12'))
+           || safeJsonParse(localStorage.getItem('rakChazaq_training_v13'))
+           || safeJsonParse(localStorage.getItem('rakChazaq_training_v14'))
+           || safeJsonParse(localStorage.getItem('rakChazaq_training_v15'))
+           || discoverTrainingFromLocalStorage()
            || null;
     }
 
     trainingStore = migrateTrainingPayload(raw);
+    // Keep a breadcrumb for debugging
+    try { trainingStore._loaded_from = raw ? 'direct_or_legacy' : 'none'; } catch {}
 
     // Persist migrated payload under current key (does NOT delete legacy keys)
     try { localStorage.setItem(TRAINING_KEY, JSON.stringify(trainingStore)); } catch {}
