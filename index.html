@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Body Tracker Pro v14 - Ultimate Edition</title>
+    <title>Body Tracker Pro v15 - Ultimate Edition</title>
     <link rel="manifest" href='data:application/manifest+json,{"name": "Body Tracker Pro", "short_name": "BodyTracker", "start_url": "./?pwa=1", "display": "standalone", "background_color": "#0f172a", "theme_color": "#06b6d4", "icons": []}'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Work+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -495,7 +495,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>💪 BODY TRACKER PRO v14</h1>
+            <h1>💪 BODY TRACKER PRO v15 <span style="font-size: 0.5em; color: var(--accent-cyan);">ULTIMATE</span></h1>
             
 
 <div class="brand-section" style="margin-top:14px; display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
@@ -523,13 +523,59 @@
       <span style="color: var(--text-secondary); font-weight:600; margin-left:8px;">(רק חזק)</span>
     </div>
     <div style="color: var(--text-secondary); font-size:0.9em; margin-top:2px;">
-      Only Strong • Track the work • Work the plan
+      <strong>Only Strong • Joshua 1:9</strong> • Plan the work, work the plan • Built for Transformation
     </div>
   </div>
   <span style="display:inline-block; background:rgba(139,92,246,0.2); color:var(--accent-purple); padding:4px 12px; border-radius:12px; font-size:0.75em; font-weight:600; font-family:'Space Mono',monospace; border:1px solid var(--accent-purple); margin-left:10px;">v14.0</span>
 </div>
 <script>
   document.addEventListener('DOMContentLoaded', ()=>{
+            
+            // Load training data
+            function loadTrainingData() {
+                try {
+                    const saved = localStorage.getItem('trainingData_v1');
+                    if (saved) {
+                        trainingLog = JSON.parse(saved);
+                    } else {
+                        trainingLog = INITIAL_TRAINING_WORKOUTS;
+                        localStorage.setItem('trainingData_v1', JSON.stringify(trainingLog));
+                    }
+                } catch (e) {
+                    console.error('Error loading training data:', e);
+                    trainingLog = INITIAL_TRAINING_WORKOUTS;
+                }
+            }
+            
+            function loadPRs() {
+                try {
+                    const saved = localStorage.getItem('personalRecords_v1');
+                    if (saved) {
+                        personalRecords = JSON.parse(saved);
+                    } else {
+                        personalRecords = { version: 1, prs: INITIAL_PERSONAL_RECORDS };
+                        localStorage.setItem('personalRecords_v1', JSON.stringify(personalRecords));
+                    }
+                } catch (e) {
+                    console.error('Error loading PRs:', e);
+                    personalRecords = { version: 1, prs: INITIAL_PERSONAL_RECORDS };
+                }
+            }
+            
+            loadTrainingData();
+            loadPRs();
+
+            // Initialize Phase 2 features
+            initPWA();
+            initQuickAdd();
+            
+            // Update all tabs on load
+            updateProgressiveTabEnhanced();
+            updateAnalyticsTab();
+            updateInsightsTab();
+            updateQualityTab();
+            
+
     const logo = document.querySelector('.brand-logo');
     if(!logo) return;
     logo.addEventListener('mouseenter', ()=>{ logo.style.boxShadow='0 0 22px rgba(6,182,212,0.35)'; logo.style.transform='translateY(-1px)';});
@@ -643,6 +689,31 @@
                 <h2>🔍 Correlations & Insights</h2>
                 <div id="correlationsContent"></div>
             </div>
+    
+    <!-- ===== TAB: ANALYTICS ===== -->
+    <div id="analytics-tab" class="main-tab-content">
+        <div class="card">
+            <h2 style="color: var(--accent-cyan); margin-bottom: 20px;">🔬 Advanced Analytics Dashboard</h2>
+            <div id="analyticsContent"></div>
+        </div>
+    </div>
+    
+    <!-- ===== TAB: INSIGHTS ===== -->
+    <div id="insights-tab" class="main-tab-content">
+        <div class="card">
+            <h2 style="color: var(--accent-cyan); margin-bottom: 20px;">💡 Training Insights & Recommendations</h2>
+            <div id="insightsContent"></div>
+        </div>
+    </div>
+    
+    <!-- ===== TAB: DATA QUALITY ===== -->
+    <div id="quality-tab" class="main-tab-content">
+        <div class="card">
+            <h2 style="color: var(--accent-cyan); margin-bottom: 20px;">✅ Data Quality Management</h2>
+            <div id="qualityContent"></div>
+        </div>
+    </div>
+
         </div>
 
         
@@ -668,6 +739,29 @@
             <div class="card">
                 <h2>📋 Complete Data Log (<span id="entryCount">0</span> entries)</h2>
                 <p style="color: var(--text-secondary); margin-bottom: 15px;">Click any row to edit • Red rows = refeed days • Badges show data integrity</p>
+                
+                <!-- Column Visibility Controls -->
+                <div class="column-controls">
+                    <div style="color: var(--accent-cyan); font-weight: 700; margin-right: 10px;">🎛️ Columns:</div>
+                    <label class="column-toggle"><input type="checkbox" checked disabled> Date</label>
+                    <label class="column-toggle"><input type="checkbox" checked disabled> Weight</label>
+                    <label class="column-toggle"><input type="checkbox" checked disabled> BF%</label>
+                    <label class="column-toggle"><input type="checkbox" checked> BF lbs</label>
+                    <label class="column-toggle"><input type="checkbox" checked> Lean</label>
+                    <label class="column-toggle"><input type="checkbox" checked> Lean%</label>
+                    <label class="column-toggle"><input type="checkbox" checked> Water%</label>
+                    <label class="column-toggle"><input type="checkbox" checked> Cal</label>
+                    <label class="column-toggle"><input type="checkbox" checked> Pro</label>
+                    <label class="column-toggle"><input type="checkbox" checked> Fat</label>
+                    <label class="column-toggle"><input type="checkbox" checked> Carbs</label>
+                    <label class="column-toggle"><input type="checkbox" checked> Steps</label>
+                    <label class="column-toggle"><input type="checkbox" checked> RHR</label>
+                    <label class="column-toggle"><input type="checkbox" checked> Sleep</label>
+                    <label class="column-toggle" style="background: var(--accent-purple); color: white; border: none; padding: 8px 14px;">
+                        <input type="checkbox" id="compactModeToggle" onchange="toggleCompactMode()"> <strong>Compact Mode</strong>
+                    </label>
+                </div>
+                
                 <div class="table-container">
                     <table>
                         <thead>
@@ -873,8 +967,18 @@ const GOALS = {
         let currentChartType = 'fatVsLean';
         let editingRow = null;
 
-        // ===== INITIAL DATA (48 days: Oct 27 - Dec 13, 2025) =====
-        const INITIAL_DATA = [{"date":"2025-10-27","weight":208.1,"bf_percent":20.5,"lean_lbs":156.3,"calories":1405.0,"protein":116.0,"fat":83.0,"carbs":40.0,"steps":7046.0,"rhr":48.0,"sleep_score":87.0,"sleep_duration_hrs":9.42,"water_percent":58.4,"refeed":false,"notes":"","bf_lbs":42.7,"lean_percent":75.1,"residual":9.14,"integrity_status":"yellow"},{"date":"2025-10-28","weight":208.9,"bf_percent":20.5,"lean_lbs":154.5,"calories":1565.0,"protein":139.0,"fat":92.0,"carbs":30.0,"steps":null,"rhr":null,"sleep_score":77.0,"sleep_duration_hrs":6.62,"water_percent":58.3,"refeed":false,"notes":"","bf_lbs":42.8,"lean_percent":74.0,"residual":11.58,"integrity_status":"yellow"},{"date":"2025-10-29","weight":203.4,"bf_percent":20.3,"lean_lbs":154.6,"calories":1577.0,"protein":151.0,"fat":79.0,"carbs":50.0,"steps":null,"rhr":null,"sleep_score":63.0,"sleep_duration_hrs":9.18,"water_percent":59.8,"refeed":false,"notes":"","bf_lbs":41.3,"lean_percent":76.0,"residual":7.51,"integrity_status":"red"},{"date":"2025-10-30","weight":202.6,"bf_percent":20.0,"lean_lbs":154.5,"calories":1555.0,"protein":142.0,"fat":95.0,"carbs":23.0,"steps":6480.0,"rhr":55.0,"sleep_score":null,"sleep_duration_hrs":null,"water_percent":59.8,"refeed":false,"notes":"","bf_lbs":40.5,"lean_percent":76.3,"residual":7.58,"integrity_status":"red"},{"date":"2025-10-31","weight":205.0,"bf_percent":19.7,"lean_lbs":154.2,"calories":1290.0,"protein":147.0,"fat":59.0,"carbs":35.0,"steps":9519.0,"rhr":54.0,"sleep_score":86.0,"sleep_duration_hrs":10.38,"water_percent":58.8,"refeed":false,"notes":"","bf_lbs":40.4,"lean_percent":75.2,"residual":10.42,"integrity_status":"green"},{"date":"2025-11-01","weight":204.4,"bf_percent":19.7,"lean_lbs":154.2,"calories":1735.0,"protein":146.0,"fat":41.0,"carbs":31.0,"steps":5231.0,"rhr":52.0,"sleep_score":66.0,"sleep_duration_hrs":7.0,"water_percent":59.3,"refeed":false,"notes":"","bf_lbs":40.3,"lean_percent":75.4,"residual":9.93,"integrity_status":"green"},{"date":"2025-11-02","weight":203.8,"bf_percent":19.5,"lean_lbs":154.3,"calories":1436.0,"protein":134.0,"fat":76.0,"carbs":29.0,"steps":2859.0,"rhr":51.0,"sleep_score":91.0,"sleep_duration_hrs":8.1,"water_percent":59.7,"refeed":false,"notes":"","bf_lbs":39.7,"lean_percent":75.7,"residual":9.76,"integrity_status":"green"},{"date":"2025-11-03","weight":204.0,"bf_percent":19.3,"lean_lbs":154.4,"calories":1981.0,"protein":207.0,"fat":76.0,"carbs":35.0,"steps":9321.0,"rhr":55.0,"sleep_score":67.0,"sleep_duration_hrs":7.53,"water_percent":59.8,"refeed":false,"notes":"","bf_lbs":39.4,"lean_percent":75.7,"residual":10.23,"integrity_status":"green"},{"date":"2025-11-04","weight":203.9,"bf_percent":19.2,"lean_lbs":154.4,"calories":1660.0,"protein":131.0,"fat":48.0,"carbs":50.0,"steps":7202.0,"rhr":54.0,"sleep_score":73.0,"sleep_duration_hrs":6.65,"water_percent":59.5,"refeed":false,"notes":"","bf_lbs":39.1,"lean_percent":75.7,"residual":10.35,"integrity_status":"green"},{"date":"2025-11-05","weight":200.8,"bf_percent":19.5,"lean_lbs":153.8,"calories":1525.0,"protein":161.0,"fat":85.0,"carbs":20.0,"steps":5753.0,"rhr":52.0,"sleep_score":87.0,"sleep_duration_hrs":9.1,"water_percent":59.1,"refeed":false,"notes":"","bf_lbs":39.2,"lean_percent":76.6,"residual":7.84,"integrity_status":"red"},{"date":"2025-11-06","weight":200.6,"bf_percent":19.6,"lean_lbs":153.3,"calories":1492.0,"protein":141.0,"fat":82.0,"carbs":39.0,"steps":10762.0,"rhr":50.0,"sleep_score":76.0,"sleep_duration_hrs":9.03,"water_percent":58.8,"refeed":false,"notes":"","bf_lbs":39.3,"lean_percent":76.4,"residual":7.98,"integrity_status":"red"},{"date":"2025-11-07","weight":200.2,"bf_percent":19.4,"lean_lbs":153.2,"calories":1724.0,"protein":179.0,"fat":71.0,"carbs":83.0,"steps":11448.0,"rhr":52.0,"sleep_score":65.0,"sleep_duration_hrs":6.48,"water_percent":60.0,"refeed":false,"notes":"","bf_lbs":38.8,"lean_percent":76.5,"residual":8.16,"integrity_status":"red"},{"date":"2025-11-08","weight":201.1,"bf_percent":19.1,"lean_lbs":153.3,"calories":2465.0,"protein":180.0,"fat":82.0,"carbs":197.0,"steps":4149.0,"rhr":49.0,"sleep_score":73.0,"sleep_duration_hrs":8.67,"water_percent":60.2,"refeed":true,"notes":"","bf_lbs":38.4,"lean_percent":76.2,"residual":9.39,"integrity_status":"green"},{"date":"2025-11-09","weight":202.8,"bf_percent":18.6,"lean_lbs":153.8,"calories":1710.0,"protein":203.0,"fat":57.0,"carbs":81.0,"steps":4673.0,"rhr":48.0,"sleep_score":85.0,"sleep_duration_hrs":7.17,"water_percent":61.0,"refeed":false,"notes":"","bf_lbs":37.7,"lean_percent":75.8,"residual":11.28,"integrity_status":"yellow"},{"date":"2025-11-10","weight":201.8,"bf_percent":18.4,"lean_lbs":154.2,"calories":1908.0,"protein":203.0,"fat":68.0,"carbs":100.0,"steps":7444.0,"rhr":51.0,"sleep_score":78.0,"sleep_duration_hrs":9.0,"water_percent":61.1,"refeed":false,"notes":"","bf_lbs":37.1,"lean_percent":76.4,"residual":10.47,"integrity_status":"green"},{"date":"2025-11-11","weight":200.3,"bf_percent":18.3,"lean_lbs":154.4,"calories":1199.0,"protein":150.0,"fat":26.0,"carbs":65.0,"steps":2327.0,"rhr":45.0,"sleep_score":56.0,"sleep_duration_hrs":4.88,"water_percent":61.1,"refeed":false,"notes":"","bf_lbs":36.6,"lean_percent":77.1,"residual":9.25,"integrity_status":"green"},{"date":"2025-11-12","weight":199.1,"bf_percent":18.3,"lean_lbs":154.2,"calories":1210.0,"protein":101.0,"fat":72.0,"carbs":28.0,"steps":3724.0,"rhr":46.0,"sleep_score":76.0,"sleep_duration_hrs":9.7,"water_percent":60.2,"refeed":false,"notes":"","bf_lbs":36.4,"lean_percent":77.5,"residual":8.46,"integrity_status":"yellow"},{"date":"2025-11-13","weight":199.5,"bf_percent":18.3,"lean_lbs":153.7,"calories":1756.0,"protein":133.0,"fat":112.0,"carbs":39.0,"steps":10266.0,"rhr":48.0,"sleep_score":83.0,"sleep_duration_hrs":8.78,"water_percent":59.6,"refeed":false,"notes":"","bf_lbs":36.5,"lean_percent":77.0,"residual":9.29,"integrity_status":"green"},{"date":"2025-11-14","weight":197.5,"bf_percent":18.4,"lean_lbs":153.5,"calories":2583.0,"protein":202.0,"fat":51.0,"carbs":270.0,"steps":6214.0,"rhr":47.0,"sleep_score":81.0,"sleep_duration_hrs":8.53,"water_percent":60.5,"refeed":true,"notes":"","bf_lbs":36.3,"lean_percent":77.7,"residual":7.66,"integrity_status":"red"},{"date":"2025-11-15","weight":199.1,"bf_percent":18.0,"lean_lbs":153.6,"calories":1960.0,"protein":219.0,"fat":84.0,"carbs":75.0,"steps":4173.0,"rhr":55.0,"sleep_score":62.0,"sleep_duration_hrs":6.62,"water_percent":61.0,"refeed":false,"notes":"","bf_lbs":35.8,"lean_percent":77.2,"residual":9.66,"integrity_status":"green"},{"date":"2025-11-16","weight":199.6,"bf_percent":17.8,"lean_lbs":153.8,"calories":1502.0,"protein":156.0,"fat":30.0,"carbs":128.0,"steps":4655.0,"rhr":54.0,"sleep_score":60.0,"sleep_duration_hrs":7.1,"water_percent":61.2,"refeed":false,"notes":"","bf_lbs":35.5,"lean_percent":77.0,"residual":10.27,"integrity_status":"green"},{"date":"2025-11-17","weight":198.3,"bf_percent":17.7,"lean_lbs":153.8,"calories":2165.0,"protein":207.0,"fat":127.0,"carbs":32.0,"steps":12478.0,"rhr":52.0,"sleep_score":67.0,"sleep_duration_hrs":8.88,"water_percent":61.0,"refeed":true,"notes":"","bf_lbs":35.1,"lean_percent":77.6,"residual":9.4,"integrity_status":"green"},{"date":"2025-11-18","weight":199.8,"bf_percent":17.8,"lean_lbs":153.4,"calories":1718.0,"protein":163.0,"fat":103.0,"carbs":26.0,"steps":4852.0,"rhr":50.0,"sleep_score":71.0,"sleep_duration_hrs":7.05,"water_percent":59.1,"refeed":false,"notes":"","bf_lbs":35.6,"lean_percent":76.8,"residual":10.84,"integrity_status":"green"},{"date":"2025-11-19","weight":199.8,"bf_percent":17.5,"lean_lbs":153.9,"calories":1715.0,"protein":169.0,"fat":60.0,"carbs":61.0,"steps":10165.0,"rhr":57.0,"sleep_score":null,"sleep_duration_hrs":null,"water_percent":61.9,"refeed":false,"notes":"","bf_lbs":35.0,"lean_percent":77.0,"residual":10.94,"integrity_status":"green"},{"date":"2025-11-20","weight":197.9,"bf_percent":17.2,"lean_lbs":154.4,"calories":2008.0,"protein":195.0,"fat":105.0,"carbs":50.0,"steps":4982.0,"rhr":54.0,"sleep_score":63.0,"sleep_duration_hrs":8.33,"water_percent":62.8,"refeed":true,"notes":"","bf_lbs":34.0,"lean_percent":78.0,"residual":9.46,"integrity_status":"green"},{"date":"2025-11-21","weight":197.2,"bf_percent":16.9,"lean_lbs":154.7,"calories":1275.0,"protein":207.0,"fat":48.0,"carbs":17.0,"steps":6988.0,"rhr":54.0,"sleep_score":85.0,"sleep_duration_hrs":9.3,"water_percent":62.4,"refeed":false,"notes":"","bf_lbs":33.3,"lean_percent":78.5,"residual":9.17,"integrity_status":"yellow"},{"date":"2025-11-22","weight":198.4,"bf_percent":16.4,"lean_lbs":155.3,"calories":1835.0,"protein":229.0,"fat":48.0,"carbs":114.0,"steps":4021.0,"rhr":48.0,"sleep_score":null,"sleep_duration_hrs":null,"water_percent":62.4,"refeed":false,"notes":"","bf_lbs":32.5,"lean_percent":78.3,"residual":10.56,"integrity_status":"green"},{"date":"2025-11-23","weight":200.2,"bf_percent":16.0,"lean_lbs":155.9,"calories":1501.0,"protein":132.0,"fat":37.0,"carbs":146.0,"steps":5803.0,"rhr":51.0,"sleep_score":72.0,"sleep_duration_hrs":7.35,"water_percent":62.8,"refeed":false,"notes":"","bf_lbs":32.0,"lean_percent":77.9,"residual":12.27,"integrity_status":"red"},{"date":"2025-11-24","weight":196.7,"bf_percent":16.6,"lean_lbs":154.9,"calories":1654.0,"protein":158.0,"fat":98.0,"carbs":21.0,"steps":7179.0,"rhr":49.0,"sleep_score":88.0,"sleep_duration_hrs":10.03,"water_percent":59.3,"refeed":false,"notes":"","bf_lbs":32.6,"lean_percent":78.8,"residual":9.15,"integrity_status":"yellow"},{"date":"2025-11-25","weight":199.7,"bf_percent":16.5,"lean_lbs":154.7,"calories":1431.0,"protein":110.0,"fat":23.0,"carbs":188.0,"steps":9946.0,"rhr":50.0,"sleep_score":76.0,"sleep_duration_hrs":7.98,"water_percent":60.6,"refeed":false,"notes":"","bf_lbs":33.0,"lean_percent":77.5,"residual":12.05,"integrity_status":"yellow"},{"date":"2025-11-26","weight":200.2,"bf_percent":16.5,"lean_lbs":154.8,"calories":1325.0,"protein":195.0,"fat":47.0,"carbs":25.0,"steps":10712.0,"rhr":48.0,"sleep_score":67.0,"sleep_duration_hrs":7.82,"water_percent":60.9,"refeed":false,"notes":"","bf_lbs":33.0,"lean_percent":77.3,"residual":12.37,"integrity_status":"red"},{"date":"2025-11-27","weight":196.0,"bf_percent":16.9,"lean_lbs":154.3,"calories":null,"protein":null,"fat":null,"carbs":null,"steps":7392.0,"rhr":49.0,"sleep_score":null,"sleep_duration_hrs":10.3,"water_percent":60.7,"refeed":true,"notes":"Thanksgiving","bf_lbs":33.1,"lean_percent":78.7,"residual":8.58,"integrity_status":"yellow"},{"date":"2025-11-28","weight":200.1,"bf_percent":16.4,"lean_lbs":154.7,"calories":967.0,"protein":133.0,"fat":40.0,"carbs":13.0,"steps":7310.0,"rhr":53.0,"sleep_score":78.0,"sleep_duration_hrs":10.3,"water_percent":61.8,"refeed":false,"notes":"","bf_lbs":32.8,"lean_percent":77.3,"residual":12.58,"integrity_status":"red"},{"date":"2025-11-29","weight":196.2,"bf_percent":16.7,"lean_lbs":154.6,"calories":1907.0,"protein":247.0,"fat":75.0,"carbs":84.0,"steps":4914.0,"rhr":50.0,"sleep_score":85.0,"sleep_duration_hrs":7.55,"water_percent":61.6,"refeed":false,"notes":"","bf_lbs":32.8,"lean_percent":78.8,"residual":8.83,"integrity_status":"yellow"},{"date":"2025-11-30","weight":196.3,"bf_percent":16.7,"lean_lbs":154.2,"calories":1410.0,"protein":206.0,"fat":46.0,"carbs":47.0,"steps":3947.0,"rhr":49.0,"sleep_score":89.0,"sleep_duration_hrs":7.63,"water_percent":60.8,"refeed":false,"notes":"","bf_lbs":32.8,"lean_percent":78.5,"residual":9.32,"integrity_status":"green"},{"date":"2025-12-01","weight":192.6,"bf_percent":16.7,"lean_lbs":154.0,"calories":1105.0,"protein":182.0,"fat":27.0,"carbs":46.0,"steps":5540.0,"rhr":49.0,"sleep_score":84.0,"sleep_duration_hrs":12.1,"water_percent":62.5,"refeed":false,"notes":"","bf_lbs":32.2,"lean_percent":80.0,"residual":6.44,"integrity_status":"red"},{"date":"2025-12-02","weight":194.1,"bf_percent":16.4,"lean_lbs":153.9,"calories":1442.0,"protein":201.0,"fat":36.0,"carbs":94.0,"steps":10665.0,"rhr":49.0,"sleep_score":73.0,"sleep_duration_hrs":7.2,"water_percent":62.1,"refeed":false,"notes":"Starting today (Dec 2), all carb entries are Total Carbs (not Net Carbs).","bf_lbs":31.8,"lean_percent":79.3,"residual":8.37,"integrity_status":"yellow"},{"date":"2025-12-03","weight":192.5,"bf_percent":16.1,"lean_lbs":154.1,"calories":1522.0,"protein":195.0,"fat":66.0,"carbs":45.0,"steps":6742.0,"rhr":51.0,"sleep_score":81.0,"sleep_duration_hrs":8.72,"water_percent":63.5,"refeed":false,"notes":"","bf_lbs":31.0,"lean_percent":80.0,"residual":7.41,"integrity_status":"red"},{"date":"2025-12-04","weight":192.9,"bf_percent":16.1,"lean_lbs":152.8,"calories":1817.0,"protein":219.0,"fat":61.0,"carbs":118.0,"steps":3050.0,"rhr":49.0,"sleep_score":85.0,"sleep_duration_hrs":7.5,"water_percent":61.0,"refeed":false,"notes":"","bf_lbs":31.1,"lean_percent":79.2,"residual":9.04,"integrity_status":"yellow"},{"date":"2025-12-05","weight":195.2,"bf_percent":15.6,"lean_lbs":154.1,"calories":1525.0,"protein":136.0,"fat":81.0,"carbs":159.0,"steps":8607.0,"rhr":48.0,"sleep_score":90.0,"sleep_duration_hrs":7.99,"water_percent":63.6,"refeed":false,"notes":"Traveled back from Tampa. Ate dinner at friend's house. Had sour dough bread and a cream of chicken dish. Difficult to accurately track nutrition.","bf_lbs":30.4,"lean_percent":78.9,"residual":10.65,"integrity_status":"green"},{"date":"2025-12-06","weight":194.4,"bf_percent":15.7,"lean_lbs":153.7,"calories":1837.0,"protein":168.0,"fat":81.0,"carbs":122.0,"steps":2662.0,"rhr":49.0,"sleep_score":85.0,"sleep_duration_hrs":8.27,"water_percent":61.2,"refeed":false,"notes":"Ate at a friends but had 2 helpings of instant mashed potatoes and had cheese when I came home. Picked a little and probably had a half of a potato skin w/cheese.","bf_lbs":30.5,"lean_percent":79.1,"residual":10.18,"integrity_status":"green"},{"date":"2025-12-07","weight":195.3,"bf_percent":15.5,"lean_lbs":153.9,"calories":1776.0,"protein":198.0,"fat":61.0,"carbs":118.0,"steps":5230.0,"rhr":53.0,"sleep_score":null,"sleep_duration_hrs":8.25,"water_percent":62.4,"refeed":false,"notes":"Diet was atrocious. Had crackers and dip around lunch time. Cleaned diet up in the afternoon and went to the gym and put in 1500 ropes to lessen the negative impact.","bf_lbs":30.3,"lean_percent":78.8,"residual":11.13,"integrity_status":"green"},{"date":"2025-12-08","weight":193.2,"bf_percent":16.2,"lean_lbs":152.8,"calories":1768.0,"protein":198.0,"fat":67.0,"carbs":114.0,"steps":7734.0,"rhr":47.0,"sleep_score":86.0,"sleep_duration_hrs":8.1,"water_percent":59.2,"refeed":false,"notes":"","bf_lbs":31.3,"lean_percent":79.1,"residual":9.1,"integrity_status":"yellow"},{"date":"2025-12-09","weight":193.2,"bf_percent":16.2,"lean_lbs":152.5,"calories":1330.0,"protein":185.0,"fat":36.0,"carbs":47.0,"steps":6809.0,"rhr":47.0,"sleep_score":78.0,"sleep_duration_hrs":6.62,"water_percent":61.3,"refeed":false,"notes":"","bf_lbs":31.3,"lean_percent":78.9,"residual":9.4,"integrity_status":"green"},{"date":"2025-12-10","weight":196.7,"bf_percent":16.1,"lean_lbs":152.3,"calories":1465.0,"protein":213.0,"fat":47.0,"carbs":48.0,"steps":9408.0,"rhr":47.0,"sleep_score":72.0,"sleep_duration_hrs":7.37,"water_percent":60.5,"refeed":false,"notes":"","bf_lbs":31.7,"lean_percent":77.4,"residual":12.73,"integrity_status":"red"},{"date":"2025-12-11","weight":192.5,"bf_percent":16.2,"lean_lbs":152.4,"calories":1604.0,"protein":194.0,"fat":66.0,"carbs":55.0,"steps":2821.0,"rhr":47.0,"sleep_score":90.0,"sleep_duration_hrs":9.48,"water_percent":62.5,"refeed":false,"notes":"","bf_lbs":31.2,"lean_percent":79.2,"residual":8.91,"integrity_status":"yellow"},{"date":"2025-12-12","weight":193.2,"bf_percent":16.2,"lean_lbs":152.1,"calories":1571.0,"protein":193.0,"fat":66.0,"carbs":59.0,"steps":4484.0,"rhr":52.0,"sleep_score":83.0,"sleep_duration_hrs":7.72,"water_percent":62.4,"refeed":false,"notes":"","bf_lbs":31.3,"lean_percent":78.7,"residual":9.8,"integrity_status":"green"},{"date":"2025-12-13","weight":193.8,"bf_percent":16.0,"lean_lbs":152.2,"calories":3097.0,"protein":224.0,"fat":138.0,"carbs":238.0,"steps":3626.0,"rhr":44.0,"sleep_score":82.0,"sleep_duration_hrs":6.43,"water_percent":61.9,"refeed":true,"notes":"","bf_lbs":31.0,"lean_percent":78.5,"residual":10.59,"integrity_status":"green"},{"date":"2025-12-14","weight":197.3,"bf_percent":15.5,"lean_lbs":152.9,"calories":1630.0,"protein":205.0,"fat":21.0,"carbs":178.0,"steps":5949.0,"rhr":47.0,"sleep_score":59.0,"sleep_duration_hrs":6.78,"water_percent":62.9,"refeed":false,"notes":"","bf_lbs":30.6,"lean_percent":77.5,"residual":13.82,"integrity_status":"red"},{"date":"2025-12-15","weight":194.1,"bf_percent":15.6,"lean_lbs":153.1,"calories":1533.0,"protein":211.0,"fat":56.0,"carbs":52.0,"steps":11492.0,"rhr":48.0,"sleep_score":84.0,"sleep_duration_hrs":7.92,"water_percent":62.4,"refeed":false,"notes":"","bf_lbs":30.3,"lean_percent":78.9,"residual":10.72,"integrity_status":"green"},{"date":"2025-12-16","weight":191.0,"bf_percent":15.8,"lean_lbs":152.8,"calories":1920.0,"protein":214.0,"fat":92.0,"carbs":60.0,"steps":6875.0,"rhr":49.0,"sleep_score":83.0,"sleep_duration_hrs":7.42,"water_percent":62.1,"refeed":false,"notes":"","bf_lbs":30.2,"lean_percent":80.0,"residual":8.02,"integrity_status":"red"},{"date":"2025-12-17","weight":191.4,"bf_percent":15.7,"lean_lbs":152.6,"calories":1650.0,"protein":247.0,"fat":40.0,"carbs":105.0,"steps":7391.0,"rhr":45.0,"sleep_score":87.0,"sleep_duration_hrs":9.95,"water_percent":62.2,"refeed":false,"notes":"","bf_lbs":30.1,"lean_percent":79.7,"residual":8.75,"integrity_status":"yellow"},{"date":"2025-12-18","weight":190.9,"bf_percent":15.6,"lean_lbs":152.4,"calories":null,"protein":null,"fat":null,"carbs":null,"steps":null,"rhr":50.0,"sleep_score":75.0,"sleep_duration_hrs":6.7,"water_percent":62.4,"refeed":false,"notes":"","bf_lbs":29.8,"lean_percent":79.8,"residual":8.72,"integrity_status":"yellow"}];
+        // ===== INITIAL DATA (57 days: Oct 27 - Dec 22, 2025) =====
+        const INITIAL_DATA = [{"date":"2025-10-27","weight":208.1,"bf_percent":20.5,"lean_lbs":156.3,"bf_lbs":42.66,"lean_percent":75.11,"residual":9.14,"calories":1405,"protein":116,"fat":83,"carbs":40,"steps":7046,"rhr":48,"sleep_score":87,"sleep_duration_hrs":9.42,"body_water_percent":58.4,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-10-28","weight":208.9,"bf_percent":20.5,"lean_lbs":154.5,"bf_lbs":42.82,"lean_percent":73.96,"residual":11.58,"calories":1565,"protein":139,"fat":92,"carbs":30,"steps":null,"rhr":null,"sleep_score":77,"sleep_duration_hrs":6.62,"body_water_percent":58.3,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-10-29","weight":203.4,"bf_percent":20.3,"lean_lbs":154.6,"bf_lbs":41.29,"lean_percent":76.01,"residual":7.51,"calories":1577,"protein":151,"fat":79,"carbs":50,"steps":null,"rhr":null,"sleep_score":63,"sleep_duration_hrs":9.18,"body_water_percent":59.8,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.7 lbs from baseline"},{"date":"2025-10-30","weight":202.6,"bf_percent":20,"lean_lbs":154.5,"bf_lbs":40.52,"lean_percent":76.26,"residual":7.58,"calories":1555,"protein":142,"fat":95,"carbs":23,"steps":6480,"rhr":55,"sleep_score":null,"sleep_duration_hrs":null,"body_water_percent":59.8,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.6 lbs from baseline"},{"date":"2025-10-31","weight":205,"bf_percent":19.7,"lean_lbs":154.2,"bf_lbs":40.38,"lean_percent":75.22,"residual":10.42,"calories":1290,"protein":147,"fat":59,"carbs":35,"steps":9519,"rhr":54,"sleep_score":86,"sleep_duration_hrs":10.38,"body_water_percent":58.8,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-01","weight":204.4,"bf_percent":19.7,"lean_lbs":154.2,"bf_lbs":40.27,"lean_percent":75.44,"residual":9.93,"calories":1735,"protein":146,"fat":41,"carbs":31,"steps":5231,"rhr":52,"sleep_score":66,"sleep_duration_hrs":7,"body_water_percent":59.3,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-02","weight":203.8,"bf_percent":19.5,"lean_lbs":154.3,"bf_lbs":39.74,"lean_percent":75.71,"residual":9.76,"calories":1436,"protein":134,"fat":76,"carbs":29,"steps":2859,"rhr":51,"sleep_score":91,"sleep_duration_hrs":8.1,"body_water_percent":59.7,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-03","weight":204,"bf_percent":19.3,"lean_lbs":154.4,"bf_lbs":39.37,"lean_percent":75.69,"residual":10.23,"calories":1981,"protein":207,"fat":76,"carbs":35,"steps":9321,"rhr":55,"sleep_score":67,"sleep_duration_hrs":7.53,"body_water_percent":59.8,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-04","weight":203.9,"bf_percent":19.2,"lean_lbs":154.4,"bf_lbs":39.15,"lean_percent":75.72,"residual":10.35,"calories":1660,"protein":131,"fat":48,"carbs":50,"steps":7202,"rhr":54,"sleep_score":73,"sleep_duration_hrs":6.65,"body_water_percent":59.5,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-05","weight":200.8,"bf_percent":19.5,"lean_lbs":153.8,"bf_lbs":39.16,"lean_percent":76.59,"residual":7.84,"calories":1525,"protein":161,"fat":85,"carbs":20,"steps":5753,"rhr":52,"sleep_score":87,"sleep_duration_hrs":9.1,"body_water_percent":59.1,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.3 lbs from baseline"},{"date":"2025-11-06","weight":200.6,"bf_percent":19.6,"lean_lbs":153.3,"bf_lbs":39.32,"lean_percent":76.42,"residual":7.98,"calories":1492,"protein":141,"fat":82,"carbs":39,"steps":10762,"rhr":50,"sleep_score":76,"sleep_duration_hrs":9.03,"body_water_percent":58.8,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.2 lbs from baseline"},{"date":"2025-11-07","weight":200.2,"bf_percent":19.4,"lean_lbs":153.2,"bf_lbs":38.84,"lean_percent":76.52,"residual":8.16,"calories":1724,"protein":179,"fat":71,"carbs":83,"steps":11448,"rhr":52,"sleep_score":65,"sleep_duration_hrs":6.48,"body_water_percent":60,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.0 lbs from baseline"},{"date":"2025-11-08","weight":201.1,"bf_percent":19.1,"lean_lbs":153.3,"bf_lbs":38.41,"lean_percent":76.23,"residual":9.39,"calories":2465,"protein":180,"fat":82,"carbs":197,"steps":4149,"rhr":49,"sleep_score":73,"sleep_duration_hrs":8.67,"body_water_percent":60.2,"refeed":true,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-09","weight":202.8,"bf_percent":18.6,"lean_lbs":153.8,"bf_lbs":37.72,"lean_percent":75.84,"residual":11.28,"calories":1710,"protein":203,"fat":57,"carbs":81,"steps":4673,"rhr":48,"sleep_score":85,"sleep_duration_hrs":7.17,"body_water_percent":61,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-11-10","weight":201.8,"bf_percent":18.4,"lean_lbs":154.2,"bf_lbs":37.13,"lean_percent":76.41,"residual":10.47,"calories":1908,"protein":203,"fat":68,"carbs":100,"steps":7444,"rhr":51,"sleep_score":78,"sleep_duration_hrs":9,"body_water_percent":61.1,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-11","weight":200.3,"bf_percent":18.3,"lean_lbs":154.4,"bf_lbs":36.65,"lean_percent":77.08,"residual":9.25,"calories":1199,"protein":150,"fat":26,"carbs":65,"steps":2327,"rhr":45,"sleep_score":56,"sleep_duration_hrs":4.88,"body_water_percent":61.1,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-12","weight":199.1,"bf_percent":18.3,"lean_lbs":154.2,"bf_lbs":36.44,"lean_percent":77.45,"residual":8.46,"calories":1210,"protein":101,"fat":72,"carbs":28,"steps":3724,"rhr":46,"sleep_score":76,"sleep_duration_hrs":9.7,"body_water_percent":60.2,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-11-13","weight":199.5,"bf_percent":18.3,"lean_lbs":153.7,"bf_lbs":36.51,"lean_percent":77.04,"residual":9.29,"calories":1756,"protein":133,"fat":112,"carbs":39,"steps":10266,"rhr":48,"sleep_score":83,"sleep_duration_hrs":8.78,"body_water_percent":59.6,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-14","weight":197.5,"bf_percent":18.4,"lean_lbs":153.5,"bf_lbs":36.34,"lean_percent":77.72,"residual":7.66,"calories":2583,"protein":202,"fat":51,"carbs":270,"steps":6214,"rhr":47,"sleep_score":81,"sleep_duration_hrs":8.53,"body_water_percent":60.5,"refeed":true,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.5 lbs from baseline"},{"date":"2025-11-15","weight":199.1,"bf_percent":18,"lean_lbs":153.6,"bf_lbs":35.84,"lean_percent":77.15,"residual":9.66,"calories":1960,"protein":219,"fat":84,"carbs":75,"steps":4173,"rhr":55,"sleep_score":62,"sleep_duration_hrs":6.62,"body_water_percent":61,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-16","weight":199.6,"bf_percent":17.8,"lean_lbs":153.8,"bf_lbs":35.53,"lean_percent":77.05,"residual":10.27,"calories":1502,"protein":156,"fat":30,"carbs":128,"steps":4655,"rhr":54,"sleep_score":60,"sleep_duration_hrs":7.1,"body_water_percent":61.2,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-17","weight":198.3,"bf_percent":17.7,"lean_lbs":153.8,"bf_lbs":35.1,"lean_percent":77.56,"residual":9.4,"calories":2165,"protein":207,"fat":127,"carbs":32,"steps":12478,"rhr":52,"sleep_score":67,"sleep_duration_hrs":8.88,"body_water_percent":61,"refeed":true,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-18","weight":199.8,"bf_percent":17.8,"lean_lbs":153.4,"bf_lbs":35.56,"lean_percent":76.78,"residual":10.84,"calories":1718,"protein":163,"fat":103,"carbs":26,"steps":4852,"rhr":50,"sleep_score":71,"sleep_duration_hrs":7.05,"body_water_percent":59.1,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-19","weight":199.8,"bf_percent":17.5,"lean_lbs":153.9,"bf_lbs":34.96,"lean_percent":77.03,"residual":10.94,"calories":1715,"protein":169,"fat":60,"carbs":61,"steps":10165,"rhr":57,"sleep_score":null,"sleep_duration_hrs":null,"body_water_percent":61.9,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-20","weight":197.9,"bf_percent":17.2,"lean_lbs":154.4,"bf_lbs":34.04,"lean_percent":78.02,"residual":9.46,"calories":2008,"protein":195,"fat":105,"carbs":50,"steps":4982,"rhr":54,"sleep_score":63,"sleep_duration_hrs":8.33,"body_water_percent":62.8,"refeed":true,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-21","weight":197.2,"bf_percent":16.9,"lean_lbs":154.7,"bf_lbs":33.33,"lean_percent":78.45,"residual":9.17,"calories":1275,"protein":207,"fat":48,"carbs":17,"steps":6988,"rhr":54,"sleep_score":85,"sleep_duration_hrs":9.3,"body_water_percent":62.4,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-11-22","weight":198.4,"bf_percent":16.4,"lean_lbs":155.3,"bf_lbs":32.54,"lean_percent":78.28,"residual":10.56,"calories":1835,"protein":229,"fat":48,"carbs":114,"steps":4021,"rhr":48,"sleep_score":null,"sleep_duration_hrs":null,"body_water_percent":62.4,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-11-23","weight":200.2,"bf_percent":16,"lean_lbs":155.9,"bf_lbs":32.03,"lean_percent":77.87,"residual":12.27,"calories":1501,"protein":132,"fat":37,"carbs":146,"steps":5803,"rhr":51,"sleep_score":72,"sleep_duration_hrs":7.35,"body_water_percent":62.8,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.1 lbs from baseline"},{"date":"2025-11-24","weight":196.7,"bf_percent":16.6,"lean_lbs":154.9,"bf_lbs":32.65,"lean_percent":78.75,"residual":9.15,"calories":1654,"protein":158,"fat":98,"carbs":21,"steps":7179,"rhr":49,"sleep_score":88,"sleep_duration_hrs":10.03,"body_water_percent":59.3,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-11-25","weight":199.7,"bf_percent":16.5,"lean_lbs":154.7,"bf_lbs":32.95,"lean_percent":77.47,"residual":12.05,"calories":1431,"protein":110,"fat":23,"carbs":188,"steps":9946,"rhr":50,"sleep_score":76,"sleep_duration_hrs":7.98,"body_water_percent":60.6,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-11-26","weight":200.2,"bf_percent":16.5,"lean_lbs":154.8,"bf_lbs":33.03,"lean_percent":77.32,"residual":12.37,"calories":1325,"protein":195,"fat":47,"carbs":25,"steps":10712,"rhr":48,"sleep_score":67,"sleep_duration_hrs":7.82,"body_water_percent":60.9,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.2 lbs from baseline"},{"date":"2025-11-27","weight":196,"bf_percent":16.9,"lean_lbs":154.3,"bf_lbs":33.12,"lean_percent":78.72,"residual":8.58,"calories":null,"protein":null,"fat":null,"carbs":null,"steps":7392,"rhr":49,"sleep_score":null,"sleep_duration_hrs":10.3,"body_water_percent":60.7,"refeed":true,"notes":"Thanksgiving","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-11-28","weight":200.1,"bf_percent":16.4,"lean_lbs":154.7,"bf_lbs":32.82,"lean_percent":77.31,"residual":12.58,"calories":967,"protein":133,"fat":40,"carbs":13,"steps":7310,"rhr":53,"sleep_score":78,"sleep_duration_hrs":10.3,"body_water_percent":61.8,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.4 lbs from baseline"},{"date":"2025-11-29","weight":196.2,"bf_percent":16.7,"lean_lbs":154.6,"bf_lbs":32.77,"lean_percent":78.8,"residual":8.83,"calories":1907,"protein":247,"fat":75,"carbs":84,"steps":4914,"rhr":50,"sleep_score":85,"sleep_duration_hrs":7.55,"body_water_percent":61.6,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-11-30","weight":196.3,"bf_percent":16.7,"lean_lbs":154.2,"bf_lbs":32.78,"lean_percent":78.55,"residual":9.32,"calories":1410,"protein":206,"fat":46,"carbs":47,"steps":3947,"rhr":49,"sleep_score":89,"sleep_duration_hrs":7.63,"body_water_percent":60.8,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-12-01","weight":192.6,"bf_percent":16.7,"lean_lbs":154,"bf_lbs":32.16,"lean_percent":79.96,"residual":6.44,"calories":1105,"protein":182,"fat":27,"carbs":46,"steps":5540,"rhr":49,"sleep_score":84,"sleep_duration_hrs":12.1,"body_water_percent":62.5,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 3.7 lbs from baseline"},{"date":"2025-12-02","weight":194.1,"bf_percent":16.4,"lean_lbs":153.9,"bf_lbs":31.83,"lean_percent":79.29,"residual":8.37,"calories":1442,"protein":201,"fat":36,"carbs":94,"steps":10665,"rhr":49,"sleep_score":73,"sleep_duration_hrs":7.2,"body_water_percent":62.1,"refeed":false,"notes":"Starting today (Dec 2), all carb entries are Total Carbs (not Net Carbs).","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-12-03","weight":192.5,"bf_percent":16.1,"lean_lbs":154.1,"bf_lbs":30.99,"lean_percent":80.05,"residual":7.41,"calories":1522,"protein":195,"fat":66,"carbs":45,"steps":6742,"rhr":51,"sleep_score":81,"sleep_duration_hrs":8.72,"body_water_percent":63.5,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.8 lbs from baseline"},{"date":"2025-12-04","weight":192.9,"bf_percent":16.1,"lean_lbs":152.8,"bf_lbs":31.06,"lean_percent":79.21,"residual":9.04,"calories":1817,"protein":219,"fat":61,"carbs":118,"steps":3050,"rhr":49,"sleep_score":85,"sleep_duration_hrs":7.5,"body_water_percent":61,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-12-05","weight":195.2,"bf_percent":15.6,"lean_lbs":154.1,"bf_lbs":30.45,"lean_percent":78.94,"residual":10.65,"calories":1525,"protein":136,"fat":81,"carbs":159,"steps":8607,"rhr":48,"sleep_score":90,"sleep_duration_hrs":7.99,"body_water_percent":63.6,"refeed":false,"notes":"Traveled back from Tampa. Ate dinner at friend's house. Had sour dough bread and a cream of chicken dish. Difficult to accurately track nutrition.","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-12-06","weight":194.4,"bf_percent":15.7,"lean_lbs":153.7,"bf_lbs":30.52,"lean_percent":79.06,"residual":10.18,"calories":1837,"protein":168,"fat":81,"carbs":122,"steps":2662,"rhr":49,"sleep_score":85,"sleep_duration_hrs":8.27,"body_water_percent":61.2,"refeed":false,"notes":"Ate at a friends but had 2 helpings of instant mashed potatoes and had cheese when I came home. Picked a little and probably had a half of a potato skin w/cheese.","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-12-07","weight":195.3,"bf_percent":15.5,"lean_lbs":153.9,"bf_lbs":30.27,"lean_percent":78.8,"residual":11.13,"calories":1776,"protein":198,"fat":61,"carbs":118,"steps":5230,"rhr":53,"sleep_score":null,"sleep_duration_hrs":8.25,"body_water_percent":62.4,"refeed":false,"notes":"Diet was atrocious. Had crackers and dip around lunch time. Cleaned diet up in the afternoon and went to the gym and put in 1500 ropes to lessen the negative impact.","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-12-08","weight":193.2,"bf_percent":16.2,"lean_lbs":152.8,"bf_lbs":31.3,"lean_percent":79.09,"residual":9.1,"calories":1768,"protein":198,"fat":67,"carbs":114,"steps":7734,"rhr":47,"sleep_score":86,"sleep_duration_hrs":8.1,"body_water_percent":59.2,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-12-09","weight":193.2,"bf_percent":16.2,"lean_lbs":152.5,"bf_lbs":31.3,"lean_percent":78.93,"residual":9.4,"calories":1330,"protein":185,"fat":36,"carbs":47,"steps":6809,"rhr":47,"sleep_score":78,"sleep_duration_hrs":6.62,"body_water_percent":61.3,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-12-10","weight":196.7,"bf_percent":16.1,"lean_lbs":152.3,"bf_lbs":31.67,"lean_percent":77.43,"residual":12.73,"calories":1465,"protein":213,"fat":47,"carbs":48,"steps":9408,"rhr":47,"sleep_score":72,"sleep_duration_hrs":7.37,"body_water_percent":60.5,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.5 lbs from baseline"},{"date":"2025-12-11","weight":192.5,"bf_percent":16.2,"lean_lbs":152.4,"bf_lbs":31.19,"lean_percent":79.17,"residual":8.91,"calories":1604,"protein":194,"fat":66,"carbs":55,"steps":2821,"rhr":47,"sleep_score":90,"sleep_duration_hrs":9.48,"body_water_percent":62.5,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-12-12","weight":193.2,"bf_percent":16.2,"lean_lbs":152.1,"bf_lbs":31.3,"lean_percent":78.73,"residual":9.8,"calories":1571,"protein":193,"fat":66,"carbs":59,"steps":4484,"rhr":52,"sleep_score":83,"sleep_duration_hrs":7.72,"body_water_percent":62.4,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-12-13","weight":193.8,"bf_percent":16,"lean_lbs":152.2,"bf_lbs":31.01,"lean_percent":78.53,"residual":10.59,"calories":3097,"protein":224,"fat":138,"carbs":238,"steps":3626,"rhr":44,"sleep_score":82,"sleep_duration_hrs":6.43,"body_water_percent":61.9,"refeed":true,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-12-14","weight":197.3,"bf_percent":15.5,"lean_lbs":152.9,"bf_lbs":30.58,"lean_percent":77.5,"residual":13.82,"calories":1630,"protein":205,"fat":21,"carbs":178,"steps":5949,"rhr":47,"sleep_score":59,"sleep_duration_hrs":6.78,"body_water_percent":62.9,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 3.6 lbs from baseline"},{"date":"2025-12-15","weight":194.1,"bf_percent":15.6,"lean_lbs":153.1,"bf_lbs":30.28,"lean_percent":78.88,"residual":10.72,"calories":1533,"protein":211,"fat":56,"carbs":52,"steps":11492,"rhr":48,"sleep_score":84,"sleep_duration_hrs":7.92,"body_water_percent":62.4,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-12-16","weight":191,"bf_percent":15.8,"lean_lbs":152.8,"bf_lbs":30.18,"lean_percent":80,"residual":8.02,"calories":1920,"protein":214,"fat":92,"carbs":60,"steps":6875,"rhr":49,"sleep_score":83,"sleep_duration_hrs":7.42,"body_water_percent":62.1,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.2 lbs from baseline"},{"date":"2025-12-17","weight":191.4,"bf_percent":15.7,"lean_lbs":152.6,"bf_lbs":30.05,"lean_percent":79.73,"residual":8.75,"calories":1650,"protein":247,"fat":40,"carbs":105,"steps":7391,"rhr":45,"sleep_score":87,"sleep_duration_hrs":9.95,"body_water_percent":62.2,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-12-18","weight":190.9,"bf_percent":15.6,"lean_lbs":152.4,"bf_lbs":29.78,"lean_percent":79.83,"residual":8.72,"calories":2344,"protein":308,"fat":98,"carbs":60,"steps":8276,"rhr":50,"sleep_score":75,"sleep_duration_hrs":6.7,"body_water_percent":62.4,"refeed":false,"notes":"","integrity_status":"yellow","integrity_message":"Warning - Slight variance detected"},{"date":"2025-12-19","weight":191.3,"bf_percent":15.3,"lean_lbs":152.6,"bf_lbs":29.27,"lean_percent":79.77,"residual":9.43,"calories":1628,"protein":208,"fat":70,"carbs":47,"steps":7716,"rhr":49,"sleep_score":94,"sleep_duration_hrs":8.3,"body_water_percent":63.3,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-12-20","weight":194.2,"bf_percent":14.9,"lean_lbs":153,"bf_lbs":28.94,"lean_percent":78.78,"residual":12.26,"calories":1956,"protein":207,"fat":49,"carbs":178,"steps":4541,"rhr":46,"sleep_score":88,"sleep_duration_hrs":7.95,"body_water_percent":62.9,"refeed":false,"notes":"","integrity_status":"red","integrity_message":"Check data - Residual shifted 2.2 lbs from baseline"},{"date":"2025-12-21","weight":192.9,"bf_percent":14.8,"lean_lbs":153.4,"bf_lbs":28.55,"lean_percent":79.52,"residual":10.95,"calories":1557,"protein":241,"fat":52,"carbs":61,"steps":5602,"rhr":47,"sleep_score":68,"sleep_duration_hrs":8.92,"body_water_percent":63.7,"refeed":false,"notes":"","integrity_status":"green","integrity_message":"Good - Values align with baseline"},{"date":"2025-12-22","weight":191.6,"bf_percent":14.7,"lean_lbs":153.5,"bf_lbs":28.17,"lean_percent":80.11,"residual":9.93,"calories":null,"protein":null,"fat":null,"carbs":null,"steps":null,"rhr":47,"sleep_score":69,"sleep_duration_hrs":5.28,"body_water_percent":63.3,"refeed":false,"notes":"Sleep hours seem low because I fell asleep at 1 but the app says 3:04. Not sure why.","integrity_status":"green","integrity_message":"Good - Values align with baseline"}];
+
+        // ===== INITIAL TRAINING DATA (3 workouts, 21 exercises, 97,230 lbs total) =====
+        const INITIAL_TRAINING_WORKOUTS = [{"date":"2025-12-21","time":"16:38","name":"Lower Body","exercises":[{"name":"Front Squat","workingVolume":4100,"pr1rm":180,"category":"Lower Body","equipment":"Barbell","notes":""},{"name":"Back Squat","workingVolume":4050,"pr1rm":180,"category":"Lower Body","equipment":"Barbell","notes":""},{"name":"Leg Curls","workingVolume":5300,"pr1rm":187,"category":"Lower Body","equipment":"Machine","notes":""},{"name":"Leg Extensions","workingVolume":6180,"pr1rm":253,"category":"Lower Body","equipment":"Machine","notes":""},{"name":"Inner Thigh","workingVolume":4800,"pr1rm":160,"category":"Lower Body","equipment":"Machine","superset":"A","notes":""},{"name":"Outer Thigh","workingVolume":4800,"pr1rm":160,"category":"Lower Body","equipment":"Machine","superset":"A","notes":""}],"totalVolume":29230,"notes":""},{"date":"2025-12-18","time":"16:38","name":"Push","exercises":[{"name":"Smith Machine Incline Bench Press","workingVolume":7300,"pr1rm":207,"category":"Push","equipment":"Smith Machine","notes":""},{"name":"Smith Machine Incline Shoulder Press","workingVolume":5400,"pr1rm":180,"category":"Push","equipment":"Smith Machine","notes":""},{"name":"Supinated Smith Incline Shoulder Press","workingVolume":2850,"pr1rm":127,"category":"Push","equipment":"Smith Machine","notes":""},{"name":"Incline Dumbbell Flies","workingVolume":2400,"pr1rm":107,"category":"Push","equipment":"Dumbbell","superset":"A","notes":""},{"name":"Close Grip Incline Dumbbell Press","workingVolume":3120,"pr1rm":131,"category":"Push","equipment":"Dumbbell","superset":"A","notes":""},{"name":"Dips","workingVolume":7664,"pr1rm":255,"category":"Push","equipment":"Bodyweight","notes":""},{"name":"Hanging Knee Raises","workingVolume":8622,"pr1rm":287,"category":"Core","equipment":"Bodyweight","notes":""}],"totalVolume":37356,"notes":"Workout was awesome!"},{"date":"2025-12-18","time":"15:01","name":"2nd Pull","exercises":[{"name":"Seated Row","workingVolume":4860,"pr1rm":187,"category":"Pull","equipment":"Cable","notes":""},{"name":"Supinated Bent Over Barbell Row","workingVolume":5800,"pr1rm":207,"category":"Pull","equipment":"Barbell","notes":""},{"name":"Cable Rear Delt Flys","workingVolume":440,"pr1rm":15,"category":"Pull","equipment":"Cable","notes":""},{"name":"Rear Delt High Pull","workingVolume":1980,"pr1rm":103,"category":"Pull","equipment":"Cable","notes":""},{"name":"Close Grip Chin-Ups","workingVolume":7664,"pr1rm":255,"category":"Pull","equipment":"Bodyweight","notes":""},{"name":"Cross Body Hammer Curls","workingVolume":1800,"pr1rm":93,"category":"Arms","equipment":"Dumbbell","superset":"A","notes":""},{"name":"Leg Raises","workingVolume":0,"pr1rm":null,"category":"Core","equipment":"Bodyweight","superset":"A","notes":""},{"name":"Dumbbell Shrugs","workingVolume":7600,"pr1rm":293,"category":"Pull","equipment":"Dumbbell","superset":"B","notes":""},{"name":"Roman Chair Back Extensions","workingVolume":500,"pr1rm":33,"category":"Lower Body","equipment":"Bodyweight","superset":"B","notes":""}],"totalVolume":30644,"notes":"Great workout. Started with 500 ropes and finished with 500 ropes. Thank you Lord for the health and ability to do this! Glory to God!"}];
+        
+        // ===== INITIAL PERSONAL RECORDS (21 exercises) =====
+        const INITIAL_PERSONAL_RECORDS = {"Front Squat":{"1rm":180,"date":"2025-12-21"},"Back Squat":{"1rm":180,"date":"2025-12-21"},"Leg Curls":{"1rm":187,"date":"2025-12-21"},"Leg Extensions":{"1rm":253,"date":"2025-12-21"},"Inner Thigh":{"1rm":160,"date":"2025-12-21"},"Outer Thigh":{"1rm":160,"date":"2025-12-21"},"Smith Machine Incline Bench Press":{"1rm":207,"date":"2025-12-18"},"Smith Machine Incline Shoulder Press":{"1rm":180,"date":"2025-12-18"},"Supinated Smith Incline Shoulder Press":{"1rm":127,"date":"2025-12-18"},"Incline Dumbbell Flies":{"1rm":107,"date":"2025-12-18"},"Close Grip Incline Dumbbell Press":{"1rm":131,"date":"2025-12-18"},"Dips":{"1rm":255,"date":"2025-12-18"},"Hanging Knee Raises":{"1rm":287,"date":"2025-12-18"},"Seated Row":{"1rm":187,"date":"2025-12-18"},"Supinated Bent Over Barbell Row":{"1rm":207,"date":"2025-12-18"},"Cable Rear Delt Flys":{"1rm":15,"date":"2025-12-18"},"Rear Delt High Pull":{"1rm":103,"date":"2025-12-18"},"Close Grip Chin-Ups":{"1rm":255,"date":"2025-12-18"},"Cross Body Hammer Curls":{"1rm":93,"date":"2025-12-18"},"Dumbbell Shrugs":{"1rm":293,"date":"2025-12-18"},"Roman Chair Back Extensions":{"1rm":33,"date":"2025-12-18"}};
+        
+        // Training data state
+        let trainingLog = [];
+        let personalRecords = { version: 1, prs: {} };
 
         // ===== INTEGRITY VALIDATION FUNCTIONS =====
         
@@ -4012,7 +4116,12 @@ function escapeAttr(str) {
 }
 
         
-        function showToast(message, isError = false) {
+        
+        function closePRModal() {
+            document.getElementById('prCelebrationModal').classList.remove('show');
+        }
+        
+function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
             toast.className = 'toast show';
@@ -4554,177 +4663,1257 @@ function escapeAttr(str) {
                         '🏋️ Training log\n' +
                         '🔍 Correlations & insights\n' +
                         '🛡️ Data integrity validation\n\n' +
-                        'All 48 days pre-loaded!'
+                        'All 57 days pre-loaded!\nRAK CHAZAQ - Only Strong! 💪'
                     );
                     localStorage.setItem('hasSeenWelcome_v2', 'true');
                 }, 500);
             }
         });
-    </script>
-</body>
-</html>
-        // ===== PROGRESSIVE OVERLOAD ENHANCED (V13) =====
-        function epley1RM(w, reps){ if(!isFinite(w)||!isFinite(reps)||reps<=0) return null; return w*(1+(reps/30)); }
-
-        function collectTrainingSets() {
-            // Supports both legacy and set-based formats
-            const all = [];
-            (trainingLog||[]).forEach(w=>{
-                const workoutId = w.id || w.date || 'workout';
-                const date = w.date || '';
-                const sess = w.session || w.session_name || w.name || w.type || 'Workout';
-                const exercises = w.exercises || [];
-                exercises.forEach(ex=>{
-                    const exName = ex.name || ex.exercise || 'Exercise';
-                    const exId = ex.id || exName;
-                    const superset = !!ex.superset;
-                    const sets = ex.sets_detail || ex.sets || [];
-                    if (Array.isArray(sets) && sets.length && typeof sets[0] === 'object') {
-                        sets.forEach((s, idx)=>{
-                            const isWarmup = !!s.warmup;
-                            const completed = (s.completed===undefined)? true : !!s.completed;
-                            const weight = Number(s.weight||0);
-                            const reps = Number(s.reps||0);
-                            all.push({date, workoutId, sess, exId, exName, superset, setIndex: idx+1, isWarmup, completed, weight, reps});
-                        });
-                    } else {
-                        // legacy single-line
-                        const weight = Number(ex.weight||0);
-                        const reps = Number(ex.reps||0);
-                        const setsN = Number(ex.sets||0);
-                        for (let i=0;i<Math.max(1,setsN||1);i++){
-                            all.push({date, workoutId, sess, exId, exName, superset, setIndex:i+1, isWarmup:false, completed:true, weight, reps});
-                        }
-                    }
+        
+        // ===== PHASE 2 ENHANCEMENTS =====
+        
+        // Moving Average Calculator
+        function calculateMovingAverage(data, field, windowSize) {
+            const result = [];
+            const sorted = data.slice().sort((a, b) => a.date.localeCompare(b.date));
+            for (let i = 0; i < sorted.length; i++) {
+                const windowStart = Math.max(0, i - windowSize + 1);
+                const window = sorted.slice(windowStart, i + 1);
+                const values = window.map(d => d[field]).filter(v => v != null && isFinite(v));
+                const avg = values.length > 0 ? values.reduce((a, b) => a + b) / values.length : null;
+                result.push(avg);
+            }
+            return result;
+        }
+        
+        // Data Quality Score Calculator
+        function calculateQualityScore(entry) {
+            let score = 0;
+            const max = 10;
+            
+            // Body composition (4 points)
+            if (entry.weight != null) score += 1.5;
+            if (entry.bf_percent != null) score += 1.5;
+            if (entry.lean_lbs != null) score += 1;
+            if (entry.water_percent != null) score += 0.5;
+            
+            // Nutrition (3 points)
+            if (entry.calories != null) score += 1;
+            if (entry.protein != null) score += 1;
+            if (entry.fat != null && entry.carbs != null) score += 1;
+            
+            // Activity (2 points)
+            if (entry.steps != null) score += 1;
+            if (entry.rhr != null) score += 1;
+            
+            // Sleep (1 point)
+            if (entry.sleep_score != null || entry.sleep_duration_hrs != null) score += 1;
+            
+            const percentage = (score / max) * 100;
+            return {
+                score: Math.round(percentage),
+                grade: percentage >= 90 ? 'A' : percentage >= 80 ? 'B' : percentage >= 70 ? 'C' : 'D'
+            };
+        }
+        
+        // Volume Landmarks Calculator
+        function calculateVolumeLandmarks() {
+            let totalVolume = 0;
+            trainingLog.forEach(workout => {
+                workout.exercises.forEach(ex => {
+                    totalVolume += ex.workingVolume || 0;
                 });
             });
-            return all.filter(s=>s.exName && isFinite(s.weight) && isFinite(s.reps));
+            
+            const milestones = [100000, 250000, 500000, 1000000, 2500000, 5000000, 10000000];
+            const achieved = milestones.filter(m => m <= totalVolume);
+            const nextMilestone = milestones.find(m => m > totalVolume) || milestones[milestones.length - 1];
+            const previousMilestone = achieved[achieved.length - 1] || 0;
+            const progress = ((totalVolume - previousMilestone) / (nextMilestone - previousMilestone)) * 100;
+            
+            return { 
+                totalVolume, 
+                nextMilestone, 
+                previousMilestone, 
+                progress: Math.round(progress),
+                achieved 
+            };
         }
-
-        function computeExerciseStats(sets) {
-            const stats = {};
-            sets.forEach(s=>{
-                if (!stats[s.exName]) stats[s.exName] = {sets:[], volume:0, workVolume:0, best1rm:0, bestSet:null, prReps:0, prWeight:0};
-                stats[s.exName].sets.push(s);
-                const v = s.weight * s.reps;
-                stats[s.exName].volume += v;
-                if (!s.isWarmup && s.completed) stats[s.exName].workVolume += v;
-                const est = epley1RM(s.weight, s.reps);
-                if (est && est > stats[s.exName].best1rm) { stats[s.exName].best1rm = est; stats[s.exName].bestSet = s; }
-                if (s.reps > stats[s.exName].prReps) stats[s.exName].prReps = s.reps;
-                if (s.weight > stats[s.exName].prWeight) stats[s.exName].prWeight = s.weight;
-            });
-            return stats;
-        }
-
-        function updatePersonalRecordsFromTraining() {
-            loadPRs();
-            const sets = collectTrainingSets().filter(s=>s.completed && !s.isWarmup);
-            const stats = computeExerciseStats(sets);
-            Object.keys(stats).forEach(name=>{
-                const s = stats[name];
-                const cur = personalRecords.prs[name] || {};
-                const newPR = {
-                    best1rm: Math.max(cur.best1rm||0, s.best1rm||0),
-                    prWeight: Math.max(cur.prWeight||0, s.prWeight||0),
-                    prReps: Math.max(cur.prReps||0, s.prReps||0),
-                    updated_at: new Date().toISOString()
-                };
-                personalRecords.prs[name] = newPR;
-            });
-            savePRs();
-        }
-
-        function deloadHeuristic() {
-            // Basic heuristic: elevated RHR + falling volume over last 7 entries
-            const sortedBody = bodyData.slice().sort((a,b)=>a.date.localeCompare(b.date));
-            const recent = sortedBody.slice(-7).filter(d=>isFinite(d.rhr));
-            const rhrAvg = recent.length ? recent.reduce((s,d)=>s+d.rhr,0)/recent.length : null;
-            const base = sortedBody.slice(-21,-7).filter(d=>isFinite(d.rhr));
-            const baseAvg = base.length ? base.reduce((s,d)=>s+d.rhr,0)/base.length : null;
-            const rhrUp = (rhrAvg!=null && baseAvg!=null) ? (rhrAvg - baseAvg) : null;
-            const sets = collectTrainingSets().filter(s=>s.completed && !s.isWarmup);
-            // weekly volume last 2 weeks
-            const byDate = {};
-            sets.forEach(s=>{
-                byDate[s.date] = (byDate[s.date]||0) + (s.weight*s.reps);
-            });
-            const dates = Object.keys(byDate).sort();
-            const last7 = dates.slice(-7).reduce((sum, d)=>sum+byDate[d],0);
-            const prev7 = dates.slice(-14,-7).reduce((sum, d)=>sum+byDate[d],0);
-            const volDown = (prev7>0) ? ((last7 - prev7)/prev7) : null;
-            const suggest = (rhrUp!=null && rhrUp>=4) || (volDown!=null && volDown<-0.15);
-            return {rhrAvg, baseAvg, rhrUp, last7, prev7, volDown, suggest};
-        }
-
-        function updateProgressiveTabV13() {
-            const el = document.getElementById('progressiveContent');
-            if (!el) return;
+        
+        // Enhanced Progressive Overload Tab Update
+        function updateProgressiveTabEnhanced() {
+            const content = document.getElementById('progressiveContent');
+            if (!content) return;
+            
             if (!trainingLog || trainingLog.length === 0) {
-                el.innerHTML = `<div style="background: var(--bg-tertiary); padding: 30px; border-radius: 10px; text-align:center;">
-                    <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🏋️ No Training Data Yet</h3>
-                    <p style="color: var(--text-secondary);">Log workouts to see PRs, volume trends, and deload guidance.</p>
-                </div>`;
+                content.innerHTML = `
+                    <div style="background: rgba(245, 158, 11, 0.12); border-left: 4px solid var(--accent-warning); padding: 20px; border-radius: 10px;">
+                        <h3 style="color: var(--accent-warning);">🏋️ No Training Data Yet</h3>
+                        <p style="color: var(--text-secondary); margin-top: 10px;">
+                            Log workouts in the Training tab to see progressive overload insights, personal records, and volume trends.
+                        </p>
+                    </div>
+                `;
                 return;
             }
-
-            updatePersonalRecordsFromTraining();
-            const sets = collectTrainingSets().filter(s=>s.completed);
-            const exStats = computeExerciseStats(sets);
-            const names = Object.keys(exStats).sort((a,b)=> (exStats[b].workVolume||0) - (exStats[a].workVolume||0)).slice(0, 20);
-
-            // Build table
-            const rows = names.map(n=>{
-                const s = exStats[n];
-                const pr = (personalRecords && personalRecords.prs && personalRecords.prs[n]) ? personalRecords.prs[n] : {};
-                const best = s.bestSet;
-                const bestStr = best ? `${best.weight}×${best.reps} (Set ${best.setIndex})` : '—';
-                const best1 = s.best1rm ? s.best1rm.toFixed(1) : '—';
-                const sug = (best && isFinite(best.weight)) ? Math.round(best.weight + 5) : '—';
-                return `<tr>
-                    <td>${n}${s.sets.some(x=>x.superset)?' <span style="color:var(--accent-warning)">(SS)</span>':''}</td>
-                    <td style="font-family:'Space Mono', monospace;">${Math.round(s.workVolume).toLocaleString()}</td>
-                    <td style="font-family:'Space Mono', monospace;">${bestStr}</td>
-                    <td style="font-family:'Space Mono', monospace;">${best1}</td>
-                    <td style="font-family:'Space Mono', monospace;">${(pr.best1rm||0).toFixed(1)}</td>
-                    <td style="font-family:'Space Mono', monospace;">Try +5: ${sug}</td>
-                </tr>`;
-            }).join('');
-
-            const d = deloadHeuristic();
-            const deloadCard = `
-              <div style="background: rgba(245, 158, 11, 0.12); border-left:4px solid var(--accent-warning); padding: 18px; border-radius: 10px; margin-bottom: 16px;">
-                <h3 style="color: var(--accent-warning); margin-bottom: 8px;">🧯 Deload / Recovery Check</h3>
-                <div style="color: var(--text-secondary); font-size: 0.9em; line-height: 1.7;">
-                  RHR (last 7 avg): <b>${d.rhrAvg!=null ? d.rhrAvg.toFixed(1) : '—'}</b> • Prior baseline: <b>${d.baseAvg!=null ? d.baseAvg.toFixed(1) : '—'}</b> • Δ: <b>${d.rhrUp!=null ? d.rhrUp.toFixed(1) : '—'}</b><br/>
-                  Training volume (last 7 logged days): <b>${Math.round(d.last7||0).toLocaleString()}</b> • Prior 7: <b>${Math.round(d.prev7||0).toLocaleString()}</b> • Change: <b>${d.volDown!=null ? (d.volDown*100).toFixed(0)+'%' : '—'}</b><br/>
-                  ${d.suggest ? `<span style="color: var(--accent-warning); font-weight:700;">Suggestion:</span> Consider a 3–7 day deload (reduce volume 30–50%, keep intensity moderate) + prioritize sleep.` :
-                                `✅ No strong deload flags detected.`}
+            
+            const landmarks = calculateVolumeLandmarks();
+            
+            // Volume Landmarks Section
+            const landmarksHTML = `
+                <div style="background: var(--bg-tertiary); padding: 25px; border-radius: 12px; margin-bottom: 20px;">
+                    <h3 style="color: var(--accent-cyan); margin-bottom: 15px;">🎯 Volume Landmarks</h3>
+                    <div style="font-size: 2.5em; font-weight: 900; font-family: 'Space Mono', monospace; text-align: center; margin: 20px 0;">
+                        ${landmarks.totalVolume.toLocaleString()} lbs
+                    </div>
+                    <div style="text-align: center; color: var(--text-secondary); margin-bottom: 15px;">
+                        Total Lifetime Volume
+                    </div>
+                    <div style="width: 100%; height: 30px; background: var(--bg-secondary); border-radius: 15px; overflow: hidden; margin: 15px 0;">
+                        <div style="height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple)); width: ${landmarks.progress}%; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.9em;">
+                            ${landmarks.progress}%
+                        </div>
+                    </div>
+                    <div style="text-align: center; color: var(--text-secondary);">
+                        Next: ${(landmarks.nextMilestone / 1000).toFixed(0)}K lbs 
+                        (${(landmarks.nextMilestone - landmarks.totalVolume).toLocaleString()} lbs to go)
+                    </div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; justify-content: center;">
+                        ${[100, 250, 500, 1000, 2500, 5000, 10000].map(m => {
+                            const value = m * 1000;
+                            const achieved = value <= landmarks.totalVolume;
+                            return `
+                                <div style="padding: 8px 16px; border-radius: 20px; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 0.85em; ${achieved ? 'background: var(--accent-success); color: white;' : 'background: var(--bg-secondary); color: var(--text-secondary); border: 2px dashed var(--border);'}">
+                                    ${achieved ? '✓' : ''} ${m}K
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
                 </div>
-              </div>`;
-
-            el.innerHTML = `
-              ${deloadCard}
-              <div style="color: var(--text-secondary); margin-bottom: 10px;">
-                Top exercises by working volume. Warmup sets are excluded from "working volume". (SS)=superset.
-              </div>
-              <div class="table-container" style="max-height: 520px;">
-                <table>
-                  <thead><tr>
-                    <th>Exercise</th><th>Work Volume</th><th>Best Set</th><th>Best Est 1RM</th><th>All-time PR 1RM</th><th>Next Step</th>
-                  </tr></thead>
-                  <tbody>${rows || '<tr><td colspan="6" style="color:var(--text-secondary);">No completed sets found.</td></tr>'}</tbody>
-                </table>
-              </div>
             `;
+            
+            // Exercise PRs Table
+            const exerciseVolumes = {};
+            trainingLog.forEach(workout => {
+                workout.exercises.forEach(ex => {
+                    if (!exerciseVolumes[ex.name]) {
+                        exerciseVolumes[ex.name] = {
+                            totalVolume: 0,
+                            pr1rm: ex.pr1rm || 0
+                        };
+                    }
+                    exerciseVolumes[ex.name].totalVolume += ex.workingVolume || 0;
+                });
+            });
+            
+            const sortedExercises = Object.keys(exerciseVolumes)
+                .sort((a, b) => exerciseVolumes[b].totalVolume - exerciseVolumes[a].totalVolume)
+                .slice(0, 20);
+            
+            const prsHTML = `
+                <div style="background: var(--bg-tertiary); padding: 25px; border-radius: 12px;">
+                    <h3 style="color: var(--accent-cyan); margin-bottom: 15px;">💪 Personal Records by Exercise</h3>
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid var(--accent-cyan);">
+                                    <th style="padding: 12px; text-align: left; color: var(--accent-cyan);">Exercise</th>
+                                    <th style="padding: 12px; text-align: right; color: var(--accent-cyan);">Total Volume</th>
+                                    <th style="padding: 12px; text-align: right; color: var(--accent-cyan);">Est. 1RM</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${sortedExercises.map(name => {
+                                    const data = exerciseVolumes[name];
+                                    return `
+                                        <tr style="border-bottom: 1px solid var(--border);">
+                                            <td style="padding: 12px; font-weight: 600;">${name}</td>
+                                            <td style="padding: 12px; text-align: right; font-family: 'Space Mono', monospace;">${data.totalVolume.toLocaleString()} lbs</td>
+                                            <td style="padding: 12px; text-align: right; font-family: 'Space Mono', monospace; color: var(--accent-success); font-weight: 700;">${data.pr1rm} lbs</td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = landmarksHTML + prsHTML;
         }
+        
+        // Call enhanced progressive tab on initialization
+        if (document.getElementById('progressiveContent')) {
+            updateProgressiveTabEnhanced();
+        }
+        
+        // ===== PHASE 2 COMPREHENSIVE ENHANCEMENTS =====
+// This file contains all 27 Phase 2 feature implementations
 
+// ===== PRIORITY 1: ENHANCED PROGRESSIVE OVERLOAD =====
 
+// Pearson Correlation Coefficient
+function pearsonCorrelation(x, y) {
+    const pairs = x.map((xi, i) => [xi, y[i]])
+        .filter(([xi, yi]) => xi != null && yi != null && isFinite(xi) && isFinite(yi));
+    
+    if (pairs.length < 5) return null;
+    
+    const n = pairs.length;
+    const sumX = pairs.reduce((sum, [xi]) => sum + xi, 0);
+    const sumY = pairs.reduce((sum, [, yi]) => sum + yi, 0);
+    const sumXY = pairs.reduce((sum, [xi, yi]) => sum + xi * yi, 0);
+    const sumX2 = pairs.reduce((sum, [xi]) => sum + xi * xi, 0);
+    const sumY2 = pairs.reduce((sum, [, yi]) => sum + yi * yi, 0);
+    
+    const numerator = n * sumXY - sumX * sumY;
+    const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+    
+    return denominator === 0 ? null : numerator / denominator;
+}
 
-        // ===== INITIALIZATION =====
-        document.addEventListener('DOMContentLoaded', ()=> {
-            init();
+// Calculate Full Correlations
+function calculateCorrelations() {
+    const xVars = ['calories', 'protein', 'fat', 'carbs', 'steps', 'sleep_duration_hrs', 'rhr'];
+    const yVars = ['weight', 'bf_percent', 'lean_lbs'];
+    
+    const sorted = bodyData.slice().sort((a, b) => a.date.localeCompare(b.date));
+    const correlations = {};
+    
+    // Calculate changes for y variables
+    const changes = {};
+    yVars.forEach(yVar => {
+        changes[yVar + '_change'] = [];
+        for (let i = 1; i < sorted.length; i++) {
+            if (sorted[i][yVar] != null && sorted[i-1][yVar] != null) {
+                changes[yVar + '_change'].push(sorted[i][yVar] - sorted[i-1][yVar]);
+            } else {
+                changes[yVar + '_change'].push(null);
+            }
+        }
+    });
+    
+    // Calculate correlations
+    xVars.forEach(xVar => {
+        correlations[xVar] = {};
+        yVars.forEach(yVar => {
+            const xValues = sorted.slice(1).map((d, i) => d[xVar]);
+            const yValues = changes[yVar + '_change'];
+            correlations[xVar][yVar + '_change'] = pearsonCorrelation(xValues, yValues);
         });
+    });
+    
+    return correlations;
+}
+
+// Linear Regression for Projections
+function calculateLinearRegression(data, field) {
+    const sorted = data.slice().sort((a, b) => a.date.localeCompare(b.date));
+    const values = sorted.map((d, i) => ({ x: i, y: d[field] }))
+        .filter(p => p.y != null && isFinite(p.y));
+    
+    if (values.length < 5) return null;
+    
+    const n = values.length;
+    const sumX = values.reduce((sum, p) => sum + p.x, 0);
+    const sumY = values.reduce((sum, p) => sum + p.y, 0);
+    const sumXY = values.reduce((sum, p) => sum + p.x * p.y, 0);
+    const sumX2 = values.reduce((sum, p) => sum + p.x * p.x, 0);
+    
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    
+    // Calculate R²
+    const meanY = sumY / n;
+    const ssTotal = values.reduce((sum, p) => sum + Math.pow(p.y - meanY, 2), 0);
+    const ssResidual = values.reduce((sum, p) => {
+        const predicted = slope * p.x + intercept;
+        return sum + Math.pow(p.y - predicted, 2);
+    }, 0);
+    const r2 = 1 - (ssResidual / ssTotal);
+    
+    return {
+        slope,
+        intercept,
+        r2,
+        predict: (days) => slope * (values.length - 1 + days) + intercept
+    };
+}
+
+// Anomaly Detection
+function detectAnomalies(data) {
+    const anomalies = [];
+    const fields = ['weight', 'bf_percent', 'calories', 'protein', 'steps', 'rhr'];
+    
+    fields.forEach(field => {
+        const values = data.map(d => d[field]).filter(v => v != null && isFinite(v));
+        if (values.length < 10) return;
+        
+        const mean = values.reduce((a, b) => a + b) / values.length;
+        const variance = values.reduce((sum, v) => sum + Math.pow(v - mean, 2), 0) / values.length;
+        const stdDev = Math.sqrt(variance);
+        
+        data.forEach(entry => {
+            const value = entry[field];
+            if (value != null && isFinite(value)) {
+                const zScore = Math.abs((value - mean) / stdDev);
+                if (zScore > 3) {
+                    anomalies.push({
+                        date: entry.date,
+                        field: field,
+                        value: value,
+                        zScore: zScore,
+                        mean: mean,
+                        stdDev: stdDev
+                    });
+                }
+            }
+        });
+    });
+    
+    return anomalies.sort((a, b) => b.zScore - a.zScore);
+}
+
+// Enhanced Recovery Score
+function calculateRecoveryScore() {
+    const last7Days = bodyData.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 7);
+    const baseline14Days = bodyData.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(7, 21);
+    
+    let rhrScore = 15;
+    let sleepQualityScore = 15;
+    let sleepDurationScore = 10;
+    let volumeScore = 15;
+    
+    // RHR Component (30 points)
+    const rhr7 = last7Days.filter(d => d.rhr).map(d => d.rhr);
+    const rhrBaseline = baseline14Days.filter(d => d.rhr).map(d => d.rhr);
+    
+    if (rhr7.length > 0 && rhrBaseline.length > 0) {
+        const avgRHR7 = rhr7.reduce((a, b) => a + b) / rhr7.length;
+        const avgRHRBaseline = rhrBaseline.reduce((a, b) => a + b) / rhrBaseline.length;
+        const rhrDiff = avgRHR7 - avgRHRBaseline;
+        
+        if (rhrDiff <= 0) rhrScore = 30;
+        else if (rhrDiff <= 3) rhrScore = 25;
+        else if (rhrDiff <= 5) rhrScore = 15;
+        else rhrScore = 5;
+    }
+    
+    // Sleep Quality (30 points)
+    const sleepScores = last7Days.filter(d => d.sleep_score).map(d => d.sleep_score);
+    if (sleepScores.length > 0) {
+        const avgSleepScore = sleepScores.reduce((a, b) => a + b) / sleepScores.length;
+        if (avgSleepScore >= 85) sleepQualityScore = 30;
+        else if (avgSleepScore >= 75) sleepQualityScore = 23;
+        else if (avgSleepScore >= 65) sleepQualityScore = 15;
+        else sleepQualityScore = 7;
+    }
+    
+    // Sleep Duration (20 points)
+    const sleepHours = last7Days.filter(d => d.sleep_duration_hrs).map(d => d.sleep_duration_hrs);
+    if (sleepHours.length > 0) {
+        const avgSleepHrs = sleepHours.reduce((a, b) => a + b) / sleepHours.length;
+        if (avgSleepHrs >= 8) sleepDurationScore = 20;
+        else if (avgSleepHrs >= 7) sleepDurationScore = 15;
+        else if (avgSleepHrs >= 6) sleepDurationScore = 10;
+        else sleepDurationScore = 3;
+    }
+    
+    // Volume Trend (20 points)
+    if (trainingLog && trainingLog.length >= 2) {
+        const recent = trainingLog.slice(-2);
+        const older = trainingLog.slice(-4, -2);
+        
+        const recentVol = recent.reduce((sum, w) => sum + (w.totalVolume || 0), 0);
+        const olderVol = older.reduce((sum, w) => sum + (w.totalVolume || 0), 0);
+        
+        if (olderVol > 0) {
+            const change = (recentVol - olderVol) / olderVol;
+            if (change >= -0.1 && change <= 0.2) volumeScore = 20;
+            else if (change > 0.2) volumeScore = 12;
+            else volumeScore = 8;
+        }
+    }
+    
+    const total = rhrScore + sleepQualityScore + sleepDurationScore + volumeScore;
+    
+    return {
+        total: Math.round(total),
+        status: total >= 80 ? 'excellent' : total >= 60 ? 'good' : total >= 40 ? 'moderate' : 'compromised',
+        rhrScore,
+        sleepQualityScore,
+        sleepDurationScore,
+        volumeScore
+    };
+}
+
+// Injury Risk Assessment
+function assessInjuryRisk() {
+    const risks = {
+        volumeSpike: false,
+        rhrElevated: false,
+        poorSleep: false,
+        overallRisk: 'low',
+        recommendations: []
+    };
+    
+    // Check RHR elevation
+    const last3Days = bodyData.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
+    const baseline = bodyData.slice().sort((a, b) => b.date.localeCompare(a.date)).slice(3, 17);
+    
+    const rhr3 = last3Days.filter(d => d.rhr).map(d => d.rhr);
+    const rhrBase = baseline.filter(d => d.rhr).map(d => d.rhr);
+    
+    if (rhr3.length > 0 && rhrBase.length > 0) {
+        const recentRHR = rhr3.reduce((a, b) => a + b) / rhr3.length;
+        const baselineRHR = rhrBase.reduce((a, b) => a + b) / rhrBase.length;
+        
+        if (recentRHR > baselineRHR + 5) {
+            risks.rhrElevated = true;
+            risks.recommendations.push(`RHR elevated +${(recentRHR - baselineRHR).toFixed(0)} bpm - consider extra rest day`);
+        }
+    }
+    
+    // Check sleep
+    const sleep3 = last3Days.filter(d => d.sleep_duration_hrs).map(d => d.sleep_duration_hrs);
+    if (sleep3.length > 0) {
+        const avgSleep = sleep3.reduce((a, b) => a + b) / sleep3.length;
+        if (avgSleep < 6.5) {
+            risks.poorSleep = true;
+            risks.recommendations.push(`Sleep averaging ${avgSleep.toFixed(1)} hours - aim for 7-9 hours`);
+        }
+    }
+    
+    // Check volume spike
+    if (trainingLog && trainingLog.length >= 2) {
+        const lastWorkout = trainingLog[trainingLog.length - 1];
+        const prevWorkout = trainingLog[trainingLog.length - 2];
+        
+        if (lastWorkout.totalVolume && prevWorkout.totalVolume) {
+            const increase = (lastWorkout.totalVolume - prevWorkout.totalVolume) / prevWorkout.totalVolume;
+            if (increase > 0.25) {
+                risks.volumeSpike = true;
+                risks.recommendations.push(`Volume increased ${(increase * 100).toFixed(0)}% - consider reducing 20-30% next session`);
+            }
+        }
+    }
+    
+    const riskCount = [risks.volumeSpike, risks.rhrElevated, risks.poorSleep].filter(x => x).length;
+    risks.overallRisk = riskCount >= 2 ? 'high' : riskCount === 1 ? 'medium' : 'low';
+    
+    return risks;
+}
+
+// Smart Recommendations Engine
+function generateSmartRecommendations() {
+    const recommendations = [];
+    const sorted = bodyData.slice().sort((a, b) => a.date.localeCompare(b.date));
+    const last30Days = sorted.slice(-30);
+    
+    if (last30Days.length < 7) return recommendations;
+    
+    // Protein recommendation
+    const proteinEntries = last30Days.filter(d => d.protein);
+    if (proteinEntries.length > 0) {
+        const avgProtein = proteinEntries.reduce((sum, d) => sum + d.protein, 0) / proteinEntries.length;
+        const latest = sorted[sorted.length - 1];
+        const proteinPerLb = avgProtein / latest.weight;
+        
+        if (proteinPerLb < 0.8) {
+            recommendations.push({
+                priority: 'high',
+                category: 'nutrition',
+                title: 'Increase Protein Intake',
+                message: `Currently averaging ${avgProtein.toFixed(0)}g/day (${proteinPerLb.toFixed(2)}g/lb). For optimal muscle retention during fat loss, aim for ${Math.round(latest.weight * 1.0)}g/day.`
+            });
+        } else if (proteinPerLb >= 1.0) {
+            recommendations.push({
+                priority: 'low',
+                category: 'nutrition',
+                title: 'Excellent Protein Intake',
+                message: `Averaging ${avgProtein.toFixed(0)}g/day (${proteinPerLb.toFixed(2)}g/lb). This is optimal for muscle retention! Keep it up.`
+            });
+        }
+    }
+    
+    // Sleep recommendation
+    const sleepEntries = last30Days.filter(d => d.sleep_duration_hrs);
+    if (sleepEntries.length > 0) {
+        const avgSleep = sleepEntries.reduce((sum, d) => sum + d.sleep_duration_hrs, 0) / sleepEntries.length;
+        if (avgSleep < 7) {
+            recommendations.push({
+                priority: 'high',
+                category: 'recovery',
+                title: 'Insufficient Sleep',
+                message: `Averaging ${avgSleep.toFixed(1)} hours/night. Aim for 7-9 hours for optimal recovery, hormone balance, and body composition.`
+            });
+        }
+    }
+    
+    // Progress acknowledgment
+    const first = sorted[0];
+    const latest = sorted[sorted.length - 1];
+    const weightLost = first.weight - latest.weight;
+    const fatLost = first.bf_lbs - latest.bf_lbs;
+    const leanChange = latest.lean_lbs - first.lean_lbs;
+    
+    if (weightLost > 10 && fatLost > 8) {
+        const leanRetention = ((first.lean_lbs + leanChange) / first.lean_lbs) * 100;
+        recommendations.push({
+            priority: 'low',
+            category: 'progress',
+            title: 'Outstanding Progress!',
+            message: `You've lost ${weightLost.toFixed(1)} lbs with ${fatLost.toFixed(1)} lbs of pure fat loss and ${leanRetention.toFixed(0)}% lean mass retention. Excellent execution! RAK CHAZAQ! 💪`
+        });
+    }
+    
+    // Calorie consistency
+    const calorieEntries = last30Days.filter(d => d.calories);
+    if (calorieEntries.length >= 14) {
+        const calories = calorieEntries.map(d => d.calories);
+        const avgCal = calories.reduce((a, b) => a + b) / calories.length;
+        const variance = calories.reduce((sum, c) => sum + Math.pow(c - avgCal, 2), 0) / calories.length;
+        const stdDev = Math.sqrt(variance);
+        
+        if (stdDev > 400) {
+            recommendations.push({
+                priority: 'medium',
+                category: 'nutrition',
+                title: 'High Calorie Variability',
+                message: `Daily calories vary significantly (SD: ${Math.round(stdDev)}). More consistency may improve results and make tracking easier.`
+            });
+        }
+    }
+    
+    // Hydration/water percentage
+    const waterEntries = last30Days.filter(d => d.water_percent);
+    if (waterEntries.length > 0) {
+        const avgWater = waterEntries.reduce((sum, d) => sum + d.water_percent, 0) / waterEntries.length;
+        if (avgWater < 58) {
+            recommendations.push({
+                priority: 'medium',
+                category: 'recovery',
+                title: 'Hydration May Be Low',
+                message: `Body water percentage averaging ${avgWater.toFixed(1)}%. Consider increasing water intake for better recovery and performance.`
+            });
+        }
+    }
+    
+    return recommendations.slice(0, 5);
+}
+
+// ===== ANALYTICS TAB - COMPLETE IMPLEMENTATION =====
+function updateAnalyticsTab() {
+    const content = document.getElementById('analyticsContent');
+    if (!content) return;
+    
+    const sorted = bodyData.slice().sort((a, b) => a.date.localeCompare(b.date));
+    
+    if (sorted.length < 7) {
+        content.innerHTML = `
+            <div style="background: rgba(245, 158, 11, 0.12); border-left: 4px solid var(--accent-warning); padding: 20px; border-radius: 10px;">
+                <h3 style="color: var(--accent-warning);">📊 Insufficient Data</h3>
+                <p style="color: var(--text-secondary); margin-top: 10px;">
+                    Need at least 7 days of data for meaningful analytics. Current: ${sorted.length} days.
+                </p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Calculate correlations
+    const correlations = calculateCorrelations();
+    
+    // Build correlation heatmap
+    const xVars = Object.keys(correlations);
+    const yVars = ['weight_change', 'bf_percent_change', 'lean_lbs_change'];
+    
+    const getCorrelationColor = (corr) => {
+        if (corr === null) return '#334155';
+        if (corr < -0.5) return '#064e3b';
+        if (corr < -0.3) return '#10b981';
+        if (corr < 0.3) return '#64748b';
+        if (corr < 0.5) return '#dc2626';
+        return '#7f1d1d';
+    };
+    
+    let heatmapHTML = '<div style="overflow-x: auto;"><table style="border-collapse: collapse; margin: 15px 0;">';
+    heatmapHTML += '<tr><th style="padding: 8px;"></th>';
+    yVars.forEach(yVar => {
+        const label = yVar.replace('_change', '').replace('_', ' ');
+        heatmapHTML += `<th style="padding: 8px; color: var(--accent-cyan); font-size: 0.85em;">${label}</th>`;
+    });
+    heatmapHTML += '</tr>';
+    
+    xVars.forEach(xVar => {
+        heatmapHTML += `<tr><td style="padding: 8px; color: var(--text-secondary); font-size: 0.85em;">${xVar.replace('_', ' ')}</td>`;
+        yVars.forEach(yVar => {
+            const corr = correlations[xVar][yVar];
+            const color = getCorrelationColor(corr);
+            const display = corr !== null ? corr.toFixed(2) : '—';
+            heatmapHTML += `<td style="padding: 12px; background: ${color}; color: white; text-align: center; font-family: 'Space Mono', monospace; font-weight: 700; border: 1px solid var(--bg-primary);">${display}</td>`;
+        });
+        heatmapHTML += '</tr>';
+    });
+    heatmapHTML += '</table></div>';
+    
+    // Detect anomalies
+    const anomalies = detectAnomalies(sorted);
+    const anomaliesHTML = anomalies.length > 0 ? `
+        <div style="background: rgba(245, 158, 11, 0.12); border-left: 4px solid var(--accent-warning); padding: 20px; border-radius: 10px; margin: 20px 0;">
+            <h4 style="color: var(--accent-warning); margin-bottom: 15px;">⚠️ Statistical Outliers Detected</h4>
+            ${anomalies.slice(0, 5).map(a => `
+                <div style="margin: 10px 0; padding: 10px; background: var(--bg-tertiary); border-radius: 8px;">
+                    <strong>${a.date}</strong>: ${a.field.replace('_', ' ')} = ${a.value.toFixed(1)}
+                    <div style="color: var(--text-secondary); font-size: 0.9em; margin-top: 5px;">
+                        ${a.zScore.toFixed(1)} standard deviations from mean (${a.mean.toFixed(1)})
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    ` : '<div style="background: rgba(16, 185, 129, 0.12); border-left: 4px solid var(--accent-success); padding: 20px; border-radius: 10px; margin: 20px 0;"><h4 style="color: var(--accent-success);">✅ No Statistical Outliers Detected</h4><p style="color: var(--text-secondary); margin-top: 10px;">All data points are within 3 standard deviations of the mean.</p></div>';
+    
+    // Trend projections
+    const weightRegression = calculateLinearRegression(sorted, 'weight');
+    const bfRegression = calculateLinearRegression(sorted, 'bf_percent');
+    
+    const projectionsHTML = weightRegression && bfRegression ? `
+        <div style="background: var(--bg-tertiary); padding: 25px; border-radius: 12px; margin: 20px 0;">
+            <h4 style="color: var(--accent-cyan); margin-bottom: 15px;">📈 Trend Projections</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                <div>
+                    <strong style="color: var(--accent-cyan);">Weight Trend:</strong>
+                    <div style="color: var(--text-secondary); margin-top: 10px; line-height: 1.8;">
+                        Trajectory: ${weightRegression.slope > 0 ? '↗' : '↘'} ${Math.abs(weightRegression.slope * 7).toFixed(2)} lbs/week<br>
+                        Confidence: R² = ${(weightRegression.r2 * 100).toFixed(0)}%<br>
+                        7-day projection: ${weightRegression.predict(7).toFixed(1)} lbs<br>
+                        14-day projection: ${weightRegression.predict(14).toFixed(1)} lbs<br>
+                        30-day projection: ${weightRegression.predict(30).toFixed(1)} lbs
+                    </div>
+                </div>
+                <div>
+                    <strong style="color: var(--accent-purple);">Body Fat Trend:</strong>
+                    <div style="color: var(--text-secondary); margin-top: 10px; line-height: 1.8;">
+                        Trajectory: ${bfRegression.slope > 0 ? '↗' : '↘'} ${Math.abs(bfRegression.slope * 7).toFixed(2)}%/week<br>
+                        Confidence: R² = ${(bfRegression.r2 * 100).toFixed(0)}%<br>
+                        7-day projection: ${bfRegression.predict(7).toFixed(1)}%<br>
+                        14-day projection: ${bfRegression.predict(14).toFixed(1)}%<br>
+                        30-day projection: ${bfRegression.predict(30).toFixed(1)}%
+                    </div>
+                </div>
+            </div>
+        </div>
+    ` : '';
+    
+    content.innerHTML = `
+        <div style="background: var(--bg-tertiary); padding: 25px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="color: var(--accent-cyan); margin-bottom: 15px;">🔬 Correlation Heatmap</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9em;">
+                Shows relationships between nutrition/activity variables and body composition changes.
+                <strong>Dark green</strong> = strong negative correlation, <strong>Dark red</strong> = strong positive correlation.
+            </p>
+            ${heatmapHTML}
+        </div>
+        ${anomaliesHTML}
+        ${projectionsHTML}
+    `;
+}
+
+// ===== INSIGHTS TAB - COMPLETE IMPLEMENTATION =====
+function updateInsightsTab() {
+    const content = document.getElementById('insightsContent');
+    if (!content) return;
+    
+    if (bodyData.length < 7) {
+        content.innerHTML = `
+            <div style="background: rgba(245, 158, 11, 0.12); border-left: 4px solid var(--accent-warning); padding: 20px; border-radius: 10px;">
+                <h3 style="color: var(--accent-warning);">💡 Insufficient Data</h3>
+                <p style="color: var(--text-secondary); margin-top: 10px;">
+                    Need at least 7 days of data for insights. Current: ${bodyData.length} days.
+                </p>
+            </div>
+        `;
+        return;
+    }
+    
+    const recoveryScore = calculateRecoveryScore();
+    const injuryRisk = assessInjuryRisk();
+    const recommendations = generateSmartRecommendations();
+    
+    // Recovery Score Display
+    const recoveryHTML = `
+        <div style="background: var(--bg-tertiary); padding: 25px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="color: var(--accent-cyan); margin-bottom: 15px;">🔋 Recovery Score</h3>
+            <div style="text-align: center;">
+                <div style="font-size: 4em; font-weight: 900; font-family: 'Space Mono', monospace; margin: 20px 0; color: ${
+                    recoveryScore.status === 'excellent' ? 'var(--accent-success)' :
+                    recoveryScore.status === 'good' ? 'var(--accent-cyan)' :
+                    recoveryScore.status === 'moderate' ? 'var(--accent-warning)' :
+                    'var(--accent-danger)'
+                };">
+                    ${recoveryScore.total}
+                </div>
+                <div style="font-size: 1.2em; color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; margin-bottom: 20px;">
+                    ${recoveryScore.status}
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: 5px;">RHR Status</div>
+                    <div style="font-size: 1.5em; font-weight: 700; font-family: 'Space Mono', monospace;">${recoveryScore.rhrScore}/30</div>
+                </div>
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: 5px;">Sleep Quality</div>
+                    <div style="font-size: 1.5em; font-weight: 700; font-family: 'Space Mono', monospace;">${recoveryScore.sleepQualityScore}/30</div>
+                </div>
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: 5px;">Sleep Duration</div>
+                    <div style="font-size: 1.5em; font-weight: 700; font-family: 'Space Mono', monospace;">${recoveryScore.sleepDurationScore}/20</div>
+                </div>
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="color: var(--text-secondary); font-size: 0.85em; margin-bottom: 5px;">Volume Trend</div>
+                    <div style="font-size: 1.5em; font-weight: 700; font-family: 'Space Mono', monospace;">${recoveryScore.volumeScore}/20</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Injury Risk Display
+    const riskColor = injuryRisk.overallRisk === 'high' ? 'var(--accent-danger)' :
+                      injuryRisk.overallRisk === 'medium' ? 'var(--accent-warning)' :
+                      'var(--accent-success)';
+    
+    const injuryRiskHTML = `
+        <div style="background: ${
+            injuryRisk.overallRisk === 'high' ? 'rgba(239, 68, 68, 0.12)' :
+            injuryRisk.overallRisk === 'medium' ? 'rgba(245, 158, 11, 0.12)' :
+            'rgba(16, 185, 129, 0.12)'
+        }; border-left: 4px solid ${riskColor}; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h3 style="color: ${riskColor}; margin-bottom: 10px;">
+                ⚠️ Injury Risk Assessment: ${injuryRisk.overallRisk.toUpperCase()}
+            </h3>
+            ${injuryRisk.recommendations.length > 0 ? `
+                <ul style="margin: 10px 0 0 20px; color: var(--text-secondary);">
+                    ${injuryRisk.recommendations.map(rec => `<li style="margin: 8px 0;">${rec}</li>`).join('')}
+                </ul>
+            ` : '<p style="color: var(--text-secondary); margin-top: 10px;">✅ No warning signs detected. Recovery markers look good. Keep up the great work!</p>'}
+        </div>
+    `;
+    
+    // Recommendations Display
+    const recommendationsHTML = recommendations.length > 0 ? `
+        <div style="background: var(--bg-tertiary); padding: 25px; border-radius: 12px;">
+            <h3 style="color: var(--accent-cyan); margin-bottom: 15px;">💡 Smart Recommendations</h3>
+            ${recommendations.map(rec => `
+                <div style="background: var(--bg-secondary); padding: 18px; border-radius: 10px; margin: 12px 0; border-left: 4px solid ${
+                    rec.priority === 'high' ? 'var(--accent-danger)' :
+                    rec.priority === 'medium' ? 'var(--accent-warning)' :
+                    'var(--accent-success)'
+                };">
+                    <div style="display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 0.75em; font-weight: 700; margin-bottom: 8px; background: ${
+                        rec.category === 'nutrition' ? 'rgba(16, 185, 129, 0.15)' :
+                        rec.category === 'recovery' ? 'rgba(6, 182, 212, 0.15)' :
+                        rec.category === 'training' ? 'rgba(139, 92, 246, 0.15)' :
+                        'rgba(245, 158, 11, 0.15)'
+                    }; color: ${
+                        rec.category === 'nutrition' ? 'var(--accent-success)' :
+                        rec.category === 'recovery' ? 'var(--accent-cyan)' :
+                        rec.category === 'training' ? 'var(--accent-purple)' :
+                        'var(--accent-warning)'
+                    };">
+                        ${rec.category.toUpperCase()}
+                    </div>
+                    <div style="font-weight: 700; color: var(--accent-cyan); margin-bottom: 8px;">${rec.title}</div>
+                    <div style="color: var(--text-secondary); line-height: 1.6;">${rec.message}</div>
+                </div>
+            `).join('')}
+        </div>
+    ` : '';
+    
+    content.innerHTML = recoveryHTML + injuryRiskHTML + recommendationsHTML;
+}
+
+// ===== QUICK ADD BOTTOM SHEET (MOBILE) =====
+function initQuickAdd() {
+    // Only show on mobile
+    if (window.innerWidth <= 768) {
+        const fabContainer = document.getElementById('fabContainer');
+        if (fabContainer) fabContainer.style.display = 'block';
+    }
+}
+
+function toggleQuickAdd() {
+    const sheet = document.getElementById('quickAddSheet');
+    if (sheet) {
+        sheet.classList.toggle('open');
+    }
+}
+
+function quickAddEntry() {
+    const weight = parseFloat(document.getElementById('quickWeight').value);
+    const bfPercent = parseFloat(document.getElementById('quickBfPercent').value);
+    
+    if (!weight || !bfPercent) {
+        showToast('⚠️ Please enter weight and body fat %');
+        return;
+    }
+    
+    const date = new Date().toISOString().split('T')[0];
+    const bf_lbs = (weight * bfPercent / 100);
+    const lean_lbs = weight - bf_lbs;
+    
+    const entry = {
+        date,
+        weight,
+        bf_percent: bfPercent,
+        bf_lbs,
+        lean_lbs,
+        lean_percent: (lean_lbs / weight * 100),
+        residual: weight - lean_lbs - bf_lbs,
+        refeed: false,
+        notes: 'Quick Add',
+        integrity_status: 'yellow'
+    };
+    
+    bodyData.push(entry);
+    saveData();
+    toggleQuickAdd();
+    updateDashboard();
+    updateTable();
+    updateChart();
+    
+    document.getElementById('quickWeight').value = '';
+    document.getElementById('quickBfPercent').value = '';
+    
+    showToast('✅ Quick entry added!');
+}
+
+// ===== COLUMN VISIBILITY TOGGLES =====
+let hiddenColumns = new Set();
+
+function toggleColumn(columnName) {
+    if (hiddenColumns.has(columnName)) {
+        hiddenColumns.delete(columnName);
+    } else {
+        hiddenColumns.add(columnName);
+    }
+    updateTable();
+}
+
+function toggleCompactMode() {
+    const isCompact = document.getElementById('compactModeToggle')?.checked;
+    document.querySelectorAll('td, th').forEach(cell => {
+        cell.style.padding = isCompact ? '6px 4px' : '12px 8px';
+    });
+}
+
+// ===== DATA QUALITY TAB =====
+function updateQualityTab() {
+    const content = document.getElementById('qualityContent');
+    if (!content) return;
+    
+    // Calculate quality distribution
+    const qualityData = bodyData.map(entry => ({
+        date: entry.date,
+        ...calculateQualityScore(entry)
+    }));
+    
+    const avgQuality = qualityData.reduce((sum, d) => sum + d.score, 0) / qualityData.length;
+    const gradeDistribution = {
+        A: qualityData.filter(d => d.grade === 'A').length,
+        B: qualityData.filter(d => d.grade === 'B').length,
+        C: qualityData.filter(d => d.grade === 'C').length,
+        D: qualityData.filter(d => d.grade === 'D').length
+    };
+    
+    content.innerHTML = `
+        <div style="background: ${avgQuality >= 80 ? 'rgba(16, 185, 129, 0.12)' : avgQuality >= 60 ? 'rgba(6, 182, 212, 0.12)' : 'rgba(245, 158, 11, 0.12)'}; border-left: 4px solid ${avgQuality >= 80 ? 'var(--accent-success)' : avgQuality >= 60 ? 'var(--accent-cyan)' : 'var(--accent-warning)'}; padding: 25px; border-radius: 12px; margin-bottom: 20px;">
+            <h3 style="color: ${avgQuality >= 80 ? 'var(--accent-success)' : avgQuality >= 60 ? 'var(--accent-cyan)' : 'var(--accent-warning)'}; margin-bottom: 15px;">📊 Overall Data Quality</h3>
+            <div style="text-align: center;">
+                <div style="font-size: 4em; font-weight: 900; font-family: 'Space Mono', monospace; margin: 20px 0; color: ${avgQuality >= 80 ? 'var(--accent-success)' : avgQuality >= 60 ? 'var(--accent-cyan)' : 'var(--accent-warning)'};">
+                    ${avgQuality.toFixed(0)}%
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-top: 20px;">
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="color: var(--accent-success); font-size: 2em; font-weight: 700; font-family: 'Space Mono', monospace;">${gradeDistribution.A}</div>
+                    <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">Grade A (90%+)</div>
+                </div>
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="color: var(--accent-cyan); font-size: 2em; font-weight: 700; font-family: 'Space Mono', monospace;">${gradeDistribution.B}</div>
+                    <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">Grade B (80%+)</div>
+                </div>
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="color: var(--accent-warning); font-size: 2em; font-weight: 700; font-family: 'Space Mono', monospace;">${gradeDistribution.C}</div>
+                    <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">Grade C (70%+)</div>
+                </div>
+                <div style="background: var(--bg-secondary); padding: 15px; border-radius: 8px; text-align: center;">
+                    <div style="color: var(--accent-danger); font-size: 2em; font-weight: 700; font-family: 'Space Mono', monospace;">${gradeDistribution.D}</div>
+                    <div style="color: var(--text-secondary); font-size: 0.85em; margin-top: 5px;">Grade D (<70%)</div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="background: var(--bg-tertiary); padding: 25px; border-radius: 12px;">
+            <h4 style="color: var(--accent-cyan); margin-bottom: 15px;">Quality Score Components</h4>
+            <ul style="color: var(--text-secondary); margin-left: 20px; line-height: 2;">
+                <li><strong>Body Composition (40 points):</strong> Weight, BF%, Lean Mass, Water%</li>
+                <li><strong>Nutrition (30 points):</strong> Calories, Protein, Macros</li>
+                <li><strong>Activity (20 points):</strong> Steps, RHR</li>
+                <li><strong>Sleep (10 points):</strong> Sleep Score or Duration</li>
+            </ul>
+            <p style="color: var(--text-secondary); margin-top: 20px; font-size: 0.9em;">
+                💡 Tip: Click on any entry in the Data Table to edit and improve its quality score.
+            </p>
+        </div>
+    `;
+}
+
+// ===== PWA FEATURES =====
+let deferredPrompt;
+
+function initPWA() {
+    // Service Worker Registration
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        const swCode = `
+            const CACHE_NAME = 'body-tracker-v15';
+            const urlsToCache = [
+                './',
+                'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js'
+            ];
+            
+            self.addEventListener('install', (event) => {
+                event.waitUntil(
+                    caches.open(CACHE_NAME)
+                        .then((cache) => cache.addAll(urlsToCache))
+                );
+            });
+            
+            self.addEventListener('fetch', (event) => {
+                event.respondWith(
+                    caches.match(event.request)
+                        .then((response) => response || fetch(event.request))
+                );
+            });
+        `;
+        
+        const blob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        
+        navigator.serviceWorker.register(swUrl)
+            .then(() => console.log('✅ Service Worker registered'))
+            .catch(err => console.error('Service Worker registration failed:', err));
+    }
+    
+    // Install Prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const btn = document.getElementById('installAppBtn');
+        if (btn) btn.style.display = 'block';
+    });
+    
+    // Offline Detection
+    window.addEventListener('online', () => {
+        const banner = document.getElementById('offlineBanner');
+        if (banner) banner.classList.remove('show');
+        showToast('✅ Back online!');
+    });
+    
+    window.addEventListener('offline', () => {
+        const banner = document.getElementById('offlineBanner');
+        if (banner) banner.classList.add('show');
+    });
+}
+
+function installApp() {
+    if (!deferredPrompt) {
+        showToast('⚠️ Install prompt not available');
+        return;
+    }
+    
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            showToast('🎉 App installed successfully!');
+        }
+        deferredPrompt = null;
+        const btn = document.getElementById('installAppBtn');
+        if (btn) btn.style.display = 'none';
+    });
+}
+
+// ===== ENHANCED SWITCHAB FUNCTION =====
+function switchTab(tabName) {
+    // Hide all tabs
+    document.querySelectorAll('.main-tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Remove active from all buttons
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected tab
+    const tabElement = document.getElementById(`${tabName}-tab`);
+    if (tabElement) {
+        tabElement.classList.add('active');
+    }
+    
+    // Activate button
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        if (btn.getAttribute('onclick')?.includes(`'${tabName}'`)) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Update content based on tab
+    switch(tabName) {
+        case 'dashboard':
+            updateDashboard();
+            updateChart();
+            break;
+        case 'nutrition':
+            updateNutritionTab();
+            break;
+        case 'training':
+            updateTrainingTab();
+            break;
+        case 'progressive':
+            updateProgressiveTabEnhanced();
+            break;
+        case 'analytics':
+            updateAnalyticsTab();
+            break;
+        case 'insights':
+            updateInsightsTab();
+            break;
+        case 'quality':
+            updateQualityTab();
+            break;
+        case 'correlations':
+            updateCorrelations();
+            break;
+        case 'data':
+            updateTable();
+            break;
+    }
+}
+
+console.log('Phase 2 UI Enhancements Loaded');
+
+        console.log('Phase 2 Tab Updates Loaded');
+
+console.log('Phase 2 Analytics Functions Loaded');
+
+        console.log('✨ Phase 2 Enhancements Loaded:');
+        console.log('  ✓ Moving averages');
+        console.log('  ✓ Data quality scoring');
+        console.log('  ✓ Volume landmarks');
+        console.log('  ✓ Enhanced progressive overload');
     </script>
+    <!-- ===== PHASE 2 UI ELEMENTS ===== -->
+    
+    <!-- Floating Action Button (Mobile Only) -->
+    <div id="fabContainer" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
+        <button onclick="toggleQuickAdd()" style="width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); border: none; color: white; font-size: 24px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: transform 0.2s;">
+            ➕
+        </button>
+    </div>
+    
+    <!-- Quick Add Bottom Sheet -->
+    <div id="quickAddSheet" style="position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-tertiary); border-radius: 20px 20px 0 0; padding: 25px; transform: translateY(100%); transition: transform 0.3s ease; z-index: 999; box-shadow: 0 -4px 20px rgba(0,0,0,0.3);">
+        <div style="width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px;"></div>
+        <h3 style="color: var(--accent-cyan); margin-bottom: 20px;">⚡ Quick Add Entry</h3>
+        <div style="display: grid; gap: 15px;">
+            <div>
+                <label style="display: block; color: var(--text-secondary); margin-bottom: 5px; font-size: 0.9em;">Weight (lbs)</label>
+                <input type="number" id="quickWeight" step="0.1" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 16px;">
+            </div>
+            <div>
+                <label style="display: block; color: var(--text-secondary); margin-bottom: 5px; font-size: 0.9em;">Body Fat %</label>
+                <input type="number" id="quickBfPercent" step="0.1" style="width: 100%; padding: 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-primary); font-size: 16px;">
+            </div>
+            <button onclick="quickAddEntry()" style="padding: 14px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); border: none; border-radius: 8px; color: white; font-weight: 700; font-size: 16px; cursor: pointer; min-height: 44px;">
+                ✅ Add Entry
+            </button>
+            <button onclick="toggleQuickAdd()" style="padding: 14px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; color: var(--text-secondary); font-weight: 700; font-size: 16px; cursor: pointer; min-height: 44px;">
+                Cancel
+            </button>
+        </div>
+    </div>
+    
+    <!-- Offline Banner -->
+    <div id="offlineBanner" style="position: fixed; top: 0; left: 0; right: 0; background: var(--accent-warning); color: white; padding: 12px; text-align: center; transform: translateY(-100%); transition: transform 0.3s ease; z-index: 1001; font-weight: 700;">
+        ⚠️ You're offline - Changes will sync when reconnected
+    </div>
+    
+    <!-- Install App Button (PWA) -->
+    <button id="installAppBtn" onclick="installApp()" style="display: none; position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: var(--accent-success); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; min-height: 44px;">
+        📲 Install App
+    </button>
+    
+    <!-- PR Celebration Modal -->
+    <div id="prCelebrationModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-tertiary); padding: 40px; border-radius: 20px; text-align: center; max-width: 500px; position: relative; animation: slideInUp 0.5s ease;">
+            <div style="font-size: 5em; margin-bottom: 20px;">🏆</div>
+            <h2 id="prTitle" style="color: var(--accent-success); margin-bottom: 15px;"></h2>
+            <div id="prDetails" style="color: var(--text-secondary); font-size: 1.2em; margin-bottom: 30px;"></div>
+            <button onclick="closePRModal()" style="padding: 15px 40px; background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); border: none; border-radius: 10px; color: white; font-weight: 700; font-size: 16px; cursor: pointer; min-height: 44px;">
+                🎉 Awesome!
+            </button>
+        </div>
+    </div>
+    
+    <style>
+    /* Phase 2 UI Enhancements CSS */
+    
+    /* Quick Add Sheet */
+    #quickAddSheet.open {
+        transform: translateY(0);
+    }
+    
+    /* Offline Banner */
+    #offlineBanner.show {
+        transform: translateY(0);
+    }
+    
+    /* PR Modal */
+    #prCelebrationModal.show {
+        display: flex !important;
+    }
+    
+    /* Confetti Animation */
+    @keyframes confetti {
+        0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    
+    /* Slide In Up Animation */
+    @keyframes slideInUp {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    /* FAB Hover Effect */
+    #fabContainer button:hover {
+        transform: scale(1.1);
+    }
+    
+    #fabContainer button:active {
+        transform: scale(0.95);
+    }
+    
+    /* Touch Target Sizing (44x44px minimum) */
+    .tab-button,
+    button,
+    .action-button,
+    input[type="checkbox"],
+    input[type="radio"] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Responsive adjustments for mobile */
+    @media (max-width: 768px) {
+        #fabContainer {
+            display: block !important;
+        }
+        
+        .tabs {
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab-button {
+            font-size: 0.85em;
+            padding: 12px 16px;
+        }
+    }
+    
+    /* Prevent iOS zoom on input focus */
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+    
+    /* Data table enhancements */
+    .compact-mode td,
+    .compact-mode th {
+        padding: 6px 4px !important;
+        font-size: 0.85em;
+    }
+    
+    /* Column toggle controls */
+    .column-controls {
+        background: var(--bg-tertiary);
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .column-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        cursor: pointer;
+        user-select: none;
+        min-height: 44px;
+    }
+    
+    .column-toggle input {
+        cursor: pointer;
+        min-width: 18px;
+        min-height: 18px;
+    }
+    
+    .column-toggle:hover {
+        background: var(--bg-primary);
+    }
+    
+    /* Info icon tooltips */
+    .info-icon {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        background: var(--accent-cyan);
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+        line-height: 18px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: help;
+        margin-left: 5px;
+        position: relative;
+    }
+    
+    .info-icon:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 8px 12px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        white-space: nowrap;
+        font-size: 12px;
+        font-weight: normal;
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    </style>
+
 </body>
 </html>
