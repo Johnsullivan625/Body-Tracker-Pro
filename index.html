@@ -3916,6 +3916,10 @@ window.switchMainTab = function(tabName) {
         function updateCorrelationsTab() {
             const el = document.getElementById('correlationsContent');
             if (!el) return;
+            // Ensure training data exists in this view (v15 stores workouts in trainingStore.workouts)
+            const trainingLog = (typeof trainingStore !== 'undefined' && trainingStore && Array.isArray(trainingStore.workouts))
+                ? trainingStore.workouts
+                : ((typeof window !== 'undefined' && Array.isArray(window.trainingLog)) ? window.trainingLog : []);
             try {
 
             const sorted = bodyData.slice().sort((a, b) => a.date.localeCompare(b.date));
