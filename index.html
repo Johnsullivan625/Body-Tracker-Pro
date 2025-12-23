@@ -890,6 +890,7 @@
 
 
     <script>
+
         // ===== GLOBAL CONFIGURATION =====
         const STORAGE_KEY = 'bodyTrackingData_User1';
         
@@ -3913,9 +3914,11 @@ window.switchMainTab = function(tabName) {
         // ===== CORRELATIONS TAB =====
         
         function updateCorrelationsTab() {
+            const el = document.getElementById('correlationsContent');
+            if (!el) return;
             try {
+
             const sorted = bodyData.slice().sort((a, b) => a.date.localeCompare(b.date));
-            const workouts = (typeof trainingStore !== 'undefined' && trainingStore && Array.isArray(trainingStore.workouts)) ? trainingStore.workouts : ((typeof trainingLog !== 'undefined' && Array.isArray(trainingLog)) ? trainingLog : []);
             
             if (sorted.length < 14) {
                 document.getElementById('correlationsContent').innerHTML = `
@@ -4048,16 +4051,16 @@ window.switchMainTab = function(tabName) {
                     </div>
                 </div>
                 
-                ${workouts.length > 0 ? `
+                ${trainingLog.length > 0 ? `
                 <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px; margin-top: 20px;">
                     <h3 style="color: var(--accent-purple); margin-bottom: 15px;">🏋️ Training Frequency</h3>
                     <div class="nutrition-card">
                         <div class="nutrition-label">Total Workouts Logged</div>
-                        <div class="nutrition-value">${workouts.length}</div>
+                        <div class="nutrition-value">${trainingLog.length}</div>
                     </div>
                     <p style="color: var(--text-secondary); font-size: 0.9em; margin-top: 10px;">
-                        ${workouts.length >= 20 ? '🔥 Excellent training consistency! Keep it up!' :
-                          workouts.length >= 10 ? '💪 Good training frequency. Stay consistent!' :
+                        ${trainingLog.length >= 20 ? '🔥 Excellent training consistency! Keep it up!' :
+                          trainingLog.length >= 10 ? '💪 Good training frequency. Stay consistent!' :
                           '📈 Building training history. Consistency is key for results!'}
                     </p>
                 </div>
@@ -4084,10 +4087,23 @@ window.switchMainTab = function(tabName) {
             `;
             
             document.getElementById('correlationsContent').innerHTML = html;
+        
+            } catch (e) {
+                console.error('Correlations & Insights error:', e);
+
+                el.innerHTML = `
+                    <div style="background: var(--bg-tertiary); padding: 24px; border-radius: 12px; border-left: 4px solid var(--accent-danger);">
+                        <h3 style="margin:0 0 8px 0; color: var(--accent-danger);">⚠️ Correlations temporarily unavailable</h3>
+                        <div style="color: var(--text-secondary); line-height: 1.5;">
+                            Something went wrong while building this view. Your data is safe.
+                            <br><span style="opacity:.9;">Open the browser console to see details.</span>
+                        </div>
+                    </div>
+                `;
+            }
         }
-        
-        
-        function escapeHTML(str) {
+
+function escapeHTML(str) {
             if (str === null || str === undefined) return '';
             return String(str)
                 .replace(/&/g, '&amp;')
@@ -4162,22 +4178,7 @@ function escapeAttr(str) {
             workout: { default_rest_seconds: 90, warmup_excluded: true, show_est_1rm: true },
             display: { units: 'lbs', date_format: 'YYYY-MM-DD', compact_tables: false, show_water_overlay: true },
             sync: { auto_pull_seconds: 60, auto_push: false }
-        
-            } catch (e) {
-                console.error('Correlations render error:', e);
-                const el = document.getElementById('correlationsContent');
-                if (el) {
-                    el.innerHTML = `
-                        <div style="background: var(--bg-tertiary); padding: 20px; border-radius: 10px;">
-                            <h3 style="color: var(--accent-danger); margin-bottom: 10px;">⚠️ Correlations temporarily unavailable</h3>
-                            <p style="color: var(--text-secondary); margin: 0;">
-                                There was an error generating correlations. Your data is safe. Please refresh the page.
-                            </p>
-                        </div>
-                    `;
-                }
-            }
-};
+        };
 
         let appSettings = null;
         let personalRecords = null;
@@ -5639,6 +5640,7 @@ try {
     };
   }
 })();
+
 
 </script>
 </body>
