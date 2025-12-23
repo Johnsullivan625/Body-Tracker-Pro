@@ -860,8 +860,8 @@
             <div id="modalIntegrityStatus" style="margin: 15px 0;"></div>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="saveEntry()" class="primary" id="saveBtn">Save Entry</button>
-                <button onclick="hideModal()">Cancel</button>
+                <button type="button" onclick="saveEntry()" class="primary" id="saveBtn">Save Entry</button>
+                <button type="button" onclick="hideModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -2832,9 +2832,22 @@ function migrateTrainingPayload(raw) {
 }
 
 function loadTraining() {
-    const raw = safeJsonParse(localStorage.getItem(TRAINING_KEY));
+    // Prefer current key; fall back to legacy keys if needed
+    let raw = safeJsonParse(localStorage.getItem(TRAINING_KEY));
+
+    if (!raw) {
+        // Legacy keys (older builds)
+        raw = safeJsonParse(localStorage.getItem(TRAINING_KEY_OLD))
+           || safeJsonParse(localStorage.getItem('trainingLog'))
+           || safeJsonParse(localStorage.getItem('trainingLog_User1'))
+           || safeJsonParse(localStorage.getItem('training_sessions'))
+           || null;
+    }
+
     trainingStore = migrateTrainingPayload(raw);
-    localStorage.setItem(TRAINING_KEY, JSON.stringify(trainingStore));
+
+    // Persist migrated payload under current key (does NOT delete legacy keys)
+    try { localStorage.setItem(TRAINING_KEY, JSON.stringify(trainingStore)); } catch {}
 }
 
 function saveTraining() {
@@ -3929,7 +3942,7 @@ window.switchMainTab = function(tabName) {
             }
             
             // Calculate correlations
-            const withNutrition = sorted.filter(d => d.calories && d.protein);
+            const withNutrition = sorted.filter(d => isFinite(d.calories) && isFinite(d.protein));
             const recent30 = sorted.slice(-30);
             
             // Fat loss correlation with protein intake
@@ -3959,14 +3972,14 @@ window.switchMainTab = function(tabName) {
             const fatLossRate = (fatLost / daysSpan) * 7;
             
             // Sleep correlation
-            const withSleep = recent30.filter(d => d.sleep_duration_hrs);
+            const withSleep = recent30.filter(d => isFinite(d.sleep_duration_hrs));
             let avgSleep = 0;
             if (withSleep.length > 0) {
                 avgSleep = withSleep.reduce((sum, d) => sum + d.sleep_duration_hrs, 0) / withSleep.length;
             }
             
             // Steps correlation
-            const withSteps = recent30.filter(d => d.steps);
+            const withSteps = recent30.filter(d => isFinite(d.steps));
             let avgSteps = 0;
             if (withSteps.length > 0) {
                 avgSteps = withSteps.reduce((sum, d) => sum + d.steps, 0) / withSteps.length;
