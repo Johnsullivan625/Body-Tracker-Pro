@@ -860,8 +860,8 @@
             <div id="modalIntegrityStatus" style="margin: 15px 0;"></div>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button type="button" onclick="saveEntry()" class="primary" id="saveBtn">Save Entry</button>
-                <button type="button" onclick="hideModal()">Cancel</button>
+                <button onclick="saveEntry()" class="primary" id="saveBtn">Save Entry</button>
+                <button onclick="hideModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -2831,78 +2831,10 @@ function migrateTrainingPayload(raw) {
     return migrated;
 }
 
-
-        function discoverTrainingFromLocalStorage() {
-            // Heuristic scan for any key that contains workouts/training sessions.
-            // This keeps UI/features intact while maximizing compatibility across older versions.
-            try {
-                const candidates = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const k = localStorage.key(i);
-                    if (!k) continue;
-                    const lk = k.toLowerCase();
-                    if (!(lk.includes('training') || lk.includes('workout') || lk.includes('session') || lk.includes('lift'))) continue;
-
-                    const rawStr = localStorage.getItem(k);
-                    if (!rawStr || rawStr.length < 2) continue;
-                    const parsed = safeJsonParse(rawStr);
-                    if (!parsed) continue;
-
-                    // Accept array of workouts
-                    if (Array.isArray(parsed) && parsed.length) {
-                        const looksLike = parsed.some(w => (w && (w.exercises || w.blocks || w.sets || w.session || w.type) && (w.date || w.workoutDate || w.day)));
-                        if (looksLike) candidates.push({ key: k, value: parsed });
-                    }
-                    // Accept object wrappers
-                    if (parsed && typeof parsed === 'object') {
-                        const arr =
-                            (Array.isArray(parsed.workouts) && parsed.workouts) ||
-                            (Array.isArray(parsed.trainingLog) && parsed.trainingLog) ||
-                            (Array.isArray(parsed.sessions) && parsed.sessions) ||
-                            (Array.isArray(parsed.training_sessions) && parsed.training_sessions) ||
-                            null;
-                        if (arr && arr.length) candidates.push({ key: k, value: parsed });
-                    }
-                }
-
-                // Prefer biggest set (most workouts)
-                if (!candidates.length) return null;
-                candidates.sort((a,b)=>{
-                    const al = Array.isArray(a.value) ? a.value.length : ((a.value.workouts||a.value.trainingLog||a.value.sessions||a.value.training_sessions)||[]).length;
-                    const bl = Array.isArray(b.value) ? b.value.length : ((b.value.workouts||b.value.trainingLog||b.value.sessions||b.value.training_sessions)||[]).length;
-                    return bl - al;
-                });
-                return candidates[0].value;
-            } catch (e) {
-                console.warn('Training discovery scan failed:', e);
-                return null;
-            }
-        }
-
-        function loadTraining() {
-    // Prefer current key; fall back to legacy keys if needed
-    let raw = safeJsonParse(localStorage.getItem(TRAINING_KEY));
-
-    if (!raw) {
-        // Legacy keys (older builds)
-        raw = safeJsonParse(localStorage.getItem(TRAINING_KEY_OLD))
-           || safeJsonParse(localStorage.getItem('trainingLog'))
-           || safeJsonParse(localStorage.getItem('trainingLog_User1'))
-           || safeJsonParse(localStorage.getItem('training_sessions'))
-           || safeJsonParse(localStorage.getItem('rakChazaq_training_v12'))
-           || safeJsonParse(localStorage.getItem('rakChazaq_training_v13'))
-           || safeJsonParse(localStorage.getItem('rakChazaq_training_v14'))
-           || safeJsonParse(localStorage.getItem('rakChazaq_training_v15'))
-           || discoverTrainingFromLocalStorage()
-           || null;
-    }
-
+function loadTraining() {
+    const raw = safeJsonParse(localStorage.getItem(TRAINING_KEY));
     trainingStore = migrateTrainingPayload(raw);
-    // Keep a breadcrumb for debugging
-    try { trainingStore._loaded_from = raw ? 'direct_or_legacy' : 'none'; } catch {}
-
-    // Persist migrated payload under current key (does NOT delete legacy keys)
-    try { localStorage.setItem(TRAINING_KEY, JSON.stringify(trainingStore)); } catch {}
+    localStorage.setItem(TRAINING_KEY, JSON.stringify(trainingStore));
 }
 
 function saveTraining() {
@@ -3997,7 +3929,7 @@ window.switchMainTab = function(tabName) {
             }
             
             // Calculate correlations
-            const withNutrition = sorted.filter(d => isFinite(d.calories) && isFinite(d.protein));
+            const withNutrition = sorted.filter(d => d.calories && d.protein);
             const recent30 = sorted.slice(-30);
             
             // Fat loss correlation with protein intake
@@ -4027,14 +3959,14 @@ window.switchMainTab = function(tabName) {
             const fatLossRate = (fatLost / daysSpan) * 7;
             
             // Sleep correlation
-            const withSleep = recent30.filter(d => isFinite(d.sleep_duration_hrs));
+            const withSleep = recent30.filter(d => d.sleep_duration_hrs);
             let avgSleep = 0;
             if (withSleep.length > 0) {
                 avgSleep = withSleep.reduce((sum, d) => sum + d.sleep_duration_hrs, 0) / withSleep.length;
             }
             
             // Steps correlation
-            const withSteps = recent30.filter(d => isFinite(d.steps));
+            const withSteps = recent30.filter(d => d.steps);
             let avgSteps = 0;
             if (withSteps.length > 0) {
                 avgSteps = withSteps.reduce((sum, d) => sum + d.steps, 0) / withSteps.length;
@@ -4683,6 +4615,17 @@ function escapeAttr(str) {
             loadExerciseLibrary();
             loadTemplates();
             loadTraining();
+/* Seed workouts from screenshots for testing */
+try {
+  if (trainingStore && Array.isArray(trainingStore.workouts) && trainingStore.workouts.length === 0) {
+    trainingStore.workouts = [{"id": "w_seed_2025_12_18_pull2", "date": "2025-12-18", "startTime": "15:01", "type": "2nd Pull", "notes": "Great workout. Started with 500 ropes and finished with 500 ropes. Thank you Lord for the health and ability to do this! Glory to God!", "exercises": [{"id": "ex_seated_row", "name": "Seated Row", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 162, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 162, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 162, "completed": true}]}, {"id": "ex_sup_bob_row", "name": "Supinated bent over barbell row", "sets": [{"id": "s1", "type": "Standard", "reps": 8, "weight": 175, "completed": true}, {"id": "s1", "type": "Standard", "reps": 8, "weight": 175, "completed": true}, {"id": "s1", "type": "Standard", "reps": 8, "weight": 175, "completed": true}, {"id": "s1", "type": "Standard", "reps": 8, "weight": 175, "completed": true}]}, {"id": "ex_cable_rear_delt", "name": "Cable Rear Delt Flys", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 22, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 22, "completed": true}]}, {"id": "ex_rear_delt_hp", "name": "Rear Delt High Pull", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 66, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 66, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 66, "completed": true}]}, {"id": "ex_cg_chins", "name": "Close Grip Chin-Ups", "isBodyweight": true, "sets": [{"id": "s1", "type": "Standard", "reps": 8, "weight": 239, "completed": true}, {"id": "s1", "type": "Standard", "reps": 8, "weight": 239, "completed": true}, {"id": "s1", "type": "Standard", "reps": 8, "weight": 239, "completed": true}, {"id": "s1", "type": "Standard", "reps": 8, "weight": 239, "completed": true}]}, {"id": "ex_hammer_curls", "name": "Cross Body Hammer Curls", "isDumbbell": true, "sets": [{"id": "s1", "type": "Standard", "reps": 12, "weight": 30, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 30, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 30, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 30, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 30, "completed": true}]}, {"id": "ex_leg_raises", "name": "Leg Raises", "isBodyweight": true, "sets": [{"id": "s1", "type": "Standard", "reps": 0, "weight": null, "completed": false}]}, {"id": "ex_db_shrugs", "name": "Dumbbell Shrugs", "isDumbbell": true, "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}]}, {"id": "ex_roman_chair", "name": "Roman Chair Back Extensions", "sets": [{"id": "s1", "type": "Standard", "reps": 20, "weight": 25, "completed": true}]}]}, {"id": "w_seed_2025_12_18_push", "date": "2025-12-18", "startTime": "16:38", "type": "Push", "notes": "Workout was awesome!", "exercises": [{"id": "ex_smith_incline_bench", "name": "Smith Machine Incline bench Press", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 182.5, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 182.5, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 182.5, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 182.5, "completed": true}]}, {"id": "ex_smith_incline_sp", "name": "Smith Machine Incline Shoulder Press", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 135, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 135, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 135, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 135, "completed": true}]}, {"id": "ex_sup_smith_incline_sp", "name": "Supinated Smith Incline Shoulder Press", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 95, "completed": true}]}, {"id": "ex_incline_db_flies", "name": "Incline Dumbbell Flies", "isDumbbell": true, "sets": [{"id": "s1", "type": "Standard", "reps": 12, "weight": 40, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 40, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 40, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 40, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 40, "completed": true}]}, {"id": "ex_cg_incline_db_press", "name": "Close Grip Incline Dumbbell Press", "isDumbbell": true, "sets": [{"id": "s1", "type": "Standard", "reps": 12, "weight": 65, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 65, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 65, "completed": true}, {"id": "s1", "type": "Standard", "reps": 12, "weight": 65, "completed": true}]}, {"id": "ex_dips", "name": "Dips", "isBodyweight": true, "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 191.6, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 191.6, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 191.6, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 191.6, "completed": true}]}, {"id": "ex_hanging_knee", "name": "Hanging Knee Raises", "isBodyweight": true, "sets": [{"id": "s1", "type": "Standard", "reps": 15, "weight": 191.6, "completed": true}, {"id": "s1", "type": "Standard", "reps": 15, "weight": 191.6, "completed": true}, {"id": "s1", "type": "Standard", "reps": 15, "weight": 191.6, "completed": true}]}]}, {"id": "w_seed_2025_12_21_lower", "date": "2025-12-21", "startTime": "16:38", "type": "Lower Body", "notes": "", "exercises": [{"id": "ex_front_squat", "name": "Front Squat", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 205, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 205, "completed": true}]}, {"id": "ex_back_squat", "name": "Back Squat", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 135, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 135, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 135, "completed": true}]}, {"id": "ex_leg_curls", "name": "Leg Curls", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 106, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 106, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 106, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 106, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 106, "completed": true}]}, {"id": "ex_leg_ext", "name": "Leg Extensions", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 154.75, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 154.75, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 154.75, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 154.75, "completed": true}]}, {"id": "ex_inner_thigh", "name": "Inner Thigh", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 120, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 120, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 120, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 120, "completed": true}]}, {"id": "ex_outer_thigh", "name": "Outer Thigh", "sets": [{"id": "s1", "type": "Standard", "reps": 10, "weight": 120, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 120, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 120, "completed": true}, {"id": "s1", "type": "Standard", "reps": 10, "weight": 120, "completed": true}]}]}];
+    localStorage.setItem(TRAINING_KEY, JSON.stringify(trainingStore));
+    try { saveTraining(); } catch {}
+    try { updateTrainingTab(); } catch {}
+    try { updateProgressiveTabV13 && updateProgressiveTabV13(); } catch {}
+  }
+} catch (e) { console.warn('Training seed error', e); }
+
             loadTemplates();
             loadExerciseLibrary();
             updateTrainingTab();
